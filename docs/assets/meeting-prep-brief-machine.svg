@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Meeting Prep Brief Machine</title>
+  <desc id="desc">Flowchart for pre-meeting account brief generation with context enrichment, smart-cog scoring, approval gate, and Slack/inbox delivery.</desc>
+  <defs>
+    <linearGradient id="bg5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7fbfd"/>
+      <stop offset="100%" stop-color="#eaf4fb"/>
+    </linearGradient>
+    <marker id="arrow5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#285c83"/>
+    </marker>
+    <style>
+      .t{font:700 34px 'Inter', 'Segoe UI', sans-serif; fill:#173b59}
+      .l{font:600 18px 'Inter', 'Segoe UI', sans-serif; fill:#204e72}
+      .m{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#4d677d}
+      .n{fill:#ffffff; stroke:#bfd3e4; stroke-width:2}
+      .a{fill:#edf5fc; stroke:#98bde0; stroke-width:2}
+      .g{fill:#fff4e8; stroke:#f0ae65; stroke-width:2.5}
+      .f{stroke:#285c83; stroke-width:3; fill:none; marker-end:url(#arrow5)}
+      .p{stroke:#7292ad; stroke-width:2.5; stroke-dasharray:10 8; fill:none}
+      .z{stroke:#ff9447; stroke-width:4; fill:none}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg5)"/>
+  <text x="60" y="70" class="t">Meeting Prep Brief Machine</text>
+
+  <rect x="70" y="145" width="220" height="94" rx="14" class="n"/>
+  <text x="98" y="188" class="l">Meeting Trigger</text>
+  <text x="98" y="210" class="m">calendar + stage changes</text>
+
+  <rect x="340" y="145" width="260" height="94" rx="14" class="a"/>
+  <text x="372" y="188" class="l">Smart Cog: Context Enrich</text>
+  <text x="372" y="210" class="m">account, history, attendees</text>
+
+  <rect x="650" y="145" width="220" height="94" rx="14" class="n"/>
+  <text x="682" y="188" class="l">Brief Scoring</text>
+  <text x="682" y="210" class="m">priority + depth type</text>
+
+  <rect x="920" y="145" width="210" height="94" rx="14" class="g"/>
+  <text x="948" y="188" class="l">Approval Loop</text>
+  <text x="948" y="210" class="m">delivery gate</text>
+
+  <rect x="220" y="360" width="310" height="102" rx="14" class="n"/>
+  <text x="250" y="408" class="l">Brief Composer</text>
+  <text x="250" y="430" class="m">snapshot, risks, talking points</text>
+
+  <rect x="580" y="360" width="250" height="102" rx="14" class="n"/>
+  <text x="610" y="408" class="l">Slack Delivery</text>
+  <text x="610" y="430" class="m">channel + DM brief card</text>
+
+  <rect x="880" y="360" width="260" height="102" rx="14" class="n"/>
+  <text x="908" y="408" class="l">Inbox Delivery</text>
+  <text x="908" y="430" class="m">email brief + linked sources</text>
+
+  <path d="M290 192 L340 192" class="f"/>
+  <path d="M600 192 L650 192" class="f"/>
+  <path d="M870 192 L920 192" class="f"/>
+  <path d="M1025 239 L1025 360" class="f"/>
+
+  <path d="M380 239 L380 360" class="p"/>
+  <path d="M705 239 L705 360" class="p"/>
+
+  <path d="M880 411 L830 411" class="f"/>
+  <path d="M580 411 L530 411" class="f"/>
+
+  <polyline points="620,286 644,252 671,286 695,252" class="z"/>
+
+  <rect x="60" y="530" width="1080" height="62" rx="12" fill="#ffffff" stroke="#bfd3e4"/>
+  <text x="82" y="557" class="m">Integrations: Endgame MCP/CLI + Salesforce Headless 360 + Google/Outlook Calendar</text>
+  <text x="82" y="579" class="m">Signals: Gong + product telemetry | Delivery: Slack + inbox channel adapters</text>
+
+  <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#bfd3e4"/>
+  <text x="82" y="645" class="m">Legend: Solid arrows = brief workflow, dashed pipes = context sync, orange box = approval gate before Slack/inbox delivery.</text>
+</svg>

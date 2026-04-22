@@ -1,0 +1,129 @@
+{
+  "name": "new-hire-ramp-accelerator-machine-v2",
+  "machine_id": "new-hire-ramp-accelerator-machine",
+  "artifact_type": "make_scenario_blueprint_reference",
+  "make_runtime": {
+    "scheduling": {
+      "mode": "webhook_plus_periodic_reconciliation",
+      "webhook_path": "new-hire-ramp-events",
+      "periodic_refresh_interval_hours": 4,
+      "max_runs_per_minute": 20,
+      "sequential_processing": true
+    },
+    "retry_model": {
+      "store_incomplete_executions": true,
+      "auto_retry_errors": [
+        "RateLimitError",
+        "ConnectionError",
+        "ModuleTimeoutError"
+      ]
+    }
+  },
+  "modules": [
+    {
+      "id": 1,
+      "module": "webhooks:customWebhook",
+      "name": "Receive Onboarding Event",
+      "parameters": {
+        "path": "new-hire-ramp-events"
+      }
+    },
+    {
+      "id": 2,
+      "module": "json:createJSON",
+      "name": "Normalize gtm_event_v1"
+    },
+    {
+      "id": 3,
+      "module": "datastore:getARecord",
+      "name": "Idempotency Lookup",
+      "parameters": {
+        "store": "new_hire_ramp_runs",
+        "key": "new-hire-ramp:{{2.event_id}}"
+      }
+    },
+    {
+      "id": 4,
+      "module": "flow:filter",
+      "name": "Skip Duplicates",
+      "filter": "{{empty(3.value)}}"
+    },
+    {
+      "id": 5,
+      "module": "http:makeRequest",
+      "name": "Build Onboarding Package",
+      "parameters": {
+        "url": "https://onboarding.internal/build",
+        "method": "POST",
+        "body": "{{toJSON(2)}}"
+      }
+    },
+    {
+      "id": 6,
+      "module": "tools:iterator",
+      "name": "Iterate Package Sections",
+      "parameters": {
+        "array": "{{5.body.sections}}"
+      }
+    },
+    {
+      "id": 7,
+      "module": "tools:arrayAggregator",
+      "name": "Aggregate Onboarding Package",
+      "parameters": {
+        "source": "6",
+        "target_structure": "sections[]"
+      }
+    },
+    {
+      "id": 8,
+      "module": "http:makeRequest",
+      "name": "Approval Loop",
+      "parameters": {
+        "url": "https://approval.internal/request",
+        "method": "POST",
+        "body": "{\"event_id\":\"{{2.event_id}}\",\"package\":{{7.array}},\"timeout_seconds\":1800}"
+      }
+    },
+    {
+      "id": 9,
+      "module": "flow:router",
+      "name": "Approval Router",
+      "routes": [
+        {
+          "name": "approved",
+          "condition": "{{8.body.approval_status}} = approved"
+        },
+        {
+          "name": "blocked",
+          "condition": "fallback"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "module": "gmail:sendAnEmail",
+      "name": "Send New-Hire Plan",
+      "route": "approved"
+    },
+    {
+      "id": 11,
+      "module": "salesforce:createARecord",
+      "name": "Create Ramp Task",
+      "route": "approved",
+      "parameters": {
+        "object": "Task"
+      }
+    },
+    {
+      "id": 12,
+      "module": "http:makeRequest",
+      "name": "Emit Outcome Event",
+      "parameters": {
+        "url": "https://events.internal/emit",
+        "method": "POST",
+        "body": "{\"event_type\":\"{{if(9.route = \\\"approved\\\"; \\\"new_hire.ramp.generated\\\"; \\\"new_hire.ramp.blocked\\\")}}\",\"event_id\":\"{{2.event_id}}\"}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "zap_name": "Account Health Audit Machine",
+  "version": "1.1.0",
+  "machine_id": "account-health-audit-machine",
+  "description": "Scheduled or webhook-triggered account health audit with idempotent execution and event emission.",
+  "trigger": {
+    "primary": {
+      "app": "schedule_by_zapier",
+      "event": "every_weekday",
+      "time": "06:00",
+      "timezone": "America/Los_Angeles"
+    },
+    "alternate": {
+      "app": "webhooks_by_zapier",
+      "event": "catch_hook",
+      "path": "/account-health-audit/events"
+    },
+    "accepts_event_types": [
+      "audit.run_requested",
+      "audit.snapshot_ready"
+    ]
+  },
+  "gtm_event_v1_mapping": {
+    "required": [
+      "schema_version",
+      "event_id",
+      "event_type",
+      "source",
+      "occurred_at",
+      "ingested_at",
+      "trace",
+      "subject",
+      "attributes"
+    ]
+  },
+  "steps": [
+    {
+      "id": "normalize_validate",
+      "app": "code_by_zapier",
+      "event": "run_javascript",
+      "purpose": "Normalize to gtm_event_v1 and fail fast on missing required fields."
+    },
+    {
+      "id": "filter_supported_events",
+      "app": "filter_by_zapier",
+      "event": "only_continue_if",
+      "rule": "event_type in ['audit.run_requested','audit.snapshot_ready']"
+    },
+    {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "account-health-audit:${event_id}"
+    },
+    {
+      "id": "fetch_context",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://context.internal/account-health-audit/enrich",
+        "json": {
+          "event": "{{trigger.raw_body}}",
+          "context_providers": [
+            "endgame_mcp_or_cli",
+            "salesforce_headless_360",
+            "product_telemetry"
+          ]
+        }
+      }
+    },
+    {
+      "id": "score_and_reason",
+      "app": "code_by_zapier",
+      "event": "run_javascript",
+      "purpose": "Compute deterministic score bands and recommended remediation themes."
+    },
+    {
+      "id": "directive_alignment",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://cogs.internal/directive_alignment/v1/execute"
+      }
+    },
+    {
+      "id": "compose_narrative_roadmap",
+      "app": "code_by_zapier",
+      "event": "run_javascript"
+    },
+    {
+      "id": "route_internal_alert",
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
+        {
+          "name": "critical",
+          "condition": "risk_band == 'critical'",
+          "actions": [
+            {
+              "app": "slack",
+              "event": "send_channel_message"
+            }
+          ]
+        },
+        {
+          "name": "standard",
+          "condition": "risk_band != 'critical'",
+          "actions": [
+            {
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "account.health.audit.completed"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "idempotency_store",
+      "app": "storage_by_zapier",
+      "event": "set_value",
+      "key_template": "account-health-audit:${event_id}",
+      "value_fields": [
+        "event_id",
+        "trace.trace_id",
+        "trace.run_id",
+        "risk_band",
+        "status"
+      ]
+    }
+  ],
+  "zapier_runtime_profile": {
+    "paths": {
+      "max_branches_per_group": 10,
+      "max_nested_paths_steps": 3,
+      "max_total_steps": 100,
+      "must_be_final_step": true
+    },
+    "code": {
+      "javascript_runtime": "nodejs_22",
+      "io_limit_mb": 6
+    },
+    "webhooks": {
+      "raw_hook_max_mb": 2,
+      "payload_limit_mb": {
+        "triggers": 10,
+        "actions": 5
+      },
+      "rate_limits": {
+        "requests_per_5m_per_user": 20000,
+        "legacy_requests_per_5m_per_zap": 1000
+      }
+    },
+    "task_usage": {
+      "filters_and_paths_consume_tasks": false,
+      "storage_steps_consume_tasks": false
+    }
+  }
+}

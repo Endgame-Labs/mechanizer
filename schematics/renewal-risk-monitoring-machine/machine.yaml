@@ -1,0 +1,39 @@
+machine_id: renewal-risk-monitoring-machine
+version: v1.0.0
+owners:
+  - team: customer-success-ops
+    contact: csops@example.com
+objective: "Monitor renewal-near accounts for risk signals, generate recommended plays, and alert the CSM with approval-gated optional actions."
+kpis:
+  - id: kpi_1
+    name: "Renewal-near risky accounts detected per daily run"
+    target: "define-per-org"
+  - id: kpi_2
+    name: "CSM alert delivery success"
+    target: "define-per-org"
+  - id: kpi_3
+    name: "Recommended play adoption rate"
+    target: "define-per-org"
+triggers:
+  - type: schedule
+    cron: "0 7 * * *"
+    timezone: "America/Los_Angeles"
+  - type: event
+    event_types: [renewal.window_opened, account.risk_signal.detected]
+inputs:
+  contract: gtm_event_v1
+  sources: [salesforce_headless_360, salesforce, gainsight, product_telemetry, support_system, billing_system, endgame_mcp, endgame_cli]
+outputs:
+  event_contract: gtm_event_v1
+  side_effects: [slack_notify, csm_task_create, playbook_recommendation_upsert, exec_alert_route]
+slo:
+  p95_end_to_end_seconds: 300
+  availability: "99.5%"
+dependencies:
+  cogs: [enrich_account_health@v1.0.0, deal_score_reasoner@v1.0.0, directive_alignment@v1.0.0, compose_outreach_message@v1.0.0, route_exec_alert@v1.0.0, approval_loop@v1.0.0]
+feature_flags: []
+security:
+  pii_policy: "minimize"
+  secret_source: "platform_secret_store"
+rollback:
+  mode: "disable_triggers_and_drain"

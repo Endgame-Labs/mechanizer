@@ -1,0 +1,194 @@
+{
+  "workflow_name": "account_plan_generation_machine",
+  "machine_id": "account-plan-generation-machine",
+  "version": "1.1.0",
+  "tray_runtime": {
+    "project": "account-plan-generation-machine",
+    "triggers": [
+      {
+        "type": "callable",
+        "name": "account_plan_event_ingest",
+        "operation": "trigger_and_respond"
+      },
+      {
+        "type": "scheduled",
+        "name": "account_plan_refresh",
+        "operation": "cron",
+        "cron": "0 */6 * * *",
+        "timezone": "America/Los_Angeles",
+        "enabled": true
+      }
+    ]
+  },
+  "contract": {
+    "input_schema": "gtm_event_v1",
+    "idempotency_key": "event_id",
+    "approval_required_before_side_effects": true
+  },
+  "steps": [
+    {
+      "key": "normalize_validate",
+      "operation": "script",
+      "language": "javascript"
+    },
+    {
+      "key": "idempotency_get",
+      "operation": "data_storage.get_value",
+      "input": {
+        "scope": "project",
+        "key": "account-plan-generation-machine:${steps.normalize_validate.output.event_id}",
+        "default": null
+      }
+    },
+    {
+      "key": "branch_if_new",
+      "operation": "branch",
+      "branches": [
+        {
+          "name": "new",
+          "condition": "steps.idempotency_get.output == null"
+        },
+        {
+          "name": "duplicate",
+          "condition": "steps.idempotency_get.output != null"
+        }
+      ]
+    },
+    {
+      "key": "context_enrichment_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_context_enrichment",
+      "input": {
+        "event": "${steps.normalize_validate.output}",
+        "providers": [
+          "endgame_mcp",
+          "salesforce_headless_360",
+          "gong_or_zoom",
+          "seismic_or_highspot"
+        ]
+      }
+    },
+    {
+      "key": "plan_assembly_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_account_plan_assembly",
+      "input": {
+        "event": "${steps.normalize_validate.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "key": "approval_loop_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_approval_loop",
+      "input": {
+        "machine_id": "account-plan-generation-machine",
+        "event_id": "${steps.normalize_validate.output.event_id}",
+        "actions": [
+          "document.publish",
+          "salesforce.update_record"
+        ],
+        "proposal": "${steps.plan_assembly_cog.output}",
+        "timeout_seconds": 1800
+      }
+    },
+    {
+      "key": "approval_branch",
+      "branch": "new",
+      "operation": "branch",
+      "branches": [
+        {
+          "name": "approved",
+          "condition": "steps.approval_loop_cog.output.approval_status == 'approved'"
+        },
+        {
+          "name": "blocked",
+          "condition": "steps.approval_loop_cog.output.approval_status != 'approved'"
+        }
+      ]
+    },
+    {
+      "key": "publish_plan",
+      "branch": "approved",
+      "operation": "http.client",
+      "error_handling": "manual",
+      "input": {
+        "method": "POST",
+        "url": "https://planner.internal/publish",
+        "body": "${steps.plan_assembly_cog.output.plan}"
+      }
+    },
+    {
+      "key": "update_sfdc_notes",
+      "branch": "approved",
+      "operation": "salesforce.update_record",
+      "error_handling": "manual",
+      "input": {
+        "object": "Account",
+        "record_id": "${steps.normalize_validate.output.subject.id}",
+        "fields": "${steps.plan_assembly_cog.output.crm_summary_fields}",
+        "external_idempotency": "${steps.normalize_validate.output.event_id}"
+      }
+    },
+    {
+      "key": "emit_terminal",
+      "branch": "new",
+      "operation": "http.client",
+      "input": {
+        "method": "POST",
+        "url": "https://events.internal/emit",
+        "body": {
+          "event_type": "${steps.approval_loop_cog.output.approval_status == 'approved' ? 'account.plan.generated' : 'account.plan.blocked'}",
+          "trace": "${steps.normalize_validate.output.trace}",
+          "subject": "${steps.normalize_validate.output.subject}",
+          "attributes": {
+            "approval_status": "${steps.approval_loop_cog.output.approval_status}",
+            "plan_version": "${steps.plan_assembly_cog.output.plan_version}"
+          }
+        }
+      }
+    },
+    {
+      "key": "idempotency_set",
+      "branch": "new",
+      "operation": "data_storage.set_value",
+      "input": {
+        "scope": "project",
+        "key": "account-plan-generation-machine:${steps.normalize_validate.output.event_id}",
+        "value": {
+          "status": "completed",
+          "approval_status": "${steps.approval_loop_cog.output.approval_status}",
+          "updated_at": "${meta.now}"
+        }
+      }
+    },
+    {
+      "key": "response_duplicate",
+      "branch": "duplicate",
+      "operation": "callable_workflow_response",
+      "body": {
+        "event_type": "account.plan.duplicate_ignored",
+        "status": "ignored"
+      }
+    },
+    {
+      "key": "response_new",
+      "branch": "new",
+      "operation": "callable_workflow_response",
+      "body": {
+        "event_type": "${steps.approval_loop_cog.output.approval_status == 'approved' ? 'account.plan.generated' : 'account.plan.blocked'}",
+        "trace": "${steps.normalize_validate.output.trace}",
+        "attributes": {
+          "approval_status": "${steps.approval_loop_cog.output.approval_status}",
+          "plan_version": "${steps.plan_assembly_cog.output.plan_version}"
+        }
+      }
+    }
+  ]
+}

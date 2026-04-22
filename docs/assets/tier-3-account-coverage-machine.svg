@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Tier-3 Account Coverage Machine</title>
+  <desc id="desc">Flow diagram for low-touch long-tail account coverage with monitoring, trigger scoring, approval-gated outreach, and integration callouts.</desc>
+  <defs>
+    <linearGradient id="bg5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8faf6"/>
+      <stop offset="100%" stop-color="#edf7f2"/>
+    </linearGradient>
+    <marker id="arrow5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2a5f6e"/>
+    </marker>
+    <style>
+      .t{font:700 34px 'Inter', 'Segoe UI', sans-serif; fill:#173f4a}
+      .l{font:600 18px 'Inter', 'Segoe UI', sans-serif; fill:#225665}
+      .m{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#4e6871}
+      .n{fill:#ffffff; stroke:#bed3d8; stroke-width:2}
+      .a{fill:#eaf6f8; stroke:#8ab9c5; stroke-width:2}
+      .g{fill:#fff4e8; stroke:#f0ae65; stroke-width:2.5}
+      .f{stroke:#2a5f6e; stroke-width:3; fill:none; marker-end:url(#arrow5)}
+      .p{stroke:#6d909b; stroke-width:2.5; stroke-dasharray:10 8; fill:none}
+      .z{stroke:#ff9546; stroke-width:4; fill:none}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg5)"/>
+  <text x="60" y="70" class="t">Tier-3 Account Coverage Machine</text>
+
+  <rect x="70" y="145" width="230" height="94" rx="14" class="n"/>
+  <text x="100" y="188" class="l">Signal Intake</text>
+  <text x="100" y="210" class="m">usage, support, billing</text>
+
+  <rect x="350" y="145" width="260" height="94" rx="14" class="a"/>
+  <text x="384" y="188" class="l">Smart Cog: Enrichment</text>
+  <text x="384" y="210" class="m">tier-3 feature map</text>
+
+  <rect x="660" y="145" width="240" height="94" rx="14" class="a"/>
+  <text x="694" y="188" class="l">Smart Cog: Scoring</text>
+  <text x="694" y="210" class="m">churn + expansion triggers</text>
+
+  <rect x="940" y="145" width="200" height="94" rx="14" class="g"/>
+  <text x="968" y="188" class="l">Approval Loop</text>
+  <text x="968" y="210" class="m">outreach and CRM gate</text>
+
+  <rect x="180" y="360" width="280" height="102" rx="14" class="n"/>
+  <text x="210" y="408" class="l">Monitoring Lane</text>
+  <text x="210" y="430" class="m">cohort watch + stale checks</text>
+
+  <rect x="510" y="360" width="300" height="102" rx="14" class="n"/>
+  <text x="542" y="408" class="l">Outreach Draft Lane</text>
+  <text x="542" y="430" class="m">compose by play and persona</text>
+
+  <rect x="860" y="360" width="280" height="102" rx="14" class="n"/>
+  <text x="892" y="398" class="l">Executed Side Effects</text>
+  <text x="892" y="420" class="m">email send + CRM note + alert</text>
+  <text x="892" y="442" class="m">only when approval is explicit</text>
+
+  <path d="M300 192 L350 192" class="f"/>
+  <path d="M610 192 L660 192" class="f"/>
+  <path d="M900 192 L940 192" class="f"/>
+  <path d="M1040 239 L1040 360" class="f"/>
+
+  <path d="M430 239 L430 360" class="p"/>
+  <path d="M690 239 L690 360" class="p"/>
+
+  <path d="M860 411 L810 411" class="f"/>
+  <path d="M510 411 L460 411" class="f"/>
+
+  <polyline points="628,286 652,252 679,286 703,252" class="z"/>
+
+  <rect x="60" y="530" width="1080" height="62" rx="12" fill="#ffffff" stroke="#bed3d8"/>
+  <text x="82" y="557" class="m">Integrations: Endgame MCP/CLI + Salesforce Headless 360 + product telemetry + billing + support systems</text>
+  <text x="82" y="579" class="m">Shared contracts: gtm_event_v1 and smart cogs from schematics/_shared/cogs</text>
+
+  <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#bed3d8"/>
+  <text x="82" y="645" class="m">Legend: Solid arrows = execution path, dashed links = context sync, orange gate = approval required before outbound/CRM writes.</text>
+</svg>

@@ -1,0 +1,40 @@
+{
+  "workflow_name": "consumption_renewal_intervention_daily",
+  "machine_id": "consumption-renewal-intervention-machine",
+  "trigger": {
+    "type": "scheduled",
+    "cron": "0 7 * * *",
+    "timezone": "America/Los_Angeles"
+  },
+  "steps": [
+    {
+      "key": "normalize_validate",
+      "operation": "script",
+      "script": "validate required gtm_event_v1 keys"
+    },
+    {
+      "key": "build_intervention_plan",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://planner.internal/compose"
+      }
+    },
+    {
+      "key": "notify_slack",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://slack.internal/notify"
+      }
+    },
+    {
+      "key": "approval_optional_actions",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://approval.internal/request"
+      }
+    }
+  ]
+}

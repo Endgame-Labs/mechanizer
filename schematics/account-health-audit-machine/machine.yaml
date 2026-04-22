@@ -1,0 +1,39 @@
+machine_id: account-health-audit-machine
+version: v1.0.0
+owners:
+  - team: customer-success-ops
+    contact: csops@example.com
+objective: "Run a scheduled deterministic account health audit across warehouse, CRM, and conversation data to produce narrative summaries and a prioritized roadmap."
+kpis:
+  - id: kpi_1
+    name: "Scheduled audit completion rate"
+    target: ">= 99% of planned runs"
+  - id: kpi_2
+    name: "Median time-to-insight from data snapshot"
+    target: "define-per-org"
+  - id: kpi_3
+    name: "Roadmap action adoption from audit outputs"
+    target: "define-per-org"
+triggers:
+  - type: schedule
+    schedule_cron: "0 6 * * 1-5"
+    timezone: "America/Los_Angeles"
+  - type: event
+    event_types: [audit.run_requested, audit.snapshot_ready]
+inputs:
+  contract: gtm_event_v1
+  sources: [warehouse_bi, salesforce_headless_360, salesforce, hubspot, gong, zoom, endgame_mcp, endgame_cli]
+outputs:
+  event_contract: gtm_event_v1
+  side_effects: [account_health_audit_publish, narrative_digest_send, roadmap_task_upsert]
+slo:
+  p95_end_to_end_seconds: 300
+  availability: "99.5%"
+dependencies:
+  cogs: [enrich_account_health@v1.0.0, deal_score_reasoner@v1.0.0, directive_alignment@v1.0.0, route_exec_alert@v1.0.0]
+feature_flags: []
+security:
+  pii_policy: "minimize"
+  secret_source: "platform_secret_store"
+rollback:
+  mode: "disable_schedule_and_drain"

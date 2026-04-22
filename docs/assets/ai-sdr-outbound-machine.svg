@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">AI SDR Outbound Machine</title>
+  <desc id="desc">Flow for prospect research, qualification scoring, personalized sequence drafting, approvals, and qualified response routing.</desc>
+  <defs>
+    <linearGradient id="bg-sdr" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7fbff"/>
+      <stop offset="100%" stop-color="#ecf4ff"/>
+    </linearGradient>
+    <marker id="arrow-sdr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2f5f99"/>
+    </marker>
+    <style>
+      .title{font:700 34px 'Inter', 'Segoe UI', sans-serif; fill:#1e3d66}
+      .label{font:600 18px 'Inter', 'Segoe UI', sans-serif; fill:#244a7d}
+      .meta{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#4f6481}
+      .card{fill:#ffffff; stroke:#c7d8ee; stroke-width:2}
+      .card-alt{fill:#eef5ff; stroke:#9bbce5; stroke-width:2}
+      .flow{stroke:#2f5f99; stroke-width:3; fill:none; marker-end:url(#arrow-sdr)}
+      .loop{stroke:#7f99bf; stroke-width:2.5; stroke-dasharray:10 8; fill:none}
+      .alert{stroke:#ff8e3b; stroke-width:4; fill:none}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg-sdr)"/>
+  <text x="60" y="70" class="title">AI SDR Outbound Machine</text>
+
+  <rect x="70" y="145" width="220" height="94" rx="14" class="card"/>
+  <text x="102" y="188" class="label">Prospect Signal</text>
+  <text x="102" y="210" class="meta">intent + trigger ingest</text>
+
+  <rect x="330" y="145" width="235" height="94" rx="14" class="card-alt"/>
+  <text x="365" y="188" class="label">Research Enrich</text>
+  <text x="365" y="210" class="meta">account + persona context</text>
+
+  <rect x="610" y="145" width="230" height="94" rx="14" class="card"/>
+  <text x="645" y="188" class="label">Qualify + Score</text>
+  <text x="645" y="210" class="meta">fit, intent, priority tier</text>
+
+  <rect x="885" y="145" width="250" height="94" rx="14" class="card"/>
+  <text x="920" y="188" class="label">Sequence Drafting</text>
+  <text x="920" y="210" class="meta">persona-specific steps</text>
+
+  <rect x="250" y="350" width="280" height="102" rx="14" class="card"/>
+  <text x="282" y="398" class="label">Approval + Policy Gate</text>
+  <text x="282" y="420" class="meta">directive alignment check</text>
+
+  <rect x="600" y="350" width="300" height="102" rx="14" class="card-alt"/>
+  <text x="632" y="398" class="label">Qualified Response Route</text>
+  <text x="632" y="420" class="meta">handoff to SDR/AE owner queue</text>
+
+  <path d="M290 192 L330 192" class="flow"/>
+  <path d="M565 192 L610 192" class="flow"/>
+  <path d="M840 192 L885 192" class="flow"/>
+  <path d="M1010 239 L760 350" class="flow"/>
+  <path d="M530 401 L600 401" class="flow"/>
+
+  <path d="M725 452 C725 530,390 530,390 452" class="loop"/>
+  <path d="M390 239 L390 350" class="loop"/>
+
+  <polyline points="575,290 598,252 625,286 650,250" class="alert"/>
+
+  <rect x="60" y="530" width="1080" height="62" rx="12" fill="#ffffff" stroke="#c7d8ee"/>
+  <text x="82" y="557" class="meta">Integrations: Endgame MCP/CLI | Salesforce Headless 360 | HubSpot/Outreach | Apollo/Clearbit/LinkedIn</text>
+  <text x="82" y="579" class="meta">Shared cogs: enrich_account_health, deal_score_reasoner, directive_alignment, compose_outreach_message, route_exec_alert, approval_loop</text>
+
+  <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#c7d8ee"/>
+  <text x="82" y="645" class="meta">Legend: Solid arrows = execution flow, dashed arcs = feedback loop, orange pulse = executive escalation trigger.</text>
+</svg>

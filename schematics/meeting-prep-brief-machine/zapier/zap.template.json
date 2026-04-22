@@ -1,0 +1,154 @@
+{
+  "zap_name": "Meeting Prep Brief Machine",
+  "version": "1.1.0",
+  "machine_id": "meeting-prep-brief-machine",
+  "description": "Generates meeting prep briefs and delivers only after approval.",
+  "trigger": {
+    "primary": {
+      "app": "webhooks_by_zapier",
+      "event": "catch_hook",
+      "path": "/meeting-prep/events"
+    },
+    "alternate": {
+      "app": "schedule_by_zapier",
+      "event": "every_15_minutes"
+    },
+    "accepts_event_types": [
+      "meeting.scheduled",
+      "account.exec_meeting_booked",
+      "opportunity.stage_changed"
+    ]
+  },
+  "steps": [
+    {
+      "id": "validate_contract",
+      "app": "code_by_zapier",
+      "event": "run_javascript"
+    },
+    {
+      "id": "filter_supported_events",
+      "app": "filter_by_zapier",
+      "event": "only_continue_if",
+      "rule": "event_type in ['meeting.scheduled','account.exec_meeting_booked','opportunity.stage_changed']"
+    },
+    {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "meeting-prep:${event_id}"
+    },
+    {
+      "id": "fetch_context",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://context.internal/meeting-prep/enrich",
+        "json": {
+          "event": "{{trigger.raw_body}}",
+          "context_providers": [
+            "endgame_mcp_or_cli",
+            "salesforce_headless_360",
+            "calendar_provider"
+          ]
+        }
+      }
+    },
+    {
+      "id": "score_prep_priority",
+      "app": "code_by_zapier",
+      "event": "run_javascript",
+      "logic": "prep_score=Math.round((0.4*meeting_tier)+(0.35*account_risk)+(0.25*deal_criticality));brief_type=(prep_score>=80)?'executive_brief':((prep_score>=65)?'full_brief':'light_brief');"
+    },
+    {
+      "id": "compose_brief",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://planner.internal/meeting-prep/compose"
+      }
+    },
+    {
+      "id": "approval_loop",
+      "app": "human_in_the_loop",
+      "event": "request_approval",
+      "fallback": {
+        "app": "webhooks_by_zapier",
+        "event": "post",
+        "url": "https://approval.internal/request"
+      },
+      "request_payload": {
+        "event_id": "{{event_id}}",
+        "meeting_id": "{{subject.id}}",
+        "actions": [
+          "send_slack_brief",
+          "send_inbox_brief"
+        ],
+        "timeout_seconds": 1200
+      }
+    },
+    {
+      "id": "path_on_approval",
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
+        {
+          "name": "approved",
+          "condition": "approval_status == 'approved'",
+          "actions": [
+            {
+              "id": "send_slack_brief",
+              "app": "slack",
+              "event": "send_channel_message"
+            },
+            {
+              "id": "send_inbox_brief",
+              "app": "gmail",
+              "event": "send_email"
+            },
+            {
+              "id": "emit_delivered_event",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "meeting.prep_brief.delivered"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "blocked",
+          "condition": "approval_status != 'approved'",
+          "actions": [
+            {
+              "id": "emit_blocked_event",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "meeting.prep_brief.blocked",
+                  "reason": "approval_rejected_or_timeout"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "idempotency_store",
+      "app": "storage_by_zapier",
+      "event": "set_value",
+      "key_template": "meeting-prep:${event_id}",
+      "value_fields": [
+        "event_id",
+        "approval_status",
+        "brief_type",
+        "trace.trace_id"
+      ]
+    }
+  ]
+}

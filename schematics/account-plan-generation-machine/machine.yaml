@@ -1,0 +1,38 @@
+machine_id: account-plan-generation-machine
+version: v1.0.0
+owners:
+  - team: revenue-ops
+    contact: revops@example.com
+objective: "Run recurring and bulk generation of structured account plans covering context, relationship map, whitespace, and executable plays."
+kpis:
+  - id: kpi_1
+    name: "Account plan coverage for in-scope accounts"
+    target: "define-per-org"
+  - id: kpi_2
+    name: "Median account-plan freshness"
+    target: "define-per-org"
+  - id: kpi_3
+    name: "Play execution rate from generated plans"
+    target: "define-per-org"
+triggers:
+  - type: event
+    event_types: [account.plan.refresh_requested, account.tier_changed, planning.window_opened]
+  - type: schedule
+    cron: "0 */6 * * *"
+inputs:
+  contract: gtm_event_v1
+  sources: [salesforce_headless_360, salesforce, hubspot, product_telemetry, endgame_mcp, endgame_cli]
+outputs:
+  event_contract: gtm_event_v1
+  side_effects: [account_plan_upsert, crm_note_append, task_create, alert_send]
+slo:
+  p95_end_to_end_seconds: 420
+  availability: "99.5%"
+dependencies:
+  cogs: [enrich_account_health@v1.0.0, deal_score_reasoner@v1.0.0, directive_alignment@v1.0.0, compose_outreach_message@v1.0.0, route_exec_alert@v1.0.0, approval_loop@v1.0.0]
+feature_flags: []
+security:
+  pii_policy: "minimize"
+  secret_source: "platform_secret_store"
+rollback:
+  mode: "disable_triggers_and_drain"

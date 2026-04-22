@@ -1,0 +1,117 @@
+{
+  "zap_name": "Stage Change Deal Review Machine",
+  "version": "1.0.0",
+  "machine_id": "stage-change-deal-review-machine",
+  "description": "Reviews qualification/risk/missing fields on stage progression and branches to approved writeback or Slack findings.",
+  "trigger": {
+    "app": "webhooks_by_zapier",
+    "event": "catch_hook",
+    "path": "/stage-change-deal-review/events",
+    "accepts_event_types": [
+      "deal.stage_changed",
+      "opportunity.stage_changed"
+    ]
+  },
+  "gtm_event_v1_mapping": {
+    "required": [
+      "schema_version",
+      "event_id",
+      "event_type",
+      "source",
+      "occurred_at",
+      "ingested_at",
+      "trace",
+      "subject",
+      "attributes"
+    ]
+  },
+  "steps": [
+    {
+      "id": "normalize_validate",
+      "type": "code",
+      "runtime": "javascript"
+    },
+    {
+      "id": "idempotency_lookup",
+      "type": "storage_get",
+      "provider": "storage_by_zapier",
+      "key_template": "stage-change-deal-review:${event_id}"
+    },
+    {
+      "id": "enrich_account_health",
+      "type": "webhook_action",
+      "url": "https://cogs.internal/enrich_account_health/v1/execute",
+      "method": "POST"
+    },
+    {
+      "id": "deal_score_reasoner",
+      "type": "webhook_action",
+      "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+      "method": "POST"
+    },
+    {
+      "id": "directive_alignment",
+      "type": "webhook_action",
+      "url": "https://cogs.internal/directive_alignment/v1/execute",
+      "method": "POST"
+    },
+    {
+      "id": "route_exec_alert",
+      "type": "webhook_action",
+      "url": "https://cogs.internal/route_exec_alert/v1/execute",
+      "method": "POST"
+    },
+    {
+      "id": "approval_loop",
+      "type": "webhook_action",
+      "url": "https://approval.internal/request",
+      "method": "POST"
+    },
+    {
+      "id": "path_on_approval",
+      "type": "paths",
+      "branches": [
+        {
+          "name": "approved",
+          "condition": "approval_status == 'approved'",
+          "actions": [
+            {
+              "id": "sfdc_writeback",
+              "type": "salesforce_action",
+              "action": "update_record",
+              "object": "Opportunity"
+            },
+            {
+              "id": "emit_writeback_applied",
+              "type": "webhook_post",
+              "url": "https://events.internal/v1/publish",
+              "payload": { "event_type": "deal.stage_review.writeback_applied" }
+            }
+          ]
+        },
+        {
+          "name": "findings",
+          "condition": "approval_status != 'approved'",
+          "actions": [
+            {
+              "id": "post_slack_findings",
+              "app": "slack",
+              "event": "send_channel_message"
+            },
+            {
+              "id": "emit_findings_posted",
+              "type": "webhook_post",
+              "url": "https://events.internal/v1/publish",
+              "payload": { "event_type": "deal.stage_review.findings_posted" }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "retries": {
+    "cog_transport": 3,
+    "approval_transport": 2,
+    "action_transport": 2
+  }
+}

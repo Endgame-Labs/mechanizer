@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">New Hire Ramp Accelerator Machine</title>
+  <desc id="desc">Provisioning-triggered onboarding package flow with territory context, starter accounts, messaging kit, and approval-gated write actions.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7fbf2"/>
+      <stop offset="100%" stop-color="#e9f6e8"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2f5f47"/>
+    </marker>
+    <style>
+      .t{font:700 33px 'Inter', 'Segoe UI', sans-serif; fill:#1f4a36}
+      .l{font:600 18px 'Inter', 'Segoe UI', sans-serif; fill:#2b664b}
+      .m{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#4f8067}
+      .n{fill:#ffffff; stroke:#b9dcc8; stroke-width:2}
+      .a{fill:#eef9f1; stroke:#8ec3a6; stroke-width:2}
+      .g{fill:#fff1e8; stroke:#e09d69; stroke-width:2.5}
+      .f{stroke:#2f5f47; stroke-width:3; fill:none; marker-end:url(#arrow)}
+      .p{stroke:#6f9e86; stroke-width:2.5; stroke-dasharray:10 8; fill:none}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <text x="60" y="72" class="t">New Hire Ramp Accelerator Machine</text>
+
+  <rect x="70" y="145" width="220" height="94" rx="14" class="n"/>
+  <text x="100" y="188" class="l">Provisioning Event</text>
+  <text x="100" y="210" class="m">gtm_event_v1 intake</text>
+
+  <rect x="330" y="145" width="255" height="94" rx="14" class="a"/>
+  <text x="360" y="188" class="l">Territory Enrichment</text>
+  <text x="360" y="210" class="m">book + context synthesis</text>
+
+  <rect x="625" y="145" width="230" height="94" rx="14" class="n"/>
+  <text x="655" y="188" class="l">Package Assembly</text>
+  <text x="655" y="210" class="m">starter assets + plan</text>
+
+  <rect x="895" y="145" width="230" height="94" rx="14" class="g"/>
+  <text x="925" y="188" class="l">Approval Loop</text>
+  <text x="925" y="210" class="m">gate write actions</text>
+
+  <rect x="180" y="360" width="280" height="102" rx="14" class="n"/>
+  <text x="210" y="408" class="l">Starter Accounts</text>
+  <text x="210" y="430" class="m">ranked first-touch list</text>
+
+  <rect x="510" y="360" width="280" height="102" rx="14" class="n"/>
+  <text x="540" y="408" class="l">Messaging Kit</text>
+  <text x="540" y="430" class="m">directive-aligned templates</text>
+
+  <rect x="840" y="360" width="300" height="102" rx="14" class="n"/>
+  <text x="870" y="400" class="l">Package Upsert + Emit</text>
+  <text x="870" y="422" class="m">rep.onboarding.package_generated</text>
+  <text x="870" y="444" class="m">trace + audit metadata</text>
+
+  <path d="M290 192 L330 192" class="f"/>
+  <path d="M585 192 L625 192" class="f"/>
+  <path d="M855 192 L895 192" class="f"/>
+  <path d="M1010 239 L1010 360" class="f"/>
+
+  <path d="M420 239 L420 360" class="p"/>
+  <path d="M650 239 L650 360" class="p"/>
+
+  <path d="M840 411 L790 411" class="f"/>
+  <path d="M510 411 L460 411" class="f"/>
+
+  <rect x="60" y="532" width="1080" height="62" rx="12" fill="#ffffff" stroke="#b9dcc8"/>
+  <text x="82" y="558" class="m">Package sections: territory_snapshot | starter_accounts | messaging_kit | week_one_plan</text>
+  <text x="82" y="580" class="m">Adapters: n8n, Zapier, Tray, Make, Agentic, Claude Routines, Claw-like</text>
+
+  <rect x="60" y="612" width="1080" height="56" rx="12" fill="#ffffff" stroke="#b9dcc8"/>
+  <text x="82" y="646" class="m">Legend: solid arrows = execution path, dashed = context sync, orange = approval-gated mutation boundary.</text>
+</svg>

@@ -1,0 +1,69 @@
+{
+  "zap_name": "New Hire Ramp Accelerator Machine",
+  "version": "1.0.0",
+  "machine_id": "new-hire-ramp-accelerator-machine",
+  "description": "Generates territory/book onboarding packages for newly provisioned reps from canonical gtm_event_v1 triggers.",
+  "trigger": {
+    "app": "webhooks_by_zapier",
+    "event": "catch_hook",
+    "path": "/new-hire-ramp/events"
+  },
+  "gtm_event_v1_mapping": {
+    "required": [
+      "schema_version",
+      "event_id",
+      "event_type",
+      "source",
+      "occurred_at",
+      "ingested_at",
+      "trace",
+      "subject",
+      "attributes"
+    ]
+  },
+  "steps": [
+    {
+      "id": "validate_contract",
+      "type": "code",
+      "runtime": "javascript"
+    },
+    {
+      "id": "filter_supported_events",
+      "type": "filter",
+      "rule": "event_type in ['rep.provisioned','rep.territory_assigned','rep.book_rebalanced']"
+    },
+    {
+      "id": "build_onboarding_package",
+      "type": "webhook_post",
+      "url": "https://onboarding.internal/build",
+      "payload": {
+        "sections": [
+          "territory_snapshot",
+          "starter_accounts",
+          "messaging_kit",
+          "week_one_plan"
+        ],
+        "event": "{{trigger.raw_body}}"
+      }
+    },
+    {
+      "id": "approval_loop",
+      "type": "webhook_post",
+      "url": "https://approval.internal/request"
+    },
+    {
+      "id": "path_on_approval",
+      "type": "paths",
+      "branches": [
+        {
+          "name": "approved",
+          "condition": "approval_status == 'approved'"
+        },
+        {
+          "name": "blocked",
+          "condition": "approval_status != 'approved'"
+        }
+      ]
+    }
+  ]
+}

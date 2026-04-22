@@ -1,0 +1,38 @@
+machine_id: new-hire-ramp-accelerator-machine
+version: v1.0.0
+owners:
+  - team: revenue-enablement
+    contact: enablement@example.com
+objective: "On rep provisioning, generate a territory/book-specific onboarding package with account priorities, messaging starters, and first-week execution plan."
+kpis:
+  - id: kpi_1
+    name: "Provisioned reps receiving onboarding package within SLA"
+    target: "define-per-org"
+  - id: kpi_2
+    name: "Median time-to-first-qualified-outreach for new reps"
+    target: "define-per-org"
+  - id: kpi_3
+    name: "Ramp milestone completion rate in first 30 days"
+    target: "define-per-org"
+triggers:
+  - type: event
+    event_types: [rep.provisioned, rep.territory_assigned, rep.book_rebalanced]
+  - type: schedule
+    cron: "0 */4 * * *"
+inputs:
+  contract: gtm_event_v1
+  sources: [salesforce_headless_360, salesforce, hubspot, endgame_mcp, endgame_cli, enablement_system]
+outputs:
+  event_contract: gtm_event_v1
+  side_effects: [onboarding_package_upsert, crm_task_create, checklist_writeback, alert_send]
+slo:
+  p95_end_to_end_seconds: 300
+  availability: "99.5%"
+dependencies:
+  cogs: [enrich_account_health@v1.0.0, directive_alignment@v1.0.0, compose_outreach_message@v1.0.0, route_exec_alert@v1.0.0, approval_loop@v1.0.0]
+feature_flags: []
+security:
+  pii_policy: "minimize"
+  secret_source: "platform_secret_store"
+rollback:
+  mode: "disable_triggers_and_drain"

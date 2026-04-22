@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Renewal Risk Monitoring Machine</title>
+  <desc id="desc">Daily renewal-near risk monitoring that scores risk signals, recommends plays, alerts CSM owners, and routes high-severity escalation.</desc>
+  <defs>
+    <linearGradient id="bgrrm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7fbff"/>
+      <stop offset="100%" stop-color="#e8f1fb"/>
+    </linearGradient>
+    <marker id="arrowrrm" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#1f5f8f"/>
+    </marker>
+    <style>
+      .t{font:700 32px 'Inter','Segoe UI',sans-serif; fill:#174a74}
+      .l{font:600 18px 'Inter','Segoe UI',sans-serif; fill:#216390}
+      .m{font:500 14px 'Inter','Segoe UI',sans-serif; fill:#4d6c85}
+      .n{fill:#ffffff; stroke:#b9d0e6; stroke-width:2}
+      .a{fill:#eaf4ff; stroke:#89b4da; stroke-width:2}
+      .g{fill:#fff1e9; stroke:#f0a264; stroke-width:2.5}
+      .f{stroke:#1f5f8f; stroke-width:3; fill:none; marker-end:url(#arrowrrm)}
+      .p{stroke:#6f95b4; stroke-width:2.5; stroke-dasharray:10 8; fill:none}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bgrrm)"/>
+  <text x="56" y="68" class="t">Renewal Risk Monitoring Machine</text>
+
+  <rect x="70" y="145" width="240" height="95" rx="14" class="n"/>
+  <text x="96" y="186" class="l">Daily Risk Sweep</text>
+  <text x="96" y="210" class="m">renewal-near account cohort</text>
+
+  <rect x="360" y="145" width="250" height="95" rx="14" class="a"/>
+  <text x="390" y="186" class="l">Risk Scoring</text>
+  <text x="390" y="210" class="m">signal weighting + tiering</text>
+
+  <rect x="660" y="145" width="250" height="95" rx="14" class="n"/>
+  <text x="688" y="186" class="l">Play Recommendation</text>
+  <text x="688" y="210" class="m">reason codes + next actions</text>
+
+  <rect x="960" y="145" width="180" height="95" rx="14" class="g"/>
+  <text x="986" y="186" class="l">CSM Alert</text>
+  <text x="986" y="210" class="m">always-on Slack</text>
+
+  <rect x="250" y="365" width="320" height="105" rx="14" class="n"/>
+  <text x="282" y="410" class="l">Exec Escalation Routing</text>
+  <text x="282" y="434" class="m">high-severity only</text>
+
+  <rect x="620" y="365" width="520" height="105" rx="14" class="n"/>
+  <text x="648" y="398" class="l">Optional Approved Actions</text>
+  <text x="648" y="422" class="m">csm_task_create, playbook_recommendation_upsert</text>
+  <text x="648" y="446" class="m">approval loop gate before execution</text>
+
+  <path d="M310 192 L360 192" class="f"/>
+  <path d="M610 192 L660 192" class="f"/>
+  <path d="M910 192 L960 192" class="f"/>
+  <path d="M1050 240 L1050 365" class="p"/>
+  <path d="M410 240 L410 365" class="f"/>
+  <path d="M570 417 L620 417" class="f"/>
+
+  <rect x="56" y="542" width="1088" height="56" rx="12" fill="#ffffff" stroke="#b9d0e6"/>
+  <text x="80" y="575" class="m">Contracts: gtm_event_v1 input/output | Smart cogs: enrich, score, align, compose, route alert, approval loop.</text>
+
+  <rect x="56" y="614" width="1088" height="52" rx="12" fill="#ffffff" stroke="#b9d0e6"/>
+  <text x="80" y="646" class="m">Schedule: daily at 07:00 PT | CSM alert mandatory | high-severity exec routing + optional approved actions.</text>
+</svg>

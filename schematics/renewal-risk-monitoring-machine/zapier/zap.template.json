@@ -1,0 +1,49 @@
+{
+  "zap_name": "Renewal Risk Monitoring Machine - Daily",
+  "version": "1.0.0",
+  "machine_id": "renewal-risk-monitoring-machine",
+  "description": "Daily renewal-risk monitoring with mandatory CSM alert, high-severity exec routing, and optional approved downstream actions.",
+  "trigger": {
+    "app": "schedule_by_zapier",
+    "event": "every_day",
+    "time": "07:00"
+  },
+  "gtm_event_v1_mapping": {
+    "required": [
+      "event_id",
+      "event_type",
+      "source",
+      "occurred_at",
+      "trace",
+      "subject",
+      "attributes"
+    ]
+  },
+  "steps": [
+    {
+      "id": "validate_contract",
+      "type": "code",
+      "runtime": "javascript"
+    },
+    {
+      "id": "build_recommended_play",
+      "type": "webhook_post",
+      "url": "https://planner.internal/compose"
+    },
+    {
+      "id": "notify_csm_slack",
+      "type": "webhook_post",
+      "url": "https://slack.internal/notify"
+    },
+    {
+      "id": "route_exec_alert_if_high",
+      "type": "webhook_post",
+      "url": "https://exec-alert.internal/route"
+    },
+    {
+      "id": "approval_loop",
+      "type": "webhook_post",
+      "url": "https://approval.internal/request"
+    }
+  ]
+}

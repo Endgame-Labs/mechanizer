@@ -1,0 +1,87 @@
+{
+  "workflow_name": "tier3_account_coverage_machine",
+  "machine_id": "tier-3-account-coverage-machine",
+  "version": "1.0.0",
+  "tray_runtime": {
+    "trigger_mode": "callable",
+    "callable_trigger": {
+      "name": "tier3_coverage_ingest",
+      "operation": "trigger_and_respond"
+    },
+    "scheduled_trigger": {
+      "enabled": true,
+      "cron": "0 */6 * * *",
+      "timezone": "America/Los_Angeles"
+    }
+  },
+  "contract": {
+    "input_schema": "gtm_event_v1",
+    "idempotency_key": "event_id",
+    "approval_required_before_side_effects": true
+  },
+  "steps": [
+    {
+      "key": "normalize_validate",
+      "operation": "script",
+      "language": "javascript",
+      "notes": "Validate required gtm_event_v1 keys and normalize trace metadata."
+    },
+    {
+      "key": "idempotency_check",
+      "operation": "data_storage_get",
+      "input": {
+        "key": "tier3-account-coverage:${steps.normalize_validate.output.event_id}"
+      }
+    },
+    {
+      "key": "fetch_context",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://context.internal/enrich"
+      }
+    },
+    {
+      "key": "segment_gate",
+      "operation": "boolean_condition",
+      "condition": "steps.fetch_context.output.segment in ['low_touch','no_touch']"
+    },
+    {
+      "key": "score_and_play",
+      "operation": "script",
+      "language": "javascript",
+      "logic": "churn=Math.round((0.5*health_decline)+(0.3*renewal_risk)+(0.2*support_escalation)); expansion=Math.round((0.4*adoption_growth)+(0.35*intent_signal)+(0.25*seat_momentum)); play=(churn>=76)?'churn_prevent_nudge':((expansion>=72 && churn<60)?'expansion_probe':'monitor_only');"
+    },
+    {
+      "key": "approval_loop",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://approval.internal/request",
+        "body": {
+          "event_id": "${steps.normalize_validate.output.event_id}",
+          "play": "${steps.score_and_play.play}",
+          "actions": [
+            "outbound_email_send",
+            "crm_note_append"
+          ],
+          "timeout_seconds": 1800
+        }
+      }
+    },
+    {
+      "key": "approved_branch",
+      "operation": "branch",
+      "branches": [
+        {
+          "name": "approved",
+          "condition": "steps.approval_loop.output.approval_status == 'approved'"
+        },
+        {
+          "name": "blocked",
+          "condition": "steps.approval_loop.output.approval_status != 'approved'"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "zap_name": "Consumption Renewal Intervention Machine - Daily",
+  "version": "1.0.0",
+  "machine_id": "consumption-renewal-intervention-machine",
+  "description": "Daily under-consumption renewal intervention planning with mandatory Slack notify and optional approved downstream actions.",
+  "trigger": {
+    "app": "schedule_by_zapier",
+    "event": "every_day",
+    "time": "07:00"
+  },
+  "gtm_event_v1_mapping": {
+    "required": [
+      "event_id",
+      "event_type",
+      "source",
+      "occurred_at",
+      "trace",
+      "subject",
+      "attributes"
+    ]
+  },
+  "steps": [
+    {
+      "id": "validate_contract",
+      "type": "code",
+      "runtime": "javascript"
+    },
+    {
+      "id": "build_intervention_plan",
+      "type": "webhook_post",
+      "url": "https://planner.internal/compose"
+    },
+    {
+      "id": "notify_slack",
+      "type": "webhook_post",
+      "url": "https://slack.internal/notify"
+    },
+    {
+      "id": "approval_loop",
+      "type": "webhook_post",
+      "url": "https://approval.internal/request"
+    }
+  ]
+}

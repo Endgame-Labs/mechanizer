@@ -1,0 +1,250 @@
+{
+  "name": "ai-sdr-outbound-machine-events",
+  "machine_id": "ai-sdr-outbound-machine",
+  "version": "1.1.0",
+  "trigger": {
+    "type": "callable",
+    "operation": "trigger_and_respond",
+    "input_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "subject"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "prospect.research_requested",
+            "account.intent_detected",
+            "response.received"
+          ]
+        },
+        "subject": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "entity_type": {
+              "type": "string"
+            }
+          }
+        },
+        "attributes": {
+          "type": "object"
+        }
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "event_type",
+        "trace",
+        "attributes"
+      ]
+    }
+  },
+  "contract": {
+    "idempotency_key": "id",
+    "approval_required_before_side_effects": true
+  },
+  "steps": [
+    {
+      "id": "normalize_gtm_event",
+      "type": "script",
+      "language": "javascript",
+      "code": "return {event_id: $.steps.trigger.body.id, event_type: $.steps.trigger.body.type, source: 'tray', occurred_at: $.meta.timestamp, ingested_at: $.meta.timestamp, trace: {trace_id: $.meta.run_id, run_id: $.meta.run_id}, subject: {id: $.steps.trigger.body.subject.id, type: $.steps.trigger.body.subject.entity_type || 'prospect'}, attributes: $.steps.trigger.body.attributes || {}};"
+    },
+    {
+      "id": "idempotency_get",
+      "type": "data_storage.get_value",
+      "input": {
+        "scope": "project",
+        "key": "ai-sdr-outbound-machine:${steps.normalize_gtm_event.output.event_id}",
+        "default": null
+      }
+    },
+    {
+      "id": "branch_if_new",
+      "type": "branch",
+      "branches": [
+        {
+          "name": "new",
+          "when": "steps.idempotency_get.output == null"
+        },
+        {
+          "name": "duplicate",
+          "when": "steps.idempotency_get.output != null"
+        }
+      ]
+    },
+    {
+      "id": "context_enrichment_cog",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_context_enrichment",
+      "input": {
+        "event": "${steps.normalize_gtm_event.output}",
+        "providers": [
+          "endgame_mcp",
+          "salesforce_headless_360",
+          "exa_or_perplexity_or_parallel"
+        ]
+      }
+    },
+    {
+      "id": "qualification_cog",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_outbound_qualification",
+      "input": {
+        "event": "${steps.normalize_gtm_event.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "id": "directive_alignment_cog",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_directive_alignment",
+      "input": {
+        "qualification": "${steps.qualification_cog.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "id": "compose_outbound_cog",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_outbound_composer",
+      "input": {
+        "event": "${steps.normalize_gtm_event.output}",
+        "context": "${steps.context_enrichment_cog.output}",
+        "alignment": "${steps.directive_alignment_cog.output}"
+      }
+    },
+    {
+      "id": "approval_loop",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_approval_loop",
+      "input": {
+        "event_id": "${steps.normalize_gtm_event.output.event_id}",
+        "trace": "${steps.normalize_gtm_event.output.trace}",
+        "actions": [
+          "send_email",
+          "salesforce.update_record"
+        ],
+        "proposal": "${steps.compose_outbound_cog.output}",
+        "timeout_seconds": 1800
+      }
+    },
+    {
+      "id": "approval_branch",
+      "branch": "new",
+      "type": "branch",
+      "branches": [
+        {
+          "name": "approved",
+          "when": "steps.approval_loop.output.approval_status == 'approved'"
+        },
+        {
+          "name": "blocked",
+          "when": "steps.approval_loop.output.approval_status != 'approved'"
+        }
+      ]
+    },
+    {
+      "id": "send_sequence_step",
+      "branch": "approved",
+      "type": "send_email",
+      "error_handling": "manual",
+      "input": {
+        "to": "${steps.compose_outbound_cog.output.to}",
+        "subject": "${steps.compose_outbound_cog.output.subject}",
+        "body": "${steps.compose_outbound_cog.output.body}"
+      }
+    },
+    {
+      "id": "update_crm_step",
+      "branch": "approved",
+      "type": "salesforce.update_record",
+      "error_handling": "manual",
+      "input": {
+        "object": "Lead",
+        "record_id": "${steps.normalize_gtm_event.output.subject.id}",
+        "fields": "${steps.compose_outbound_cog.output.crm_fields}",
+        "external_idempotency": "${steps.normalize_gtm_event.output.event_id}"
+      }
+    },
+    {
+      "id": "emit_output",
+      "branch": "new",
+      "type": "http.client",
+      "config": {
+        "method": "POST",
+        "url": "https://event-bus.example/v1/events",
+        "body": {
+          "schema_version": "gtm_event_v1",
+          "event_type": "${steps.approval_loop.output.approval_status == 'approved' ? (steps.normalize_gtm_event.output.event_type == 'response.received' ? 'sdr.response.routed' : 'sdr.sequence.ready') : 'sdr.sequence.blocked'}",
+          "source": "tray",
+          "trace": "${steps.normalize_gtm_event.output.trace}",
+          "subject": "${steps.normalize_gtm_event.output.subject}",
+          "attributes": {
+            "approval_status": "${steps.approval_loop.output.approval_status}",
+            "qualification_score": "${steps.qualification_cog.output.score}"
+          }
+        }
+      }
+    },
+    {
+      "id": "idempotency_set",
+      "branch": "new",
+      "type": "data_storage.set_value",
+      "input": {
+        "scope": "project",
+        "key": "ai-sdr-outbound-machine:${steps.normalize_gtm_event.output.event_id}",
+        "value": {
+          "status": "completed",
+          "approval_status": "${steps.approval_loop.output.approval_status}",
+          "updated_at": "${meta.now}"
+        }
+      }
+    },
+    {
+      "id": "response_duplicate",
+      "branch": "duplicate",
+      "type": "callable_workflow_response",
+      "body": {
+        "event_type": "sdr.duplicate_ignored",
+        "status": "ignored"
+      }
+    },
+    {
+      "id": "response_new",
+      "branch": "new",
+      "type": "callable_workflow_response",
+      "body": {
+        "event_type": "${steps.approval_loop.output.approval_status == 'approved' ? (steps.normalize_gtm_event.output.event_type == 'response.received' ? 'sdr.response.routed' : 'sdr.sequence.ready') : 'sdr.sequence.blocked'}",
+        "trace": "${steps.normalize_gtm_event.output.trace}",
+        "attributes": {
+          "approval_status": "${steps.approval_loop.output.approval_status}",
+          "qualification_score": "${steps.qualification_cog.output.score}"
+        }
+      }
+    }
+  ]
+}

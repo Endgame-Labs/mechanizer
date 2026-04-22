@@ -1,0 +1,46 @@
+{
+  "workflow_name": "new_hire_ramp_accelerator_machine",
+  "machine_id": "new-hire-ramp-accelerator-machine",
+  "version": "1.0.0",
+  "tray_runtime": {
+    "project": "new-hire-ramp-accelerator-machine",
+    "trigger_mode": "callable",
+    "callable_trigger": {
+      "name": "new_hire_ramp_event_ingest",
+      "operation": "trigger_and_respond"
+    },
+    "scheduled_trigger": {
+      "enabled": true,
+      "cron": "0 */4 * * *",
+      "timezone": "America/Los_Angeles"
+    }
+  },
+  "contract": {
+    "input_schema": "gtm_event_v1",
+    "idempotency_key": "event_id",
+    "approval_required_before_side_effects": true
+  },
+  "steps": [
+    {
+      "key": "normalize_validate",
+      "operation": "script",
+      "language": "javascript"
+    },
+    {
+      "key": "build_onboarding_package",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://onboarding.internal/build"
+      }
+    },
+    {
+      "key": "approval_loop",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://approval.internal/request"
+      }
+    }
+  ]
+}

@@ -1,0 +1,354 @@
+{
+  "name": "ai-sdr-outbound-machine-events-v2",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "timezone": "America/Los_Angeles"
+  },
+  "meta": {
+    "machine_id": "ai-sdr-outbound-machine",
+    "schema_version": "gtm_event_v1",
+    "idempotency_key": "event_id"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "path": "ai-sdr-outbound/events",
+        "httpMethod": "POST",
+        "responseMode": "onReceived"
+      },
+      "id": "webhook_events",
+      "name": "Webhook - Machine Events",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.body.type || ''}}",
+              "operation": "regex",
+              "value2": "^(prospect\\.research_requested|account\\.intent_detected|response\\.received)$"
+            }
+          ]
+        }
+      },
+      "id": "filter_supported",
+      "name": "Filter Supported Event",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        460,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const b = $json.body;\nif (!b?.id) throw new Error('Missing id');\nif (!b?.subject?.id) throw new Error('Missing subject.id');\nreturn {\n  event_id: b.id,\n  event_type: b.type,\n  source: b.source || 'orchestrator',\n  occurred_at: b.occurred_at || new Date().toISOString(),\n  ingested_at: new Date().toISOString(),\n  trace: { trace_id: b.trace?.trace_id || `trace_${b.id}`, run_id: `${b.id}:${Date.now()}` },\n  subject: { entity_type: b.subject.entity_type || 'prospect', entity_id: b.subject.id },\n  attributes: {\n    account_id: b.attributes?.account_id || null,\n    persona: b.attributes?.persona || null,\n    owner_email: b.attributes?.owner_email || null,\n    response_text: b.attributes?.response_text || null,\n    directive_set_version: b.attributes?.directive_set_version || 'sdr_policy_2026_q2_v1'\n  }\n};"
+      },
+      "id": "normalize",
+      "name": "Normalize to gtm_event_v1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/enrich_account_health/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "id": "enrich",
+      "name": "enrich_account_health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        940,
+        120
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "id": "score",
+      "name": "deal_score_reasoner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1160,
+        120
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "id": "align",
+      "name": "directive_alignment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1380,
+        120
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/compose_outreach_message/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "id": "compose",
+      "name": "compose_outreach_message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1600,
+        120
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/route_exec_alert/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "id": "exec_alert",
+      "name": "route_exec_alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1820,
+        120
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://approval.internal/request",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, timeout_seconds: 1800, actions: ['sequence_draft_create', 'crm_task_create', 'qualified_response_route'] } }}"
+      },
+      "id": "approve",
+      "name": "approval_loop",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2040,
+        120
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.approval_status || $json.attributes?.approval_status || ''}}",
+              "operation": "equal",
+              "value2": "approved"
+            }
+          ]
+        }
+      },
+      "id": "approved_gate",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2260,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: $json.event_type === 'response.received' ? 'sdr.response.routed' : 'sdr.sequence.ready' } }}"
+      },
+      "id": "emit",
+      "name": "Emit Result Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2480,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'sdr.outbound.blocked', approval_status: $json.approval_status || 'rejected_or_timeout' } }}"
+      },
+      "id": "emit_blocked",
+      "name": "Emit Blocked Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2480,
+        220
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Machine Events": {
+      "main": [
+        [
+          {
+            "node": "Filter Supported Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Supported Event": {
+      "main": [
+        [
+          {
+            "node": "Normalize to gtm_event_v1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Normalize to gtm_event_v1": {
+      "main": [
+        [
+          {
+            "node": "enrich_account_health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "enrich_account_health": {
+      "main": [
+        [
+          {
+            "node": "deal_score_reasoner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deal_score_reasoner": {
+      "main": [
+        [
+          {
+            "node": "directive_alignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "directive_alignment": {
+      "main": [
+        [
+          {
+            "node": "compose_outreach_message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "compose_outreach_message": {
+      "main": [
+        [
+          {
+            "node": "route_exec_alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "route_exec_alert": {
+      "main": [
+        [
+          {
+            "node": "approval_loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "approval_loop": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Emit Result Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Emit Blocked Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

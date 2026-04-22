@@ -1,0 +1,323 @@
+{
+  "name": "meeting-prep-brief-machine-v1",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "timezone": "America/Los_Angeles"
+  },
+  "meta": {
+    "machine_id": "meeting-prep-brief-machine",
+    "schema_version": "gtm_event_v1",
+    "idempotency_key": "event_id"
+  },
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Webhook Ingest",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [120, 260],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "meeting-prep/events",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "2",
+      "name": "Normalize + Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [360, 260],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst required = ['event_id','event_type','source','occurred_at','trace','subject'];\nfor (const key of required) { if (!e[key]) throw new Error(`Missing ${key}`); }\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nconst supported = ['meeting.scheduled','account.exec_meeting_booked','opportunity.stage_changed'];\nif (!supported.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nreturn { ...e, machine_id: 'meeting-prep-brief-machine', ingested_at: e.ingested_at || new Date().toISOString() };"
+      }
+    },
+    {
+      "id": "3",
+      "name": "enrich_account_health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [600, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/enrich_account_health/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "4",
+      "name": "deal_score_reasoner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [840, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "5",
+      "name": "directive_alignment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1080, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "6",
+      "name": "compose_outreach_message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1320, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/compose_outreach_message/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "7",
+      "name": "route_exec_alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1560, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/route_exec_alert/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "8",
+      "name": "approval_loop",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1800, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://approval.internal/request",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, timeout_seconds: 1200, actions: ['slack_brief_send','inbox_brief_send'] } }}"
+      }
+    },
+    {
+      "id": "9",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2040, 260],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.approval_status || $json.attributes?.approval_status || ''}}",
+              "operation": "equal",
+              "value2": "approved"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "10",
+      "name": "Send Slack Brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2280, 180],
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.internal/brief/send",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "11",
+      "name": "Send Inbox Brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2280, 320],
+      "parameters": {
+        "method": "POST",
+        "url": "https://inbox.internal/brief/send",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "12",
+      "name": "Emit Delivered",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2520, 240],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'meeting.prep_brief.delivered' } }}"
+      }
+    },
+    {
+      "id": "13",
+      "name": "Emit Blocked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2280, 460],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'meeting.prep_brief.blocked' } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Ingest": {
+      "main": [
+        [
+          {
+            "node": "Normalize + Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize + Validate": {
+      "main": [
+        [
+          {
+            "node": "enrich_account_health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "enrich_account_health": {
+      "main": [
+        [
+          {
+            "node": "deal_score_reasoner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deal_score_reasoner": {
+      "main": [
+        [
+          {
+            "node": "directive_alignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "directive_alignment": {
+      "main": [
+        [
+          {
+            "node": "compose_outreach_message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "compose_outreach_message": {
+      "main": [
+        [
+          {
+            "node": "route_exec_alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "route_exec_alert": {
+      "main": [
+        [
+          {
+            "node": "approval_loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "approval_loop": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Brief",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Inbox Brief",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Emit Blocked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Slack Brief": {
+      "main": [
+        [
+          {
+            "node": "Emit Delivered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Inbox Brief": {
+      "main": [
+        [
+          {
+            "node": "Emit Delivered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

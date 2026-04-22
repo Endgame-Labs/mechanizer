@@ -1,0 +1,42 @@
+{
+  "name": "renewal-risk-monitoring-machine-daily-v1",
+  "machine_id": "renewal-risk-monitoring-machine",
+  "artifact_type": "make_scenario_blueprint_reference",
+  "make_runtime": {
+    "scheduling": {
+      "mode": "daily",
+      "cron": "0 7 * * *",
+      "timezone": "America/Los_Angeles"
+    }
+  },
+  "flow": [
+    {
+      "id": 1,
+      "module": "scheduler:daily",
+      "name": "Daily Trigger"
+    },
+    {
+      "id": 2,
+      "module": "tools:validator",
+      "name": "Validate gtm_event_v1"
+    },
+    {
+      "id": 3,
+      "module": "http:makeRequest",
+      "name": "Build Recommended Play",
+      "parameters": {
+        "url": "https://planner.internal/compose",
+        "method": "POST"
+      }
+    },
+    {
+      "id": 4,
+      "module": "http:makeRequest",
+      "name": "CSM Slack Notify",
+      "parameters": {
+        "url": "https://slack.internal/notify",
+        "method": "POST"
+      }
+    }
+  ]
+}

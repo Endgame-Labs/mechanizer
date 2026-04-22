@@ -1,0 +1,134 @@
+{
+  "workflow_name": "stage_change_deal_review_machine",
+  "machine_id": "stage-change-deal-review-machine",
+  "version": "1.0.0",
+  "tray_runtime": {
+    "trigger_mode": "callable",
+    "callable_trigger": {
+      "name": "stage_change_deal_review_ingest",
+      "operation": "trigger_and_respond"
+    },
+    "scheduled_trigger": {
+      "enabled": true,
+      "cron": "*/15 * * * *",
+      "timezone": "America/Los_Angeles"
+    }
+  },
+  "contract": {
+    "input_schema": "gtm_event_v1",
+    "idempotency_key": "event_id",
+    "approval_required_before_writeback": true
+  },
+  "steps": [
+    {
+      "key": "normalize_validate",
+      "operation": "script",
+      "language": "javascript"
+    },
+    {
+      "key": "idempotency_check",
+      "operation": "data_storage_get",
+      "input": {
+        "key": "stage-change-deal-review:${steps.normalize_validate.output.event_id}"
+      }
+    },
+    {
+      "key": "enrich_account_health",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://cogs.internal/enrich_account_health/v1/execute"
+      }
+    },
+    {
+      "key": "deal_score_reasoner",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute"
+      }
+    },
+    {
+      "key": "directive_alignment",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://cogs.internal/directive_alignment/v1/execute"
+      }
+    },
+    {
+      "key": "route_exec_alert",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://cogs.internal/route_exec_alert/v1/execute"
+      }
+    },
+    {
+      "key": "approval_loop",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://approval.internal/request"
+      }
+    },
+    {
+      "key": "review_branch",
+      "operation": "branch",
+      "branches": [
+        {
+          "name": "approved",
+          "condition": "steps.approval_loop.output.approval_status == 'approved'",
+          "steps": [
+            {
+              "key": "sfdc_writeback",
+              "operation": "salesforce_update_record",
+              "error_handling": "manual"
+            },
+            {
+              "key": "emit_writeback_applied",
+              "operation": "http_client",
+              "request": {
+                "method": "POST",
+                "url": "https://events.internal/v1/publish",
+                "body": {
+                  "event_type": "deal.stage_review.writeback_applied"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "findings",
+          "condition": "steps.approval_loop.output.approval_status != 'approved'",
+          "steps": [
+            {
+              "key": "post_slack_findings",
+              "operation": "slack_post_message",
+              "error_handling": "manual"
+            },
+            {
+              "key": "emit_findings_posted",
+              "operation": "http_client",
+              "request": {
+                "method": "POST",
+                "url": "https://events.internal/v1/publish",
+                "body": {
+                  "event_type": "deal.stage_review.findings_posted"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "error_handling": {
+    "default_step_mode": "automatic",
+    "manual_paths_for": [
+      "sfdc_writeback",
+      "post_slack_findings"
+    ],
+    "dead_letter_target": "stage-change-deal-review-machine-dlq"
+  }
+}

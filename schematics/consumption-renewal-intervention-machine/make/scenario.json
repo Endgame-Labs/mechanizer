@@ -1,0 +1,143 @@
+{
+  "name": "consumption-renewal-intervention-machine-daily-v2",
+  "machine_id": "consumption-renewal-intervention-machine",
+  "artifact_type": "make_scenario_blueprint_reference",
+  "make_runtime": {
+    "scheduling": {
+      "mode": "daily_plus_webhook",
+      "daily_cron": "0 7 * * *",
+      "timezone": "America/Los_Angeles",
+      "webhook_path": "consumption-renewal-events",
+      "max_runs_per_minute": 30,
+      "sequential_processing": true
+    },
+    "retry_model": {
+      "store_incomplete_executions": true,
+      "auto_retry_errors": [
+        "RateLimitError",
+        "ConnectionError",
+        "ModuleTimeoutError"
+      ]
+    }
+  },
+  "modules": [
+    {
+      "id": 1,
+      "module": "scheduler:everyDay",
+      "name": "Daily Renewal Sweep"
+    },
+    {
+      "id": 2,
+      "module": "json:createJSON",
+      "name": "Normalize gtm_event_v1"
+    },
+    {
+      "id": 3,
+      "module": "http:makeRequest",
+      "name": "Enrich Context",
+      "parameters": {
+        "url": "https://context.internal/consumption-renewal/enrich",
+        "method": "POST",
+        "body": "{{toJSON(2)}}"
+      }
+    },
+    {
+      "id": 4,
+      "module": "http:makeRequest",
+      "name": "Intervention Score",
+      "parameters": {
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "method": "POST",
+        "body": "{{3.body}}"
+      }
+    },
+    {
+      "id": 5,
+      "module": "flow:router",
+      "name": "Play Router",
+      "routes": [
+        {
+          "name": "renewal_rescue",
+          "condition": "{{4.body.score}} >= 80"
+        },
+        {
+          "name": "adoption_nudge",
+          "condition": "{{4.body.score}} >= 65"
+        },
+        {
+          "name": "monitor",
+          "condition": "fallback"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "module": "http:makeRequest",
+      "name": "Compose Intervention Plan",
+      "parameters": {
+        "url": "https://planner.internal/renewal-intervention/compose",
+        "method": "POST",
+        "body": "{{4.body}}"
+      }
+    },
+    {
+      "id": 7,
+      "module": "slack:createAMessage",
+      "name": "Slack Notify",
+      "parameters": {
+        "channel": "#renewal-risk"
+      }
+    },
+    {
+      "id": 8,
+      "module": "http:makeRequest",
+      "name": "Approval Loop",
+      "parameters": {
+        "url": "https://approval.internal/request",
+        "method": "POST",
+        "body": "{\"event_id\":\"{{2.event_id}}\",\"actions\":[\"outbound_email_send\",\"renewal_plan_update\"],\"timeout_seconds\":1800}"
+      }
+    },
+    {
+      "id": 9,
+      "module": "flow:router",
+      "name": "Approval Router",
+      "routes": [
+        {
+          "name": "approved",
+          "condition": "{{8.body.approval_status}} = approved"
+        },
+        {
+          "name": "blocked",
+          "condition": "fallback"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "module": "gmail:sendAnEmail",
+      "name": "Send Email Intervention",
+      "route": "approved"
+    },
+    {
+      "id": 11,
+      "module": "salesforce:updateARecord",
+      "name": "Update Renewal Plan",
+      "route": "approved",
+      "parameters": {
+        "object": "Account",
+        "record_id": "{{2.subject.id}}"
+      }
+    },
+    {
+      "id": 12,
+      "module": "http:makeRequest",
+      "name": "Emit Outcome Event",
+      "parameters": {
+        "url": "https://events.internal/emit",
+        "method": "POST",
+        "body": "{\"event_type\":\"{{if(9.route = \\\"approved\\\"; \\\"cri.play.executed\\\"; \\\"cri.play.blocked\\\")}}\",\"event_id\":\"{{2.event_id}}\"}"
+      }
+    }
+  ]
+}

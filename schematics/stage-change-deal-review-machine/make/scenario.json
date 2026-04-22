@@ -1,0 +1,134 @@
+{
+  "name": "stage-change-deal-review-machine-v1",
+  "machine_id": "stage-change-deal-review-machine",
+  "artifact_type": "make_scenario_blueprint_reference",
+  "make_runtime": {
+    "scheduling": {
+      "mode": "immediate_webhook_plus_periodic_sweep",
+      "event_webhook_path": "stage-change-deal-review-events",
+      "periodic_sweep_interval_minutes": 15,
+      "use_sequential_processing": true
+    }
+  },
+  "flow": [
+    {
+      "id": 1,
+      "module": "webhooks:customWebhook",
+      "name": "Receive GTM Event",
+      "parameters": {
+        "path": "stage-change-deal-review-events"
+      }
+    },
+    {
+      "id": 2,
+      "module": "tools:validator",
+      "name": "Validate gtm_event_v1",
+      "parameters": {
+        "required": [
+          "event_id",
+          "event_type",
+          "source",
+          "occurred_at",
+          "trace.trace_id",
+          "subject.entity_id"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "module": "dataStore:getRecord",
+      "name": "Idempotency Lookup",
+      "parameters": {
+        "key": "stage-change-deal-review:{{1.event_id}}"
+      }
+    },
+    {
+      "id": 4,
+      "module": "http:makeRequest",
+      "name": "enrich_account_health",
+      "parameters": {
+        "url": "https://cogs.internal/enrich_account_health/v1/execute",
+        "method": "POST"
+      }
+    },
+    {
+      "id": 5,
+      "module": "http:makeRequest",
+      "name": "deal_score_reasoner",
+      "parameters": {
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "method": "POST"
+      }
+    },
+    {
+      "id": 6,
+      "module": "http:makeRequest",
+      "name": "directive_alignment",
+      "parameters": {
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "method": "POST"
+      }
+    },
+    {
+      "id": 7,
+      "module": "http:makeRequest",
+      "name": "route_exec_alert",
+      "parameters": {
+        "url": "https://cogs.internal/route_exec_alert/v1/execute",
+        "method": "POST"
+      }
+    },
+    {
+      "id": 8,
+      "module": "http:makeRequest",
+      "name": "approval_loop",
+      "parameters": {
+        "url": "https://approval.internal/request",
+        "method": "POST"
+      }
+    },
+    {
+      "id": 9,
+      "module": "flow:router",
+      "name": "Approval Router",
+      "routes": [
+        {
+          "name": "Approved",
+          "condition": "{{approval_status}} = 'approved'"
+        },
+        {
+          "name": "Findings",
+          "condition": "default"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "module": "salesforce:updateRecord",
+      "name": "SFDC Writeback",
+      "route": "Approved"
+    },
+    {
+      "id": 11,
+      "module": "slack:createAMessage",
+      "name": "Post Slack Findings",
+      "route": "Findings"
+    },
+    {
+      "id": 12,
+      "module": "http:makeRequest",
+      "name": "Emit Terminal Event",
+      "parameters": {
+        "url": "https://events.internal/v1/publish",
+        "method": "POST",
+        "body": {
+          "event_type": "{{if(9.route = \"Approved\"; \"deal.stage_review.writeback_applied\"; \"deal.stage_review.findings_posted\")}}"
+        }
+      }
+    }
+  ],
+  "error_handling": {
+    "strategy": "break_with_incomplete_execution_retry_plus_dead_letter",
+    "dead_letter": "stage_change_deal_review_dlq"
+  }
+}

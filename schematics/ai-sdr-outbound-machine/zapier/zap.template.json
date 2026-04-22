@@ -1,0 +1,166 @@
+{
+  "zap_name": "AI SDR Outbound Machine",
+  "version": "1.1.0",
+  "machine_id": "ai-sdr-outbound-machine",
+  "description": "Webhook-triggered SDR outbound flow with context enrichment and approval-gated execution.",
+  "trigger": {
+    "app": "webhooks_by_zapier",
+    "event": "catch_hook",
+    "path": "/ai-sdr-outbound/events",
+    "accepts_event_types": [
+      "prospect.research_requested",
+      "account.intent_detected",
+      "response.received"
+    ]
+  },
+  "gtm_event_v1_mapping": {
+    "required": [
+      "schema_version",
+      "event_id",
+      "event_type",
+      "source",
+      "occurred_at",
+      "ingested_at",
+      "trace",
+      "subject",
+      "attributes"
+    ]
+  },
+  "steps": [
+    {
+      "id": "filter_supported",
+      "app": "filter_by_zapier",
+      "event": "only_continue_if",
+      "rule": "event_type in ['prospect.research_requested','account.intent_detected','response.received']"
+    },
+    {
+      "id": "normalize_gtm_event",
+      "app": "code_by_zapier",
+      "event": "run_javascript",
+      "purpose": "Normalize inbound payload and enforce canonical contract."
+    },
+    {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "ai-sdr-outbound:${event_id}"
+    },
+    {
+      "id": "fetch_context",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://context.internal/sdr/enrich",
+        "json": {
+          "event": "{{steps.normalize_gtm_event.output}}",
+          "context_providers": [
+            "endgame_mcp_or_cli",
+            "crm_provider",
+            "intent_provider"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compose_sequence_draft",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://cogs.internal/compose_outbound_sequence/v1/execute",
+        "json": {
+          "event": "{{steps.normalize_gtm_event.output}}",
+          "context": "{{steps.fetch_context.body}}"
+        }
+      }
+    },
+    {
+      "id": "approval_loop",
+      "app": "human_in_the_loop",
+      "event": "request_approval",
+      "fallback": {
+        "app": "webhooks_by_zapier",
+        "event": "post",
+        "url": "https://approval.internal/request"
+      },
+      "request_payload": {
+        "event_id": "{{steps.normalize_gtm_event.output.event_id}}",
+        "actions": [
+          "outbound_send_or_draft",
+          "crm_task_create"
+        ],
+        "summary": "{{steps.compose_sequence_draft.body.summary}}",
+        "trace": "{{steps.normalize_gtm_event.output.trace}}"
+      }
+    },
+    {
+      "id": "path_on_approval",
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
+        {
+          "name": "approved",
+          "condition": "approval_status == 'approved'",
+          "actions": [
+            {
+              "id": "create_outbound_draft",
+              "app": "gmail",
+              "event": "create_draft"
+            },
+            {
+              "id": "create_crm_task",
+              "app": "salesforce",
+              "event": "create_record",
+              "object": "Task",
+              "idempotency_key": "{{steps.normalize_gtm_event.output.event_id}}"
+            },
+            {
+              "id": "emit_ready",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "sdr.sequence.ready"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "blocked",
+          "condition": "approval_status != 'approved'",
+          "actions": [
+            {
+              "id": "notify_review_channel",
+              "app": "slack",
+              "event": "send_channel_message"
+            },
+            {
+              "id": "emit_blocked",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "sdr.sequence.blocked"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "idempotency_store",
+      "app": "storage_by_zapier",
+      "event": "set_value",
+      "key_template": "ai-sdr-outbound:${event_id}",
+      "value_fields": [
+        "event_id",
+        "approval_status",
+        "trace.trace_id",
+        "trace.run_id"
+      ]
+    }
+  ]
+}

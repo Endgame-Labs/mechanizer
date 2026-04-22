@@ -1,0 +1,100 @@
+{
+  "name": "new-hire-ramp-accelerator-machine-v1",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "timezone": "America/Los_Angeles"
+  },
+  "meta": {
+    "machine_id": "new-hire-ramp-accelerator-machine",
+    "schema_version": "gtm_event_v1",
+    "idempotency_key": "event_id"
+  },
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Webhook Ingest",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [120, 280],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-hire-ramp/events",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "2",
+      "name": "Schedule Reconcile Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [120, 520],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3",
+      "name": "Normalize + Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [360, 280],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst required = ['event_id','event_type','source','occurred_at','trace','subject'];\nfor (const k of required) { if (!e[k]) throw new Error(`Missing ${k}`); }\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nreturn { ...e, machine_id: 'new-hire-ramp-accelerator-machine', schema_version: 'gtm_event_v1', ingested_at: e.ingested_at || new Date().toISOString() };"
+      }
+    },
+    {
+      "id": "4",
+      "name": "Package Pipeline (Placeholder)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [600, 280],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/new-hire-ramp/pipeline/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "5",
+      "name": "approval_loop",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [840, 280],
+      "parameters": {
+        "method": "POST",
+        "url": "https://approval.internal/request",
+        "sendBody": true,
+        "jsonBody": "={{ { event_id: $json.event_id, machine_id: 'new-hire-ramp-accelerator-machine', proposed_actions: $json.proposed_actions || ['onboarding_package_upsert','crm_task_create'] } }}"
+      }
+    },
+    {
+      "id": "6",
+      "name": "Emit rep.onboarding.package_generated",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1080, 280],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'rep.onboarding.package_generated' } }}"
+      }
+    }
+  ],
+  "connections": {}
+}

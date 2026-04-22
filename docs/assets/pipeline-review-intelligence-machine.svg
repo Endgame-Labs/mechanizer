@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Pipeline Review Intelligence Machine</title>
+  <desc id="desc">Weekly pipeline review prep flow covering stale deals, missing next steps, single-threading flags, and manager summary output.</desc>
+  <defs>
+    <linearGradient id="bg-pri" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7fafc"/>
+      <stop offset="100%" stop-color="#eef5fb"/>
+    </linearGradient>
+    <marker id="arrow-pri" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2d5d8a"/>
+    </marker>
+    <style>
+      .t{font:700 34px 'Inter', 'Segoe UI', sans-serif; fill:#1d4467}
+      .l{font:600 18px 'Inter', 'Segoe UI', sans-serif; fill:#245278}
+      .m{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#4c657a}
+      .n{fill:#ffffff; stroke:#bfd4e6; stroke-width:2}
+      .a{fill:#edf6ff; stroke:#8bb8dc; stroke-width:2}
+      .g{fill:#fff4e8; stroke:#f0ae65; stroke-width:2.5}
+      .f{stroke:#2d5d8a; stroke-width:3; fill:none; marker-end:url(#arrow-pri)}
+      .p{stroke:#6e8faa; stroke-width:2.5; stroke-dasharray:10 8; fill:none}
+      .z{stroke:#ff9446; stroke-width:4; fill:none}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg-pri)"/>
+  <text x="60" y="70" class="t">Pipeline Review Intelligence Machine</text>
+
+  <rect x="70" y="145" width="230" height="96" rx="14" class="n"/>
+  <text x="102" y="188" class="l">Weekly Trigger</text>
+  <text x="102" y="210" class="m">Monday review window</text>
+
+  <rect x="345" y="145" width="260" height="96" rx="14" class="a"/>
+  <text x="378" y="188" class="l">Context + Enrichment</text>
+  <text x="378" y="210" class="m">CRM + activity signals</text>
+
+  <rect x="650" y="145" width="250" height="96" rx="14" class="n"/>
+  <text x="684" y="188" class="l">Risk Classification</text>
+  <text x="684" y="210" class="m">stale, next-step, threading</text>
+
+  <rect x="940" y="145" width="200" height="96" rx="14" class="g"/>
+  <text x="968" y="188" class="l">Approval Loop</text>
+  <text x="968" y="210" class="m">outbound gate</text>
+
+  <rect x="130" y="360" width="280" height="104" rx="14" class="n"/>
+  <text x="162" y="406" class="l">Stale Deals Queue</text>
+  <text x="162" y="430" class="m">last touch + close date drift</text>
+
+  <rect x="450" y="360" width="300" height="104" rx="14" class="n"/>
+  <text x="482" y="406" class="l">Missing Next Steps Queue</text>
+  <text x="482" y="430" class="m">owner action/date missing</text>
+
+  <rect x="790" y="360" width="350" height="104" rx="14" class="a"/>
+  <text x="822" y="396" class="l">Single-Threading + Manager Summary</text>
+  <text x="822" y="420" class="m">risk flag + weekly briefing payload</text>
+  <text x="822" y="444" class="m">pipeline.review.prep.completed</text>
+
+  <path d="M300 193 L345 193" class="f"/>
+  <path d="M605 193 L650 193" class="f"/>
+  <path d="M900 193 L940 193" class="f"/>
+  <path d="M1040 241 L1040 360" class="f"/>
+
+  <path d="M235 241 L235 360" class="p"/>
+  <path d="M600 241 L600 360" class="p"/>
+
+  <path d="M790 412 L750 412" class="f"/>
+  <path d="M450 412 L410 412" class="f"/>
+
+  <polyline points="628,286 652,252 678,286 702,252" class="z"/>
+
+  <rect x="60" y="530" width="1080" height="62" rx="12" fill="#ffffff" stroke="#bfd4e6"/>
+  <text x="82" y="557" class="m">Integrations: Endgame MCP/CLI + Salesforce Headless 360 + Gong/Activity sources</text>
+  <text x="82" y="579" class="m">Shared cogs: enrich_account_health, deal_score_reasoner, directive_alignment, compose_outreach_message, route_exec_alert, approval_loop</text>
+
+  <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#bfd4e6"/>
+  <text x="82" y="645" class="m">Legend: Solid arrows = execution path, dashed lines = parallel review queues, orange node = approval gate before outbound actions.</text>
+</svg>

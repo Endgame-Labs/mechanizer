@@ -1,0 +1,529 @@
+{
+  "name": "account-plan-generation-machine-v2",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "timezone": "America/Los_Angeles"
+  },
+  "meta": {
+    "machine_id": "account-plan-generation-machine",
+    "schema_version": "gtm_event_v1",
+    "idempotency_key": "event_id",
+    "n8n_notes": {
+      "error_workflow": "Attach Error Trigger workflow in Workflow Settings",
+      "queue_mode_ready": true
+    }
+  },
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Webhook Ingest",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        120,
+        280
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "account-plan/events",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "2",
+      "name": "Schedule Refresh Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        120,
+        520
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3",
+      "name": "Build Scheduled gtm_event_v1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        520
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const now = new Date().toISOString();\nreturn {\n  event_id: `account-plan-refresh-${Date.now()}`,\n  event_type: 'account.plan.refresh_requested',\n  source: 'account_plan_scheduler',\n  occurred_at: now,\n  ingested_at: now,\n  trace: { trace_id: `trace_account_plan_refresh_${Date.now()}` },\n  subject: { entity_type: 'account', entity_id: 'batch_cohort' },\n  attributes: { refresh_mode: 'scheduled' }\n};"
+      }
+    },
+    {
+      "id": "4",
+      "name": "Normalize + Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        280
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst required = ['event_id','event_type','source','occurred_at','trace','subject'];\nfor (const k of required) { if (!e[k]) throw new Error(`Missing ${k}`); }\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nconst supported = ['account.plan.requested', 'account.plan.refresh_requested', 'renewal.window_opened'];\nif (!supported.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nreturn {\n  ...e,\n  machine_id: 'account-plan-generation-machine',\n  schema_version: 'gtm_event_v1',\n  ingested_at: e.ingested_at || new Date().toISOString(),\n  trace: { ...e.trace, run_id: e.trace?.run_id || `${e.event_id}:${Date.now()}` }\n};"
+      }
+    },
+    {
+      "id": "5",
+      "name": "Idempotency Lookup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        600,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://idempotency.internal/v1/lookup",
+        "sendBody": true,
+        "jsonBody": "={{ { machine_id: 'account-plan-generation-machine', event_id: $json.event_id, event_type: $json.event_type } }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "6",
+      "name": "Already Terminal?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        840,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.status || ''}}",
+              "operation": "notEmpty"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7",
+      "name": "Emit account.plan.skipped_duplicate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1080,
+        460
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'account.plan.skipped_duplicate' } }}"
+      }
+    },
+    {
+      "id": "8",
+      "name": "enrich_account_health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1080,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/enrich_account_health/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "9",
+      "name": "deal_score_reasoner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1320,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 15000
+    },
+    {
+      "id": "10",
+      "name": "directive_alignment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1560,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "11",
+      "name": "compose_outreach_message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1800,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/compose_outreach_message/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "12",
+      "name": "route_exec_alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2040,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/route_exec_alert/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "13",
+      "name": "approval_loop",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2280,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://approval.internal/request",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, machine_id: 'account-plan-generation-machine', timeout_seconds: 1800, actions: ['account_plan_upsert', 'crm_note_append', 'owner_brief_notify'] } }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000
+    },
+    {
+      "id": "14",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2520,
+        120
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.approval_status || $json.attributes?.approval_status || ''}}",
+              "operation": "equal",
+              "value2": "approved"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "15",
+      "name": "Salesforce Plan Update",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 2,
+      "position": [
+        2760,
+        20
+      ],
+      "parameters": {
+        "operation": "update",
+        "sobject": "Opportunity",
+        "id": "={{$json.attributes?.opportunity_id || $json.subject.entity_id}}",
+        "fields": {
+          "Description": "={{$json.attributes?.plan_summary || 'Account plan refreshed by account-plan-generation-machine'}}",
+          "NextStep": "={{$json.attributes?.next_step || 'Review generated plan with owner'}}"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 15000
+    },
+    {
+      "id": "16",
+      "name": "Send Owner Plan Brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3000,
+        20
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "sendBody": true,
+        "jsonBody": "={{ { channel: '#account-plans', text: `Account plan ready for ${$json.subject.entity_id}`, metadata: { event_id: $json.event_id, trace_id: $json.trace.trace_id } } }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "17",
+      "name": "Emit account.plan.generated",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3240,
+        20
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'account.plan.generated' } }}"
+      }
+    },
+    {
+      "id": "18",
+      "name": "Emit account.plan.blocked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2760,
+        260
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'account.plan.blocked', approval_status: $json.approval_status || 'rejected_or_timeout' } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Ingest": {
+      "main": [
+        [
+          {
+            "node": "Normalize + Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Refresh Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Scheduled gtm_event_v1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Scheduled gtm_event_v1": {
+      "main": [
+        [
+          {
+            "node": "Normalize + Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize + Validate": {
+      "main": [
+        [
+          {
+            "node": "Idempotency Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Idempotency Lookup": {
+      "main": [
+        [
+          {
+            "node": "Already Terminal?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Already Terminal?": {
+      "main": [
+        [
+          {
+            "node": "Emit account.plan.skipped_duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "enrich_account_health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "enrich_account_health": {
+      "main": [
+        [
+          {
+            "node": "deal_score_reasoner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deal_score_reasoner": {
+      "main": [
+        [
+          {
+            "node": "directive_alignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "directive_alignment": {
+      "main": [
+        [
+          {
+            "node": "compose_outreach_message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "compose_outreach_message": {
+      "main": [
+        [
+          {
+            "node": "route_exec_alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "route_exec_alert": {
+      "main": [
+        [
+          {
+            "node": "approval_loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "approval_loop": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Salesforce Plan Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Emit account.plan.blocked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salesforce Plan Update": {
+      "main": [
+        [
+          {
+            "node": "Send Owner Plan Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Owner Plan Brief": {
+      "main": [
+        [
+          {
+            "node": "Emit account.plan.generated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

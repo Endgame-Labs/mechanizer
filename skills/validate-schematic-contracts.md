@@ -20,6 +20,7 @@ Ensure event payloads and machine examples conform to canonical schema contracts
 - Zero validation errors.
 - Any breaking change is documented with migration path.
 - Machine README reflects new/changed required fields.
+- Machine README links to the machine's diagram entry in root `README.md` when applicable.
 
 ## Suggested Tooling
 - `ajv` or equivalent JSON Schema validator.

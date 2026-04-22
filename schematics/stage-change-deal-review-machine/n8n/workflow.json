@@ -1,0 +1,213 @@
+{
+  "name": "stage-change-deal-review-machine-v1",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "timezone": "America/Los_Angeles"
+  },
+  "meta": {
+    "machine_id": "stage-change-deal-review-machine",
+    "schema_version": "gtm_event_v1",
+    "idempotency_key": "event_id"
+  },
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Webhook Ingest",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [120, 260],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stage-change-deal-review/events",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "2",
+      "name": "Normalize + Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [360, 260],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst required = ['event_id','event_type','source','occurred_at','trace','subject'];\nfor (const key of required) { if (!e[key]) throw new Error(`Missing ${key}`); }\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nconst supported = ['deal.stage_changed','opportunity.stage_changed'];\nif (!supported.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nreturn { ...e, schema_version: 'gtm_event_v1', machine_id: 'stage-change-deal-review-machine', ingested_at: e.ingested_at || new Date().toISOString() };"
+      }
+    },
+    {
+      "id": "3",
+      "name": "enrich_account_health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [600, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/enrich_account_health/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "4",
+      "name": "deal_score_reasoner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [840, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "5",
+      "name": "directive_alignment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1080, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "6",
+      "name": "route_exec_alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1320, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/route_exec_alert/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "7",
+      "name": "approval_loop",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1560, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://approval.internal/request",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, timeout_seconds: 1800, actions: ['sfdc_update','slack_findings_send'] } }}"
+      }
+    },
+    {
+      "id": "8",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1800, 260],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.approval_status || $json.attributes?.approval_status || ''}}",
+              "operation": "equal",
+              "value2": "approved"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "9",
+      "name": "Salesforce Writeback",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 2,
+      "position": [2040, 180],
+      "parameters": {
+        "operation": "update",
+        "sobject": "Opportunity",
+        "id": "={{$json.subject.entity_id}}",
+        "fields": {
+          "NextStep": "={{$json.attributes.proposed_mutations?.next_step}}",
+          "CloseDate": "={{$json.attributes.proposed_mutations?.close_date}}"
+        }
+      }
+    },
+    {
+      "id": "10",
+      "name": "Post Slack Findings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2040, 360],
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.internal/findings/post",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "11",
+      "name": "Emit Writeback Applied",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2280, 180],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'deal.stage_review.writeback_applied' } }}"
+      }
+    },
+    {
+      "id": "12",
+      "name": "Emit Findings Posted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2280, 360],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'deal.stage_review.findings_posted' } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Ingest": {
+      "main": [[{ "node": "Normalize + Validate", "type": "main", "index": 0 }]]
+    },
+    "Normalize + Validate": {
+      "main": [[{ "node": "enrich_account_health", "type": "main", "index": 0 }]]
+    },
+    "enrich_account_health": {
+      "main": [[{ "node": "deal_score_reasoner", "type": "main", "index": 0 }]]
+    },
+    "deal_score_reasoner": {
+      "main": [[{ "node": "directive_alignment", "type": "main", "index": 0 }]]
+    },
+    "directive_alignment": {
+      "main": [[{ "node": "route_exec_alert", "type": "main", "index": 0 }]]
+    },
+    "route_exec_alert": {
+      "main": [[{ "node": "approval_loop", "type": "main", "index": 0 }]]
+    },
+    "approval_loop": {
+      "main": [[{ "node": "Approved?", "type": "main", "index": 0 }]]
+    },
+    "Approved?": {
+      "main": [
+        [{ "node": "Salesforce Writeback", "type": "main", "index": 0 }],
+        [{ "node": "Post Slack Findings", "type": "main", "index": 0 }]
+      ]
+    },
+    "Salesforce Writeback": {
+      "main": [[{ "node": "Emit Writeback Applied", "type": "main", "index": 0 }]]
+    },
+    "Post Slack Findings": {
+      "main": [[{ "node": "Emit Findings Posted", "type": "main", "index": 0 }]]
+    }
+  }
+}

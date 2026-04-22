@@ -1,0 +1,96 @@
+{
+  "name": "pipeline-review-intelligence-machine-v1",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "timezone": "America/Los_Angeles"
+  },
+  "meta": {
+    "machine_id": "pipeline-review-intelligence-machine",
+    "schema_version": "gtm_event_v1",
+    "idempotency_key": "event_id"
+  },
+  "nodes": [
+    {
+      "id": "Webhook_Ingest",
+      "name": "Webhook Ingest",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 280],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pipeline-review-intelligence-machine",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "Normalize_Validate",
+      "name": "Normalize + Validate gtm_event_v1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 280],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst required = ['event_id', 'event_type', 'source', 'occurred_at', 'trace', 'subject'];\nfor (const key of required) { if (!e[key]) throw new Error(`Missing ${key}`); }\nconst allowed = ['pipeline.review.requested', 'deal.updated', 'activity.logged'];\nif (!allowed.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nreturn { ...e, schema_version: 'gtm_event_v1', ingested_at: e.ingested_at || new Date().toISOString() };"
+      }
+    },
+    {
+      "id": "Cog_Pipeline",
+      "name": "Run Shared Cogs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [760, 280],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/pipeline-review-intelligence-machine/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "Approval_Loop",
+      "name": "approval_loop",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1020, 280],
+      "parameters": {
+        "method": "POST",
+        "url": "https://approvals.internal/v1/request",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "Emit_Output",
+      "name": "Emit pipeline.review.prep.*",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1280, 280],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook_Ingest": {
+      "main": [[{ "node": "Normalize_Validate", "type": "main", "index": 0 }]]
+    },
+    "Normalize_Validate": {
+      "main": [[{ "node": "Cog_Pipeline", "type": "main", "index": 0 }]]
+    },
+    "Cog_Pipeline": {
+      "main": [[{ "node": "Approval_Loop", "type": "main", "index": 0 }]]
+    },
+    "Approval_Loop": {
+      "main": [[{ "node": "Emit_Output", "type": "main", "index": 0 }]]
+    }
+  }
+}

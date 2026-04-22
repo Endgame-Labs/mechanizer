@@ -25,6 +25,7 @@ Produce deterministic artifacts for one machine across selected adapters.
 - Validate all included payload examples against included schema versions.
 - Verify `MANIFEST.json` checksums match final archive contents.
 - Confirm no credentials/secrets are present.
+- Confirm root `README.md` includes the machine diagram for discoverability.
 
 ## Suggested Automation
 - CI release job per machine.

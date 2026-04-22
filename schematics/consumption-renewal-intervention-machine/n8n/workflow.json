@@ -1,0 +1,61 @@
+{
+  "name": "consumption-renewal-intervention-machine-daily-v1",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "timezone": "America/Los_Angeles"
+  },
+  "meta": {
+    "machine_id": "consumption-renewal-intervention-machine",
+    "schema_version": "gtm_event_v1",
+    "idempotency_key": "event_id"
+  },
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [120, 260],
+      "parameters": {
+        "rule": {
+          "cronExpression": "0 7 * * *"
+        }
+      }
+    },
+    {
+      "id": "2",
+      "name": "Build Daily Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [360, 260],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const now = new Date().toISOString(); return { event_id: `cri-daily-${Date.now()}`, event_type: 'renewal.consumption_under_target_detected', source: 'cri_scheduler', occurred_at: now, ingested_at: now, trace: { trace_id: `trace_cri_${Date.now()}` }, subject: { entity_type: 'cohort', entity_id: 'under_consuming_renewals' }, attributes: { run_type: 'daily' } };"
+      }
+    },
+    {
+      "id": "3",
+      "name": "Slack Notify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [620, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.internal/notify",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [[{"node": "Build Daily Event", "type": "main", "index": 0}]]
+    },
+    "Build Daily Event": {
+      "main": [[{"node": "Slack Notify", "type": "main", "index": 0}]]
+    }
+  }
+}

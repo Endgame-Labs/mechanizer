@@ -1,0 +1,210 @@
+{
+  "name": "tier-3-account-coverage-machine-v1",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "timezone": "America/Los_Angeles"
+  },
+  "meta": {
+    "machine_id": "tier-3-account-coverage-machine",
+    "schema_version": "gtm_event_v1",
+    "idempotency_key": "event_id"
+  },
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Webhook Ingest",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [120, 260],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tier3-account-coverage/events",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "2",
+      "name": "Schedule Sweep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [120, 460],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3",
+      "name": "Build Scheduled Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [340, 460],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const now = new Date().toISOString();\nreturn {\n  event_id: `tier3-sweep-${Date.now()}`,\n  event_type: 'account.health_changed',\n  source: 'tier3_scheduler',\n  occurred_at: now,\n  ingested_at: now,\n  trace: { trace_id: `trace_tier3_${Date.now()}` },\n  subject: { entity_type: 'account', entity_id: 'tier3_cohort' },\n  attributes: { refresh_mode: 'scheduled' }\n};"
+      }
+    },
+    {
+      "id": "4",
+      "name": "Normalize + Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [340, 260],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst required = ['event_id', 'event_type', 'source', 'occurred_at', 'trace', 'subject'];\nfor (const key of required) { if (!e[key]) throw new Error(`Missing ${key}`); }\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nconst supported = ['account.health_changed', 'usage.declined', 'renewal.window_opened', 'intent.signal_detected'];\nif (!supported.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nreturn { ...e, machine_id: 'tier-3-account-coverage-machine', schema_version: 'gtm_event_v1', ingested_at: e.ingested_at || new Date().toISOString() };"
+      }
+    },
+    {
+      "id": "5",
+      "name": "enrich_account_health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [580, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/enrich_account_health/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "6",
+      "name": "Segment Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [820, 260],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.segment || ''}}",
+              "operation": "in",
+              "value2": "low_touch,no_touch"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7",
+      "name": "deal_score_reasoner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1040, 180],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "8",
+      "name": "directive_alignment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1260, 180],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "9",
+      "name": "compose_outreach_message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1480, 180],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/compose_outreach_message/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "10",
+      "name": "route_exec_alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1700, 180],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/route_exec_alert/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "11",
+      "name": "approval_loop",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1920, 180],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/approval_loop/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    },
+    {
+      "id": "12",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2140, 180],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.approval_status || ''}}",
+              "operation": "equal",
+              "value2": "approved"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "13",
+      "name": "Emit Executed Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2360, 120],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'tier3.coverage.executed' } }}"
+      }
+    },
+    {
+      "id": "14",
+      "name": "Emit Blocked Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2360, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'tier3.coverage.blocked' } }}"
+      }
+    }
+  ],
+  "connections": {}
+}

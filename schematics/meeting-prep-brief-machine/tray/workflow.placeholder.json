@@ -1,0 +1,217 @@
+{
+  "workflow_name": "meeting_prep_brief_machine",
+  "machine_id": "meeting-prep-brief-machine",
+  "version": "1.1.0",
+  "tray_runtime": {
+    "project": "meeting-prep-brief-machine",
+    "triggers": [
+      {
+        "type": "callable",
+        "name": "meeting_prep_event_ingest",
+        "operation": "trigger_and_respond"
+      },
+      {
+        "type": "scheduled",
+        "name": "meeting_prep_poll",
+        "operation": "cron",
+        "cron": "*/15 * * * *",
+        "timezone": "America/Los_Angeles",
+        "enabled": true
+      }
+    ]
+  },
+  "contract": {
+    "input_schema": "gtm_event_v1",
+    "idempotency_key": "event_id",
+    "approval_required_before_side_effects": true
+  },
+  "steps": [
+    {
+      "key": "normalize_validate",
+      "operation": "script",
+      "language": "javascript"
+    },
+    {
+      "key": "idempotency_get",
+      "operation": "data_storage.get_value",
+      "input": {
+        "scope": "project",
+        "key": "meeting-prep-brief-machine:${steps.normalize_validate.output.event_id}",
+        "default": null
+      }
+    },
+    {
+      "key": "branch_if_new",
+      "operation": "branch",
+      "branches": [
+        {
+          "name": "new",
+          "condition": "steps.idempotency_get.output == null"
+        },
+        {
+          "name": "duplicate",
+          "condition": "steps.idempotency_get.output != null"
+        }
+      ]
+    },
+    {
+      "key": "context_enrichment_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_context_enrichment",
+      "input": {
+        "event": "${steps.normalize_validate.output}",
+        "providers": [
+          "endgame_mcp",
+          "salesforce_headless_360",
+          "seismic_or_highspot",
+          "gong_or_zoom"
+        ]
+      }
+    },
+    {
+      "key": "prep_scoring_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_prep_scoring",
+      "input": {
+        "event": "${steps.normalize_validate.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "key": "compose_brief_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_meeting_brief_composer",
+      "input": {
+        "score": "${steps.prep_scoring_cog.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "key": "approval_needed_gate",
+      "branch": "new",
+      "operation": "boolean_condition",
+      "condition": "steps.prep_scoring_cog.output.prep_score >= 75"
+    },
+    {
+      "key": "approval_loop_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_approval_loop",
+      "run_when": "steps.approval_needed_gate.output == true",
+      "input": {
+        "machine_id": "meeting-prep-brief-machine",
+        "event_id": "${steps.normalize_validate.output.event_id}",
+        "actions": [
+          "slack.post_message",
+          "send_email"
+        ],
+        "proposal": "${steps.compose_brief_cog.output}",
+        "timeout_seconds": 1200
+      }
+    },
+    {
+      "key": "approval_branch",
+      "branch": "new",
+      "operation": "branch",
+      "branches": [
+        {
+          "name": "approved",
+          "condition": "steps.approval_needed_gate.output == false || steps.approval_loop_cog.output.approval_status == 'approved'"
+        },
+        {
+          "name": "blocked",
+          "condition": "steps.approval_needed_gate.output == true && steps.approval_loop_cog.output.approval_status != 'approved'"
+        }
+      ]
+    },
+    {
+      "key": "send_slack_brief",
+      "branch": "approved",
+      "operation": "slack.post_message",
+      "error_handling": "manual",
+      "input": {
+        "channel": "${steps.compose_brief_cog.output.slack_channel}",
+        "text": "${steps.compose_brief_cog.output.summary}"
+      }
+    },
+    {
+      "key": "send_email_brief",
+      "branch": "approved",
+      "operation": "send_email",
+      "error_handling": "manual",
+      "input": {
+        "to": "${steps.compose_brief_cog.output.email_to}",
+        "subject": "${steps.compose_brief_cog.output.email_subject}",
+        "body": "${steps.compose_brief_cog.output.email_body}"
+      }
+    },
+    {
+      "key": "emit_terminal",
+      "branch": "new",
+      "operation": "http.client",
+      "input": {
+        "method": "POST",
+        "url": "https://events.internal/emit",
+        "body": {
+          "event_type": "${steps.approval_needed_gate.output == true && steps.approval_loop_cog.output.approval_status != 'approved' ? 'meeting.prep_brief.blocked' : 'meeting.prep_brief.delivered'}",
+          "trace": "${steps.normalize_validate.output.trace}",
+          "subject": "${steps.normalize_validate.output.subject}",
+          "attributes": {
+            "prep_score": "${steps.prep_scoring_cog.output.prep_score}",
+            "approval_status": "${steps.approval_loop_cog.output.approval_status || 'not_required'}"
+          }
+        }
+      }
+    },
+    {
+      "key": "idempotency_set",
+      "branch": "new",
+      "operation": "data_storage.set_value",
+      "input": {
+        "scope": "project",
+        "key": "meeting-prep-brief-machine:${steps.normalize_validate.output.event_id}",
+        "value": {
+          "status": "completed",
+          "updated_at": "${meta.now}"
+        }
+      }
+    },
+    {
+      "key": "response_duplicate",
+      "branch": "duplicate",
+      "operation": "callable_workflow_response",
+      "body": {
+        "event_type": "meeting.prep_brief.duplicate_ignored",
+        "status": "ignored"
+      }
+    },
+    {
+      "key": "response_new",
+      "branch": "new",
+      "operation": "callable_workflow_response",
+      "body": {
+        "event_type": "${steps.approval_needed_gate.output == true && steps.approval_loop_cog.output.approval_status != 'approved' ? 'meeting.prep_brief.blocked' : 'meeting.prep_brief.delivered'}",
+        "trace": "${steps.normalize_validate.output.trace}",
+        "attributes": {
+          "prep_score": "${steps.prep_scoring_cog.output.prep_score}",
+          "approval_status": "${steps.approval_loop_cog.output.approval_status || 'not_required'}"
+        }
+      }
+    }
+  ],
+  "error_handling": {
+    "default_step_mode": "automatic",
+    "manual_paths_for": [
+      "send_slack_brief",
+      "send_email_brief"
+    ],
+    "dead_letter_target": "meeting-prep-brief-machine-dlq"
+  }
+}

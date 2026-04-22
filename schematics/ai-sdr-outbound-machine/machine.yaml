@@ -1,0 +1,33 @@
+machine_id: ai-sdr-outbound-machine
+version: v1.0.0
+owners:
+  - team: sales-development-ops
+    contact: sdr-ops@example.com
+objective: "Run AI SDR outbound research and personalized sequence drafting with qualified response routing."
+kpis:
+  - id: kpi_1
+    name: "Qualified meetings booked from machine-generated sequences"
+    target: "define-per-org"
+  - id: kpi_2
+    name: "Positive response rate on personalized outbound"
+    target: "define-per-org"
+triggers:
+  - type: event
+    event_types: [prospect.research_requested, account.intent_detected, response.received]
+inputs:
+  contract: gtm_event_v1
+  sources: [salesforce_headless_360, hubspot, outreach, apollo, clearbit, linkedin, endgame_mcp, endgame_cli]
+outputs:
+  event_contract: gtm_event_v1
+  side_effects: [sequence_draft_create, crm_task_create, qualified_response_route, exec_alert_send]
+slo:
+  p95_end_to_end_seconds: 210
+  availability: "99.5%"
+dependencies:
+  cogs: [enrich_account_health@v1.0.0, deal_score_reasoner@v1.0.0, directive_alignment@v1.0.0, compose_outreach_message@v1.0.0, route_exec_alert@v1.0.0, approval_loop@v1.0.0]
+feature_flags: []
+security:
+  pii_policy: "minimize"
+  secret_source: "platform_secret_store"
+rollback:
+  mode: "disable_triggers_and_drain"

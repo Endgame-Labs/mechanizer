@@ -1,0 +1,118 @@
+{
+  "name": "account-health-audit-machine-v2",
+  "machine_id": "account-health-audit-machine",
+  "artifact_type": "make_scenario_blueprint_reference",
+  "make_runtime": {
+    "blueprint": {
+      "max_import_size_mb": 2
+    },
+    "scheduling": {
+      "mode": "scheduled_plus_webhook",
+      "weekday_cron": "0 6 * * 1-5",
+      "timezone": "America/Los_Angeles",
+      "max_runs_per_minute": 20,
+      "sequential_processing": true
+    },
+    "retry_model": {
+      "store_incomplete_executions": true,
+      "auto_retry_errors": [
+        "RateLimitError",
+        "ConnectionError",
+        "ModuleTimeoutError"
+      ]
+    }
+  },
+  "modules": [
+    {
+      "id": 1,
+      "module": "scheduler:everyDay",
+      "name": "Weekday Audit Trigger"
+    },
+    {
+      "id": 2,
+      "module": "json:createJSON",
+      "name": "Normalize gtm_event_v1"
+    },
+    {
+      "id": 3,
+      "module": "datastore:getARecord",
+      "name": "Idempotency Lookup",
+      "parameters": {
+        "store": "account_health_audit_runs",
+        "key": "account-health-audit:{{2.event_id}}"
+      }
+    },
+    {
+      "id": 4,
+      "module": "flow:filter",
+      "name": "Skip Duplicates",
+      "filter": "{{empty(3.value)}}"
+    },
+    {
+      "id": 5,
+      "module": "http:makeRequest",
+      "name": "Enrich Account Health",
+      "parameters": {
+        "url": "https://cogs.internal/enrich_account_health/v1/execute",
+        "method": "POST",
+        "body": "{{toJSON(2)}}"
+      }
+    },
+    {
+      "id": 6,
+      "module": "http:makeRequest",
+      "name": "Risk Scoring",
+      "parameters": {
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "method": "POST",
+        "body": "{{5.body}}"
+      }
+    },
+    {
+      "id": 7,
+      "module": "http:makeRequest",
+      "name": "Directive Alignment",
+      "parameters": {
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "method": "POST",
+        "body": "{{6.body}}"
+      }
+    },
+    {
+      "id": 8,
+      "module": "tools:iterator",
+      "name": "Iterate Risk Factors",
+      "parameters": {
+        "array": "{{7.body.risk_factors}}"
+      }
+    },
+    {
+      "id": 9,
+      "module": "tools:arrayAggregator",
+      "name": "Aggregate Evidence",
+      "parameters": {
+        "source": "8",
+        "target_structure": "risk_evidence[]"
+      }
+    },
+    {
+      "id": 10,
+      "module": "http:makeRequest",
+      "name": "Emit Completion Event",
+      "parameters": {
+        "url": "https://events.internal/emit",
+        "method": "POST",
+        "body": "{\"event_type\":\"account.health.audit.completed\",\"event_id\":\"{{2.event_id}}\",\"risk_evidence\":{{9.array}}}"
+      }
+    },
+    {
+      "id": 11,
+      "module": "datastore:addOrReplaceARecord",
+      "name": "Write Run Summary",
+      "parameters": {
+        "store": "account_health_audit_runs",
+        "key": "account-health-audit:{{2.event_id}}"
+      }
+    }
+  ]
+}

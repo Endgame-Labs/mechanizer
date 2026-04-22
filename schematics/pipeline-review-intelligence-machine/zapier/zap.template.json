@@ -1,0 +1,42 @@
+{
+  "title": "Pipeline Review Intelligence Machine",
+  "version": "1.0.0",
+  "machine_id": "pipeline-review-intelligence-machine",
+  "trigger": {
+    "app": "webhooks",
+    "event": "catch_hook",
+    "path": "/pipeline-review-intelligence-machine",
+    "accepts_event_types": [
+      "pipeline.review.requested",
+      "deal.updated",
+      "activity.logged"
+    ]
+  },
+  "gtm_event_v1_mapping": {
+    "required": [
+      "schema_version",
+      "event_id",
+      "event_type",
+      "source",
+      "occurred_at",
+      "ingested_at",
+      "trace",
+      "subject",
+      "attributes"
+    ]
+  },
+  "steps": [
+    { "id": "normalize_validate", "type": "code", "name": "Normalize to gtm_event_v1" },
+    { "id": "enrich_account_health", "type": "webhook_action", "url": "https://cogs.internal/enrich_account_health/v1/execute" },
+    { "id": "deal_score_reasoner", "type": "webhook_action", "url": "https://cogs.internal/deal_score_reasoner/v1/execute" },
+    { "id": "directive_alignment", "type": "webhook_action", "url": "https://cogs.internal/directive_alignment/v1/execute" },
+    { "id": "compose_outreach_message", "type": "webhook_action", "url": "https://cogs.internal/compose_outreach_message/v1/execute" },
+    { "id": "route_exec_alert", "type": "webhook_action", "url": "https://cogs.internal/route_exec_alert/v1/execute" },
+    { "id": "approval_loop", "type": "webhook_action", "url": "https://approvals.internal/v1/request" },
+    { "id": "emit_output_event", "type": "webhook_action", "url": "https://events.internal/v1/publish" }
+  ],
+  "idempotency": {
+    "store": "storage_by_zapier",
+    "key_template": "pipeline-review-intelligence:${event_id}"
+  }
+}

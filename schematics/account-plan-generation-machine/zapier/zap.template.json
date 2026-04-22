@@ -1,0 +1,173 @@
+{
+  "zap_name": "Account Plan Generation Machine",
+  "version": "1.1.0",
+  "machine_id": "account-plan-generation-machine",
+  "description": "Generates structured account plans from canonical events with approval-gated side effects.",
+  "trigger": {
+    "primary": {
+      "app": "webhooks_by_zapier",
+      "event": "catch_hook",
+      "path": "/account-plan/events"
+    },
+    "alternate": {
+      "app": "schedule_by_zapier",
+      "event": "every_6_hours"
+    },
+    "accepts_event_types": [
+      "account.plan.refresh_requested",
+      "account.tier_changed",
+      "planning.window_opened"
+    ]
+  },
+  "gtm_event_v1_mapping": {
+    "required": [
+      "schema_version",
+      "event_id",
+      "event_type",
+      "source",
+      "occurred_at",
+      "ingested_at",
+      "trace",
+      "subject",
+      "attributes"
+    ]
+  },
+  "steps": [
+    {
+      "id": "validate_contract",
+      "app": "code_by_zapier",
+      "event": "run_javascript"
+    },
+    {
+      "id": "filter_supported_events",
+      "app": "filter_by_zapier",
+      "event": "only_continue_if",
+      "rule": "event_type in ['account.plan.refresh_requested','account.tier_changed','planning.window_opened']"
+    },
+    {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "account-plan:${event_id}"
+    },
+    {
+      "id": "fetch_context",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://context.internal/account-plan/enrich",
+        "json": {
+          "event": "{{trigger.raw_body}}",
+          "context_providers": [
+            "endgame_mcp_or_cli",
+            "salesforce_headless_360",
+            "enablement_provider"
+          ]
+        }
+      }
+    },
+    {
+      "id": "build_structured_plan",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://planner.internal/build",
+        "json": {
+          "sections": [
+            "context",
+            "relationship_map",
+            "whitespace",
+            "plays"
+          ],
+          "event": "{{trigger.raw_body}}",
+          "context": "{{steps.fetch_context.body}}"
+        }
+      }
+    },
+    {
+      "id": "approval_loop",
+      "app": "human_in_the_loop",
+      "event": "request_approval",
+      "fallback": {
+        "app": "webhooks_by_zapier",
+        "event": "post",
+        "url": "https://approval.internal/request"
+      },
+      "request_payload": {
+        "event_id": "{{event_id}}",
+        "account_id": "{{subject.id}}",
+        "proposed_actions": [
+          "plan_upsert",
+          "crm_update"
+        ],
+        "trace": "{{trace}}"
+      }
+    },
+    {
+      "id": "path_on_approval",
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
+        {
+          "name": "approved",
+          "condition": "approval_status == 'approved'",
+          "actions": [
+            {
+              "id": "upsert_plan",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://planner.internal/upsert"
+              }
+            },
+            {
+              "id": "emit_generated",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "account.plan.generated"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "blocked",
+          "condition": "approval_status != 'approved'",
+          "actions": [
+            {
+              "id": "notify_blocked",
+              "app": "slack",
+              "event": "send_channel_message"
+            },
+            {
+              "id": "emit_blocked",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "account.plan.blocked"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "idempotency_store",
+      "app": "storage_by_zapier",
+      "event": "set_value",
+      "key_template": "account-plan:${event_id}",
+      "value_fields": [
+        "event_id",
+        "approval_status",
+        "trace.trace_id",
+        "trace.run_id"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+machine_id: meeting-prep-brief-machine
+version: v1.0.0
+owners:
+  - team: revenue-ops
+    contact: revops@example.com
+objective: "Deliver a pre-meeting account brief to Slack and inbox before customer-facing meetings."
+kpis:
+  - id: kpi_1
+    name: "Brief delivery rate before scheduled meeting start"
+    target: "define-per-org"
+  - id: kpi_2
+    name: "Median minutes of prep time saved per meeting"
+    target: "define-per-org"
+triggers:
+  - type: event
+    event_types: [meeting.scheduled, account.exec_meeting_booked, opportunity.stage_changed]
+inputs:
+  contract: gtm_event_v1
+  sources: [google_calendar, outlook_calendar, salesforce_headless_360, salesforce, gong, product_telemetry, endgame_mcp, endgame_cli]
+outputs:
+  event_contract: gtm_event_v1
+  side_effects: [slack_brief_send, inbox_brief_send, crm_note_append]
+slo:
+  p95_end_to_end_seconds: 180
+  availability: "99.5%"
+dependencies:
+  cogs: [enrich_account_health@v1.0.0, deal_score_reasoner@v1.0.0, directive_alignment@v1.0.0, compose_outreach_message@v1.0.0, route_exec_alert@v1.0.0, approval_loop@v1.0.0]
+feature_flags: []
+security:
+  pii_policy: "minimize"
+  secret_source: "platform_secret_store"
+rollback:
+  mode: "disable_triggers_and_drain"

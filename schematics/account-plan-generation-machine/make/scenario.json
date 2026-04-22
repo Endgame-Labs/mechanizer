@@ -1,0 +1,128 @@
+{
+  "name": "account-plan-generation-machine-v2",
+  "machine_id": "account-plan-generation-machine",
+  "artifact_type": "make_scenario_blueprint_reference",
+  "make_runtime": {
+    "blueprint": {
+      "max_import_size_mb": 2
+    },
+    "scheduling": {
+      "mode": "webhook_plus_periodic_refresh",
+      "webhook_path": "account-plan-events",
+      "periodic_refresh_interval_hours": 6,
+      "max_runs_per_minute": 25,
+      "sequential_processing": true
+    }
+  },
+  "modules": [
+    {
+      "id": 1,
+      "module": "webhooks:customWebhook",
+      "name": "Receive Planning Event",
+      "parameters": {
+        "path": "account-plan-events"
+      }
+    },
+    {
+      "id": 2,
+      "module": "json:createJSON",
+      "name": "Normalize gtm_event_v1"
+    },
+    {
+      "id": 3,
+      "module": "datastore:getARecord",
+      "name": "Idempotency Lookup",
+      "parameters": {
+        "store": "account_plan_runs",
+        "key": "account-plan:{{2.event_id}}"
+      }
+    },
+    {
+      "id": 4,
+      "module": "flow:filter",
+      "name": "Skip Duplicates",
+      "filter": "{{empty(3.value)}}"
+    },
+    {
+      "id": 5,
+      "module": "http:makeRequest",
+      "name": "Generate Plan",
+      "parameters": {
+        "url": "https://planner.internal/account-plan/generate",
+        "method": "POST",
+        "body": "{{toJSON(2)}}"
+      }
+    },
+    {
+      "id": 6,
+      "module": "tools:iterator",
+      "name": "Iterate Plan Sections",
+      "parameters": {
+        "array": "{{5.body.sections}}"
+      }
+    },
+    {
+      "id": 7,
+      "module": "tools:arrayAggregator",
+      "name": "Aggregate Plan Package",
+      "parameters": {
+        "source": "6",
+        "target_structure": "sections[]"
+      }
+    },
+    {
+      "id": 8,
+      "module": "http:makeRequest",
+      "name": "Approval Loop",
+      "parameters": {
+        "url": "https://approval.internal/request",
+        "method": "POST",
+        "body": "{\"event_id\":\"{{2.event_id}}\",\"subject\":{{2.subject}},\"plan\":{{7.array}},\"timeout_seconds\":1800}"
+      }
+    },
+    {
+      "id": 9,
+      "module": "flow:router",
+      "name": "Approval Router",
+      "routes": [
+        {
+          "name": "approved",
+          "condition": "{{8.body.approval_status}} = approved"
+        },
+        {
+          "name": "blocked",
+          "condition": "fallback"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "module": "salesforce:updateARecord",
+      "name": "Upsert Account Plan Link",
+      "route": "approved",
+      "parameters": {
+        "object": "Account",
+        "record_id": "{{2.subject.id}}"
+      }
+    },
+    {
+      "id": 11,
+      "module": "http:makeRequest",
+      "name": "Emit Outcome Event",
+      "parameters": {
+        "url": "https://events.internal/emit",
+        "method": "POST",
+        "body": "{\"event_type\":\"{{if(9.route = \\\"approved\\\"; \\\"account.plan.generated\\\"; \\\"account.plan.blocked\\\")}}\",\"event_id\":\"{{2.event_id}}\"}"
+      }
+    },
+    {
+      "id": 12,
+      "module": "datastore:addOrReplaceARecord",
+      "name": "Write Run Summary",
+      "parameters": {
+        "store": "account_plan_runs",
+        "key": "account-plan:{{2.event_id}}"
+      }
+    }
+  ]
+}

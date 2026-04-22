@@ -88,8 +88,21 @@ All forms must honor shared contracts.
 
 ## Starter Machines
 - `deal-hygiene-machine`: stage-change/cron hygiene checks with directives and approval loops.
+- `stage-change-deal-review-machine`: stage progression review with qualification/risk/missing-field checks and writeback-or-Slack branch.
 - `sales-coaching-machine`: post-call coaching against SKO/enablement standards.
 - `nrr-machine`: low-touch/no-touch retention and expansion signal machine.
+
+## New Schematics (April 2026)
+- `tier-3-account-coverage-machine`
+- `ai-sdr-outbound-machine`
+- `account-health-audit-machine`
+- `consumption-renewal-intervention-machine`
+- `meeting-prep-brief-machine`
+- `account-plan-generation-machine`
+- `pipeline-review-intelligence-machine`
+- `stage-change-deal-review-machine`
+- `new-hire-ramp-accelerator-machine`
+- `renewal-risk-monitoring-machine`
 
 ## Agentic Support Model
 `mechanizer` supports three agentic operating modes:
@@ -120,6 +133,16 @@ All forms must honor shared contracts.
 ## Diagrams
 - `docs/assets/flow-overview.svg`
 - `docs/assets/deal-hygiene-machine.svg`
+- `docs/assets/tier-3-account-coverage-machine.svg`
+- `docs/assets/ai-sdr-outbound-machine.svg`
+- `docs/assets/account-health-audit-machine.svg`
+- `docs/assets/consumption-renewal-intervention-machine.svg`
+- `docs/assets/meeting-prep-brief-machine.svg`
+- `docs/assets/account-plan-generation-machine.svg`
+- `docs/assets/pipeline-review-intelligence-machine.svg`
+- `docs/assets/stage-change-deal-review-machine.svg`
+- `docs/assets/new-hire-ramp-accelerator-machine.svg`
+- `docs/assets/renewal-risk-monitoring-machine.svg`
 - `docs/assets/sales-coaching-machine.svg`
 - `docs/assets/nrr-machine.svg`
 - `docs/assets/approval-loop-cog.svg`
@@ -131,6 +154,36 @@ All forms must honor shared contracts.
 
 ### Deal Hygiene Machine
 ![Deal Hygiene Machine](docs/assets/deal-hygiene-machine.svg)
+
+### Tier 3 Account Coverage Machine
+![Tier 3 Account Coverage Machine](docs/assets/tier-3-account-coverage-machine.svg)
+
+### AI SDR Outbound Machine
+![AI SDR Outbound Machine](docs/assets/ai-sdr-outbound-machine.svg)
+
+### Account Health Audit Machine
+![Account Health Audit Machine](docs/assets/account-health-audit-machine.svg)
+
+### Consumption Renewal Intervention Machine
+![Consumption Renewal Intervention Machine](docs/assets/consumption-renewal-intervention-machine.svg)
+
+### Meeting Prep Brief Machine
+![Meeting Prep Brief Machine](docs/assets/meeting-prep-brief-machine.svg)
+
+### Account Plan Generation Machine
+![Account Plan Generation Machine](docs/assets/account-plan-generation-machine.svg)
+
+### Pipeline Review Intelligence Machine
+![Pipeline Review Intelligence Machine](docs/assets/pipeline-review-intelligence-machine.svg)
+
+### Stage Change Deal Review Machine
+![Stage Change Deal Review Machine](docs/assets/stage-change-deal-review-machine.svg)
+
+### New Hire Ramp Accelerator Machine
+![New Hire Ramp Accelerator Machine](docs/assets/new-hire-ramp-accelerator-machine.svg)
+
+### Renewal Risk Monitoring Machine
+![Renewal Risk Monitoring Machine](docs/assets/renewal-risk-monitoring-machine.svg)
 
 ### Sales Coaching Machine
 ![Sales Coaching Machine](docs/assets/sales-coaching-machine.svg)

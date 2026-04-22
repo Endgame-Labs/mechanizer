@@ -1,0 +1,105 @@
+{
+  "name": "ai-sdr-outbound-machine-events-v2",
+  "machine_id": "ai-sdr-outbound-machine",
+  "artifact_type": "make_scenario_blueprint_reference",
+  "make_runtime": {
+    "scheduling": {
+      "mode": "instant_webhook",
+      "max_runs_per_minute": 50,
+      "sequential_processing": true
+    }
+  },
+  "modules": [
+    {
+      "id": 1,
+      "module": "webhooks:customWebhook",
+      "name": "Receive SDR Event",
+      "parameters": {
+        "name": "ai-sdr-outbound-events"
+      }
+    },
+    {
+      "id": 2,
+      "module": "json:createJSON",
+      "name": "Normalize gtm_event_v1"
+    },
+    {
+      "id": 3,
+      "module": "http:makeRequest",
+      "name": "Build Sequence Draft",
+      "parameters": {
+        "url": "https://cogs.internal/compose_outreach_message/v1/execute",
+        "method": "POST",
+        "body": "{{toJSON(2)}}"
+      }
+    },
+    {
+      "id": 4,
+      "module": "tools:iterator",
+      "name": "Iterate Sequence Steps",
+      "parameters": {
+        "array": "{{3.body.sequence_steps}}"
+      }
+    },
+    {
+      "id": 5,
+      "module": "tools:arrayAggregator",
+      "name": "Aggregate Sequence",
+      "parameters": {
+        "source": "4",
+        "target_structure": "sequence_steps[]"
+      }
+    },
+    {
+      "id": 6,
+      "module": "http:makeRequest",
+      "name": "Approval Loop",
+      "parameters": {
+        "url": "https://approval.internal/request",
+        "method": "POST",
+        "body": "{\"event_id\":\"{{2.event_id}}\",\"subject\":{{2.subject}},\"sequence\":{{5.array}},\"timeout_seconds\":1800}"
+      }
+    },
+    {
+      "id": 7,
+      "module": "flow:router",
+      "name": "Approval Router",
+      "routes": [
+        {
+          "name": "approved",
+          "condition": "{{6.body.approval_status}} = approved"
+        },
+        {
+          "name": "blocked",
+          "condition": "fallback"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "module": "gmail:sendAnEmail",
+      "name": "Launch Sequence",
+      "route": "approved"
+    },
+    {
+      "id": 9,
+      "module": "salesforce:updateARecord",
+      "name": "Update CRM Activity",
+      "route": "approved",
+      "parameters": {
+        "object": "Lead",
+        "record_id": "{{2.subject.id}}"
+      }
+    },
+    {
+      "id": 10,
+      "module": "http:makeRequest",
+      "name": "Emit Output Event",
+      "parameters": {
+        "url": "https://events.internal/emit",
+        "method": "POST",
+        "body": "{\"event_type\":\"{{if(7.route = \\\"approved\\\"; \\\"sdr.sequence.ready\\\"; \\\"sdr.sequence.blocked\\\")}}\",\"event_id\":\"{{2.event_id}}\"}"
+      }
+    }
+  ]
+}

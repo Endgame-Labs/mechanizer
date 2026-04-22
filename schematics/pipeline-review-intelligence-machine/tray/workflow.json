@@ -1,0 +1,31 @@
+{
+  "name": "pipeline-review-intelligence-machine-v1",
+  "machine_id": "pipeline-review-intelligence-machine",
+  "version": "1.0.0",
+  "trigger": {
+    "type": "callable",
+    "input_schema": "gtm_event_v1",
+    "accepts_event_types": [
+      "pipeline.review.requested",
+      "deal.updated",
+      "activity.logged"
+    ]
+  },
+  "config": {
+    "idempotency_key": "event_id",
+    "approval_required_before_writes": true,
+    "slo": {
+      "p95_end_to_end_seconds": 300
+    }
+  },
+  "steps": [
+    { "id": "normalize_validate", "type": "script", "script": "assert_required_gtm_event_v1_fields" },
+    { "id": "enrich_account_health", "type": "http.client", "url": "https://cogs.internal/enrich_account_health/v1/execute", "method": "POST" },
+    { "id": "deal_score_reasoner", "type": "http.client", "url": "https://cogs.internal/deal_score_reasoner/v1/execute", "method": "POST" },
+    { "id": "directive_alignment", "type": "http.client", "url": "https://cogs.internal/directive_alignment/v1/execute", "method": "POST" },
+    { "id": "compose_outreach_message", "type": "http.client", "url": "https://cogs.internal/compose_outreach_message/v1/execute", "method": "POST" },
+    { "id": "route_exec_alert", "type": "http.client", "url": "https://cogs.internal/route_exec_alert/v1/execute", "method": "POST" },
+    { "id": "approval_loop", "type": "http.client", "url": "https://approvals.internal/v1/request", "method": "POST" },
+    { "id": "emit_output_event", "type": "http.client", "url": "https://events.internal/v1/publish", "method": "POST" }
+  ]
+}

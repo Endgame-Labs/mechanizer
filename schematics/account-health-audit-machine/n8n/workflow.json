@@ -1,0 +1,208 @@
+{
+  "name": "account-health-audit-machine-v1",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "timezone": "America/Los_Angeles"
+  },
+  "meta": {
+    "machine_id": "account-health-audit-machine",
+    "schema_version": "gtm_event_v1",
+    "idempotency_key": "event_id"
+  },
+  "nodes": [
+    {
+      "id": "Webhook_Ingest",
+      "name": "Webhook Ingest",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 260],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "account-health-audit-machine",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "Normalize_Validate",
+      "name": "Normalize + Validate gtm_event_v1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 260],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst required = ['event_id', 'event_type', 'source', 'occurred_at', 'trace', 'subject'];\nfor (const key of required) { if (!e[key]) throw new Error(`Missing ${key}`); }\nconst allowed = ['audit.run_requested', 'audit.snapshot_ready'];\nif (!allowed.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nreturn { ...e, schema_version: 'gtm_event_v1', ingested_at: e.ingested_at || new Date().toISOString(), trace: { ...e.trace, run_id: e.trace?.run_id || `${e.event_id}:${Date.now()}` } };"
+      }
+    },
+    {
+      "id": "Enrich_Account_Health",
+      "name": "enrich_account_health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [740, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/enrich_account_health/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "Deal_Score_Reasoner",
+      "name": "deal_score_reasoner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1000, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 10000
+    },
+    {
+      "id": "Directive_Alignment",
+      "name": "directive_alignment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1260, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "Route_Exec_Alert",
+      "name": "route_exec_alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1520, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/route_exec_alert/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "Narrative_Roadmap",
+      "name": "Build Narrative + Roadmap",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 260],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst score = Number(e.attributes?.health_score ?? e.attributes?.deal_score ?? 0);\nconst riskBand = score >= 80 ? 'critical' : score >= 65 ? 'high' : score >= 45 ? 'medium' : 'low';\nconst roadmap = [\n  { priority: 1, action: 'Confirm executive sponsor engagement and next milestone.' },\n  { priority: 2, action: 'Recover inactive product areas with owner-assigned plan.' },\n  { priority: 3, action: 'Align renewal narrative to measurable value outcomes.' }\n];\nreturn {\n  ...e,\n  event_type: 'account.health.audit.completed',\n  attributes: {\n    ...e.attributes,\n    risk_band: riskBand,\n    narrative_summary: `Deterministic audit shows ${riskBand} risk based on blended warehouse, CRM, and conversation signals.`,\n    roadmap\n  }\n};"
+      }
+    },
+    {
+      "id": "Emit_Output",
+      "name": "Emit account.health.audit.completed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2040, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Ingest": {
+      "main": [
+        [
+          {
+            "node": "Normalize + Validate gtm_event_v1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize + Validate gtm_event_v1": {
+      "main": [
+        [
+          {
+            "node": "enrich_account_health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "enrich_account_health": {
+      "main": [
+        [
+          {
+            "node": "deal_score_reasoner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deal_score_reasoner": {
+      "main": [
+        [
+          {
+            "node": "directive_alignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "directive_alignment": {
+      "main": [
+        [
+          {
+            "node": "route_exec_alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "route_exec_alert": {
+      "main": [
+        [
+          {
+            "node": "Build Narrative + Roadmap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Narrative + Roadmap": {
+      "main": [
+        [
+          {
+            "node": "Emit account.health.audit.completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

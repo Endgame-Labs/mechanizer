@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Stage Change Deal Review Machine</title>
+  <desc id="desc">Flow diagram for stage-change deal review with qualification and risk checks, approval-gated writeback, and Slack findings branch.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7fbff"/>
+      <stop offset="100%" stop-color="#eef6ef"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#1f5d66"/>
+    </marker>
+    <style>
+      .title{font:700 34px 'Inter', 'Segoe UI', sans-serif;fill:#123f46}
+      .label{font:600 17px 'Inter', 'Segoe UI', sans-serif;fill:#1d545d}
+      .meta{font:500 14px 'Inter', 'Segoe UI', sans-serif;fill:#4b666c}
+      .box{fill:#ffffff;stroke:#b8d4d7;stroke-width:2}
+      .cog{fill:#ecf9f4;stroke:#83cdb3;stroke-width:2}
+      .gate{fill:#fff4e7;stroke:#e7a156;stroke-width:2.5}
+      .line{stroke:#1f5d66;stroke-width:3;fill:none;marker-end:url(#arrow)}
+      .split{stroke:#6a8f95;stroke-width:2.5;stroke-dasharray:8 7;fill:none}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <text x="60" y="72" class="title">Stage Change Deal Review Machine</text>
+
+  <rect x="70" y="150" width="220" height="94" rx="14" class="box"/>
+  <text x="98" y="192" class="label">Stage Change Trigger</text>
+  <text x="98" y="214" class="meta">deal.stage_changed</text>
+
+  <rect x="330" y="150" width="240" height="94" rx="14" class="cog"/>
+  <text x="356" y="192" class="label">Qualification Review</text>
+  <text x="356" y="214" class="meta">missing fields + evidence</text>
+
+  <rect x="610" y="150" width="220" height="94" rx="14" class="cog"/>
+  <text x="646" y="192" class="label">Risk Scoring</text>
+  <text x="646" y="214" class="meta">risk band + confidence</text>
+
+  <rect x="870" y="150" width="250" height="94" rx="14" class="gate"/>
+  <text x="900" y="192" class="label">Approval Loop</text>
+  <text x="900" y="214" class="meta">gate before writeback</text>
+
+  <rect x="840" y="360" width="280" height="96" rx="14" class="box"/>
+  <text x="870" y="402" class="label">CRM Writeback</text>
+  <text x="870" y="424" class="meta">approved branch terminal</text>
+
+  <rect x="450" y="360" width="320" height="96" rx="14" class="box"/>
+  <text x="480" y="402" class="label">Slack Findings Post</text>
+  <text x="480" y="424" class="meta">non-approved branch terminal</text>
+
+  <path d="M290 197 L330 197" class="line"/>
+  <path d="M570 197 L610 197" class="line"/>
+  <path d="M830 197 L870 197" class="line"/>
+  <path d="M995 244 L995 360" class="line"/>
+  <path d="M920 244 C920 300,610 300,610 360" class="split"/>
+
+  <rect x="60" y="530" width="1080" height="64" rx="12" fill="#ffffff" stroke="#b8d4d7"/>
+  <text x="82" y="557" class="meta">Shared contract: gtm_event_v1. Shared cogs: enrich_account_health, deal_score_reasoner, directive_alignment, route_exec_alert, approval_loop.</text>
+  <text x="82" y="579" class="meta">Outputs: deal.stage_review.writeback_applied or deal.stage_review.findings_posted.</text>
+
+  <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#b8d4d7"/>
+  <text x="82" y="645" class="meta">Integrations: Salesforce Headless 360 + Endgame MCP/CLI + Slack findings channel.</text>
+</svg>
