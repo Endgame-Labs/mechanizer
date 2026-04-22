@@ -1,55 +1,80 @@
 # HEARTBEAT
 
 machine_id: deal-hygiene-machine
-heartbeat_version: v1
+heartbeat_version: v2
 schedule_cron: "*/15 * * * *"
 timezone: "America/Los_Angeles"
 grace_period_seconds: 120
-stale_after_seconds: 1800
+stale_after_seconds: 2700
+max_run_seconds: 900
+overlap_policy: forbid
 owner: "revenue-ops"
 alert_channels:
   - "slack:#revops-alerts"
   - "email:revops-oncall@example.com"
 
+lock:
+  strategy: advisory_or_lease_lock
+  key: "claw.deal_hygiene"
+  acquire_mode: try_lock
+  lease_seconds: 1200
+
+idempotency:
+  run_key: "machine_id+expected_tick_at"
+  action_key: "event_id+action_type+target_id"
+
+cursor:
+  lookback_window: "45m"
+  watermark_field: "last_successful_occurred_at"
+
+retry_policy:
+  bootstrap: "2 attempts (10s,30s)"
+  provider_transient: "3 attempts (15s,45s,120s)"
+  approval_transport: "2 attempts (15s,45s)"
+  non_retryable: [schema_failure, policy_deny, approval_timeout]
+
+dead_letter:
+  enabled: true
+  sink: "dlq.deal-hygiene"
+  max_receive_count: 5
+
+hitl:
+  required_for: "sfdc_writeback, outbound_email_send"
+  timeout_seconds: 1800
+  timeout_fallback: deny
+
+safe_mode:
+  enter_on: [stale_transition, repeated_transient_failures, approval_subsystem_outage]
+  blocks: [crm_writes, outbound_sends, irreversible_actions]
+  diagnostics_event: "deal.hygiene.machine.safe_mode"
+
+stale_handling:
+  stale_event: "deal.hygiene.machine.stale"
+  clear_condition: "one complete healthy run with heartbeat success"
+
 ## Cron Semantics
-- Format: `minute hour day_of_month month day_of_week`
-- `*/15 * * * *` runs every 15 minutes.
-- Interpret in `timezone` above.
+- Cron format: minute hour day_of_month month day_of_week
+- Scheduler uses timezone from this file.
+- Overlap is forbidden; skipped overlapping ticks count as missed schedules.
 
-## Runtime Contract
-- One due run every 15 minutes.
-- On-time run starts within `grace_period_seconds` (120s) of expected tick.
-- Overlap policy: `forbid` to prevent concurrent write attempts.
-- Run success requires:
-- full pipeline completion
-- approval decisions finalized
-- output events emitted
-- terminal heartbeat emitted
+## Success Criteria
+A run is successful only when all are true:
+1. deterministic validation and dedupe complete,
+2. smart-cog gates complete,
+3. HITL decisions resolved for risky actions,
+4. approved side effects executed idempotently,
+5. terminal event(s) emitted,
+6. heartbeat write succeeds.
 
-## Approval Contract
-- Salesforce writes and outbound messaging are approval-gated.
-- Prompt-unavailable approvals resolve by deny fallback.
-- Approval timeout defaults to 30 minutes and is treated as denied.
-- Denied actions are non-retryable for current run.
+## Alerting Rules
+- Warn after 1 missed due tick beyond grace window.
+- Page after 2 consecutive missed due ticks or stale transition.
+- Alert payload includes machine_id, run_id, expected_tick_at, last_success_at, failure_stage.
 
-## Retry Contract
-- Scheduler/bootstrap transient failures: 2 retries (10s, 30s).
-- Fetch/transform transient failures: 3 retries (5s, 20s, 60s).
-- Approval transport transient failures: 2 retries (10s, 30s).
-- Non-retryable: policy deny, approval timeout, schema/contract validation failure.
-
-## Safe-Mode Contract
-- Trigger safe mode on stale transition or dependency degradation.
-- Safe mode behavior:
-- perform read-only hygiene scoring and diagnostics
-- block all write side effects
-- emit `deal_hygiene.machine.safe_mode`
-- Exit safe mode only after one complete successful run.
-
-## Stale and Alert Rules
-- Mark stale when no successful heartbeat for `stale_after_seconds` (1800s).
-- On stale transition:
-- emit `deal_hygiene.machine.stale`
-- alert all `alert_channels`
-- enforce safe mode
-- Alert immediately on 2 consecutive missed due runs.
+## References
+- Kubernetes CronJob: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+- APScheduler user guide: https://apscheduler.readthedocs.io/en/master/userguide.html
+- PostgreSQL explicit/advisory locking: https://www.postgresql.org/docs/current/explicit-locking.html
+- PostgreSQL advisory lock functions: https://www.postgresql.org/docs/9.5/functions-admin.html
+- Amazon SQS DLQ: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html
+- LangGraph durable execution: https://docs.langchain.com/oss/python/langgraph/durable-execution

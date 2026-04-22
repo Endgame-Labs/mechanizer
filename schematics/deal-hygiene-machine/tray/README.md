@@ -1,48 +1,49 @@
 # Tray Adapter (deal-hygiene-machine)
 
-Tray implementation of `deal-hygiene-machine` using callable ingestion, policy/approval gating, and controlled Salesforce writeback.
+Tray runtime for `deal-hygiene-machine` using composable callable workflows, deterministic policy checks, and an approval-gated Salesforce write path.
 
-## Reference Artifact
-- `workflow.json`: runtime blueprint including idempotency, approval branch, and SDLC metadata.
+## Artifact
+- `workflow.json`: Tray project workflow artifact for import/export promotion.
 
-## Trigger Mapping
-- Trigger type: Callable Trigger receiving canonical `gtm_event_v1`.
-- Strict input validation (required keys and type checks) before cog execution.
-- Reject invalid payloads into dead-letter path with full trace.
+## Tray Runtime Design
+1. **Callable Trigger** (`Trigger and respond`) receives canonical `gtm_event_v1`.
+2. Validate + normalize payload with Script + Boolean/Branch logic.
+3. Use `Call workflow` (`Fire and wait for response`) for reusable smart cogs:
+- `context_enrichment_cog`
+- `deal_scoring_cog`
+- `directive_alignment_cog`
+4. Draft mutation plan (`CloseDate`, `NextStep`, stage notes).
+5. Run `approval_loop_cog` as a callable child workflow.
+6. Branch on approval outcome:
+- `approved`: write to Salesforce + emit `deal.hygiene.remediated`
+- `blocked`: emit `deal.hygiene.deferred` (no CRM mutation)
 
-## Transform and Cog Stages
-1. `normalize_validate`
-2. `idempotency_check`
-3. `enrich_account_health`
-4. `deal_score_reasoner`
-5. `directive_alignment`
-6. `route_exec_alert`
-7. `approval_loop` (mandatory before writes)
-8. Branch to approved/deferred
-9. Approved branch performs SFDC update and emits `deal.hygiene.remediated`
-10. Deferred branch emits `deal.hygiene.deferred`
+## Idempotency and State
+- Use `Data Storage` key `deal-hygiene:{event_id}` at `Project` scope.
+- Guard against duplicate event replay before side effects.
+- Store terminal status and approval decision.
+- Never store secrets in Data Storage (visible in logs); use Tray authentications / `$.auth`.
 
-## Approval Contract
-- Approval is the last gate before write operations.
-- Rejected/expired approvals route to deferred event with `attributes.approval_status`.
-- No Salesforce write occurs on deferred branch.
+## Error Handling
+- Default: workflow-level error handling for transient connector errors.
+- High-risk steps (`salesforce.update_record`, outbound notifications): connector-level **Manual error handling** with explicit failure branch.
+- Failure branch writes dead-letter payload (`machine_id`, `event_id`, `trace_id`, `step_log_url`, connector error).
 
-## Error and Retry Path
-- Transient connector failures: Tray automatic retry/backoff.
-- Deterministic policy failures: no retries, route to deferred/dead-letter.
-- Connector-level manual error handling enabled for high-risk write steps.
-- Alerting workflow receives `step_log_url` for one-click debug/replay.
+## SDLC / Promotion
+1. Build/test in dev Project.
+2. Create Project Version.
+3. Export JSON from selected version.
+4. Use Import Requirements + Import Preview for target workspace.
+5. Import with auth/config mappings.
+6. Create destination version and publish according to release policy.
 
-## SDLC / Environment Promotion
-1. Dev project: implement and test with sandbox auth.
-2. Save annotated project versions at stable checkpoints.
-3. Export version JSON and import into stage/prod project.
-4. Complete authentication mapping and dependency mapping at import.
-5. Resolve project config values per environment.
-6. Use pre-import checks/previews before import commit.
-7. Manual first production import; subsequent imports can be automated with Tray APIs if auth dependencies are unchanged.
+## Approval/HITL rule
+- Approval is required before any Salesforce update or external outbound action.
 
-## Versioning Notes
-- Keep source and destination version numbers aligned where possible.
-- Record migration notes for any contract-impacting change.
-- Maintain promotion log with version, approver, and deployment timestamp.
+## References
+- Callable workflows: https://tray.ai/documentation/platform/automation-integration/building-workflows/composable-workflows/calling-other-workflows
+- Callable trigger: https://tray.ai/documentation/connectors/trigger/callable-trigger
+- Callable response: https://tray.ai/documentation/connectors/core/callable-workflow-response
+- Manual error handling: https://tray.ai/documentation/platform/automation-integration/building-workflows/error-handling/manual-error-handling
+- Data Storage: https://tray.ai/documentation/connectors/core/data-storage
+- Projects API (versions/import/export): https://tray.ai/documentation/developer/platform-apis/projects

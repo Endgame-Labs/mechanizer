@@ -1,56 +1,80 @@
 # HEARTBEAT
 
 machine_id: nrr-machine
-heartbeat_version: v1
+heartbeat_version: v2
 schedule_cron: "*/15 * * * *"
 timezone: "America/Los_Angeles"
 grace_period_seconds: 120
-stale_after_seconds: 1800
+stale_after_seconds: 2700
+max_run_seconds: 900
+overlap_policy: forbid
 owner: "revenue-ops"
 alert_channels:
   - "slack:#revops-alerts"
   - "email:revops-oncall@example.com"
 
+lock:
+  strategy: advisory_or_lease_lock
+  key: "claw.nrr"
+  acquire_mode: try_lock
+  lease_seconds: 1200
+
+idempotency:
+  run_key: "machine_id+expected_tick_at"
+  action_key: "event_id+action_type+target_id"
+
+cursor:
+  lookback_window: "45m"
+  watermark_field: "last_successful_occurred_at"
+
+retry_policy:
+  bootstrap: "2 attempts (10s,30s)"
+  provider_transient: "3 attempts (15s,45s,120s)"
+  approval_transport: "2 attempts (15s,45s)"
+  non_retryable: [schema_failure, policy_deny, approval_timeout]
+
+dead_letter:
+  enabled: true
+  sink: "dlq.nrr"
+  max_receive_count: 5
+
+hitl:
+  required_for: "outbound_email_send, sfdc_writeback"
+  timeout_seconds: 1800
+  timeout_fallback: deny
+
+safe_mode:
+  enter_on: [stale_transition, repeated_transient_failures, approval_subsystem_outage]
+  blocks: [crm_writes, outbound_sends, irreversible_actions]
+  diagnostics_event: "nrr.machine.safe_mode"
+
+stale_handling:
+  stale_event: "nrr.machine.stale"
+  clear_condition: "one complete healthy run with heartbeat success"
+
 ## Cron Semantics
-- Format: `minute hour day_of_month month day_of_week`
-- `*/15 * * * *` runs every 15 minutes.
-- Interpret in `timezone` above.
+- Cron format: minute hour day_of_month month day_of_week
+- Scheduler uses timezone from this file.
+- Overlap is forbidden; skipped overlapping ticks count as missed schedules.
 
-## Runtime Contract
-- One due run every 15 minutes.
-- On-time start window: scheduled tick plus `grace_period_seconds` (120s).
-- Overlap policy: `forbid` (skip overlapping start and count as missed tick).
-- Success requires:
-- pipeline completion
-- approval outcomes finalized
-- output events emitted
-- final heartbeat emitted
+## Success Criteria
+A run is successful only when all are true:
+1. deterministic validation and dedupe complete,
+2. smart-cog gates complete,
+3. HITL decisions resolved for risky actions,
+4. approved side effects executed idempotently,
+5. terminal event(s) emitted,
+6. heartbeat write succeeds.
 
-## Approval Contract
-- Outbound email and Salesforce writes require explicit approval completion.
-- Prompt-unavailable approval path resolves with deny behavior.
-- Approval timeout defaults to 30 minutes and is treated as denied.
-- Denied actions must not be retried unless a new run creates a new intent.
+## Alerting Rules
+- Warn after 1 missed due tick beyond grace window.
+- Page after 2 consecutive missed due ticks or stale transition.
+- Alert payload includes machine_id, run_id, expected_tick_at, last_success_at, failure_stage.
 
-## Retry Contract
-- Scheduler/bootstrap transient failures: 2 retries (10s, 30s).
-- Account-stage transient failures: 3 retries (5s, 20s, 60s).
-- Approval transport transient failures: 2 retries (10s, 30s).
-- Non-retryable: schema validation failure, policy deny, approval timeout, incompatible input contract.
-
-## Safe-Mode Contract
-- Trigger safe mode when stale or when approval/side-effect dependencies are unhealthy.
-- Safe mode behavior:
-- continue scoring and diagnostics
-- block all outbound/SFDC side effects
-- emit `nrr.machine.safe_mode` with reason
-- Exit safe mode only after one full successful run.
-
-## Stale and Alert Contract
-- Stale threshold: no successful heartbeat for `stale_after_seconds` (1800s).
-- On stale transition:
-- emit `nrr.machine.stale`
-- alert each channel in `alert_channels`
-- enforce safe mode until recovery
-- Page on-call after 2 consecutive missed due runs.
-- Alert payload must include `machine_id`, `run_id`, `last_success_at`, `failure_stage`, `safe_mode`.
+## References
+- Kubernetes CronJob: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+- APScheduler user guide: https://apscheduler.readthedocs.io/en/master/userguide.html
+- PostgreSQL explicit/advisory locking: https://www.postgresql.org/docs/current/explicit-locking.html
+- PostgreSQL advisory lock functions: https://www.postgresql.org/docs/9.5/functions-admin.html
+- Amazon SQS DLQ: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html
+- LangGraph durable execution: https://docs.langchain.com/oss/python/langgraph/durable-execution

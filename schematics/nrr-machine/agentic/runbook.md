@@ -1,106 +1,67 @@
 # Agentic Runbook (nrr-machine)
 
-## Input and Preconditions
-- Input contract: `gtm_event_v1`
-- Supported `event_type` values: `account.health_changed`, `usage.declined`, `renewal.window_opened`
-- Required fields: `event_id`, `event_type`, `source`, `occurred_at`, `subject.id`
-- Hard gate: skip execution if account segment is not `low_touch` or `no_touch`
+## Runtime Contract
+- Orchestration shape: **planner -> executor -> evaluator** with checkpoint persistence.
+- Input schema: `gtm_event_v1`
+- Output schema: `gtm_event_v1`
+- Idempotency key: `event_id` (side effects use `event_id + action_type + target_id`).
 
-## Runtime Assumptions
-- Provider-neutral runtime (OpenAI Agents SDK, LangGraph, or CrewAI style orchestration).
-- Checkpoint state at every stage boundary; resume from checkpoint on retries and HITL return.
-- MCP pattern preferred for context providers and tool routers (`tools/call`, `resources/read`, optional `prompts/get`).
+## Canonical Ingest Contract (`gtm_event_v1`)
+Required keys at stage entry:
+- `schema_version`, `event_id`, `event_type`, `source`, `occurred_at`, `ingested_at`
+- `trace.trace_id`
+- `subject.entity_type`, `subject.entity_id`
 
-## Stage 1: Normalize and Validate
-- Validate schema and semantic requirements.
-- Generate `run_id` and initialize trace lineage.
-- Check dedupe store by `event_id`; exit if already completed.
+## Stage 1: Planner (Validate, Dedupe, Plan)
+1. Validate contract and semantic preconditions for allowed `event_type` values.
+2. Dedupe by `event_id`; if already terminal, return prior outcome metadata.
+3. Build execution plan:
+   - context fetch tools
+   - scoring/enrichment tools
+   - proposed side effects
+4. Assign `risk_tier` (`low|medium|high`) and approval requirements.
 
-## Stage 2: Context Enrichment
-Tool requirements:
-- `endgame_mcp` + `endgame-cli`: directive context, conversation history, account timeline
-- `salesforce_headless_360`: renewal and opportunity context
-- telemetry + billing readers: usage trend and commercial indicators
+## Stage 2: Executor (Tools + Cogs)
+1. Read context through MCP/CLI adapters (CRM, telemetry, conversation history, directives).
+2. Execute reusable cogs in declared order.
+3. Generate normalized candidate output (`draft_event`) and `proposed_actions[]`.
+4. Persist per-tool latency, retries, and evidence references.
 
-Outputs:
-- canonical feature set: `risk_signals`, `expansion_signals`, `renewal_signals`
-- source freshness timestamps for each provider
+### MCP/CLI Tool Contract Rules
+- Discover: `tools/list`, `resources/list`, `prompts/list`
+- Invoke/read: `tools/call`, `resources/read`, `prompts/get`
+- Reject unsafe arguments before execution (domain, scope, tenant, object ownership checks).
+- For CLI-executed actions: non-interactive only, bounded timeout, capture stdout/stderr, audit every invocation.
 
-## Stage 3: Scoring and Play Selection
-Deterministic scoring baseline:
-- `risk_score = 0.5*health_decline + 0.3*renewal_risk + 0.2*engagement_drop`
-- `expansion_score = 0.4*seat_growth + 0.3*feature_adoption + 0.3*intent_signals`
-- `final_score = max(risk_score, expansion_score)`
+## Stage 3: Evaluator (Guardrails + HITL + Emit)
+1. **Input guardrail**: schema + scope + replay constraints.
+2. **Tool guardrail**: allowed tool/action set for this machine.
+3. **Output guardrail**: required terminal attributes + evidence completeness.
+4. **Policy guardrail**: directive alignment and prohibited-language checks.
+5. **Approval gate** (when required) before any write/email/send action.
+6. Execute approved side effects and emit final `gtm_event_v1` terminal event.
 
-Play selection:
-- `critical_retention` if `risk_score >= 78`
-- `expansion_push` if `expansion_score >= 72` and `risk_score < 60`
-- `monitor_and_nudge` otherwise
+## OpenAI and Claude Execution Notes
+- OpenAI-style: use Responses/Agents SDK loop; `tool_choice` and MCP approval configs can enforce stronger control.
+- Claude-style: run tool loop until stop reason is terminal; on `tool_use`, return matched `tool_result` blocks in the next user turn.
+- For Claude MCP connector mode, remote MCP tool calls are supported directly; prompts/resources require client-side MCP handling.
 
-## Stage 4: Draft Plan and Messaging
-- Draft outbound communication and SFDC update plan.
-- Attach reason codes and supporting evidence links.
-- Bind all recommendations to directive IDs.
+## HITL Gate for Email/CRM Writes
+- Required for email or sequencer sends and SFDC writes.
+- Decision envelope: approve/reject/edit with template-safe edit constraints.
+- Reject or timeout emits nrr.play.blocked and records policy reason codes.
 
-## Stage 5: Guardrails and Policy Checks
-Policy checks must pass before approval request:
-- Contract integrity: no missing required output keys.
-- Directive alignment: no blocked language (discounting, unsupported claims).
-- Action scope: no outbound/SFDC write outside approved play template.
-- Risk policy: strategic/enterprise segment must be blocked (manual handoff only).
-- Tool guardrails: reject unsafe or out-of-scope tool arguments before execution.
-- Output guardrails: reject incomplete action plans that cannot be explained with evidence.
+## Scheduled/Background Semantics
+- Event-driven default; scheduled mode supported for periodic sweeps.
+- Background execution permitted for long context pulls or approval waits.
+- Resume from checkpoint; never replay already-committed side effects.
 
-Failure behavior:
-- Any failed policy emits `nrr.play.blocked`.
-- Include `policy_code`, `policy_detail`, and suggested remediation.
+## Terminal Events
+- nrr.play.executed
+- nrr.play.blocked
+- nrr.play.failed
 
-## Stage 6: Approval Loop (Mandatory for Side Effects)
-- Send approval request with:
-- `event_id`, `run_id`, `account_id`, score snapshot, action plan, policy check results
-- Wait up to 30 minutes.
-- Retry approval API up to 2 times on transport errors.
-- HITL decision envelope supports `approve`, `reject`, and constrained `edit` (template-safe fields only).
-- Outcomes:
-- `approved`: proceed to Stage 7
-- `rejected`: emit blocked event and stop
-- `timeout`: emit blocked event (`approval_timeout`) and stop
-
-## Stage 7: Execute Side Effects
-- Outbound message send (email/sequencer) only if approved.
-- Salesforce writes only if approved.
-- Enforce idempotent write keys: `event_id + action_type + target_id`.
-- Retry once for transient 5xx errors.
-
-## Stage 8: Emit Output and Audit
-- Emit `gtm_event_v1` output: `nrr.play.executed`, `nrr.play.blocked`, or `nrr.play.failed`.
-- Persist audit record:
-- score inputs/outputs
-- selected play
-- policy decisions
-- approval decision metadata
-- side-effect result IDs
-
-## Observability SLOs
-- Realtime path P95 end-to-end <= 240s
-- Approval latency P95 <= 20m
-- Failed side effects < 2% daily
-- Missing trace lineage = 0 tolerated
-
-## Trace Requirements
-- Minimum span set: `ingest_validate`, `context_fetch`, `score`, `draft`, `policy_gate`, `approval_wait`, `execute`, `emit`.
-- Every span includes `machine_id`, `event_id`, `run_id`, `trace_id`, and `policy_result`.
-- Capture retry attempts and cost/latency metadata per tool call.
-
-## Retry and Incident Handling
-- Retry budget: max 3 stage retries per run (excluding approval wait polling).
-- After retry budget exhausted, mark `failed_terminal` and alert on-call.
-- If 3 consecutive `failed_terminal` runs in 15 minutes, pause outbound actions and keep scoring-only mode until cleared.
-
-## Evals
-- Maintain fixed benchmark set for play-selection consistency across runtime/provider changes.
-- Run trace-based grading on:
-  - Play correctness and justification quality.
-  - Policy/guardrail precision (blocked vs allowed decisions).
-  - HITL outcome handling correctness.
-- Require no safety regressions before rollout of prompt, model, or orchestration changes.
+## Operational SLOs and Failure Policy
+- Retry transient tool failures with exponential backoff (max 3 attempts unless stricter machine policy applies).
+- On policy/HITL denial, emit blocked/deferred terminal event with reason codes.
+- On exhausted retries, emit failed terminal event and alert owner channel.

@@ -1,95 +1,87 @@
 {
   "zap_name": "Tier-3 Account Coverage Machine",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "machine_id": "tier-3-account-coverage-machine",
-  "description": "Monitors long-tail accounts, surfaces churn and expansion triggers, gates outreach through approval, and emits canonical terminal events.",
+  "description": "Monitors long-tail accounts and executes approval-gated outreach plays.",
   "trigger": {
-    "app": "webhooks_by_zapier",
-    "event": "catch_hook",
-    "path": "/tier3-account-coverage/events"
-  },
-  "gtm_event_v1_mapping": {
-    "required": [
-      "schema_version",
-      "event_id",
-      "event_type",
-      "source",
-      "occurred_at",
-      "ingested_at",
-      "trace",
-      "subject",
-      "attributes"
-    ]
+    "primary": {
+      "app": "webhooks_by_zapier",
+      "event": "catch_hook",
+      "path": "/tier3-account-coverage/events"
+    },
+    "alternate": {
+      "app": "schedule_by_zapier",
+      "event": "every_6_hours"
+    }
   },
   "steps": [
     {
       "id": "validate_contract",
-      "type": "code",
-      "runtime": "javascript",
-      "output_fields": [
-        "event_valid",
-        "validation_error"
-      ]
+      "app": "code_by_zapier",
+      "event": "run_javascript"
     },
     {
       "id": "filter_supported_events",
-      "type": "filter",
+      "app": "filter_by_zapier",
+      "event": "only_continue_if",
       "rule": "event_type in ['account.health_changed','usage.declined','renewal.window_opened','intent.signal_detected']"
     },
     {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "tier3-coverage:${event_id}"
+    },
+    {
       "id": "fetch_context",
-      "type": "webhook_post",
-      "url": "https://context.internal/enrich",
-      "payload": {
-        "providers": [
-          "salesforce_headless_360",
-          "product_telemetry",
-          "stripe",
-          "support_system",
-          "endgame_mcp"
-        ],
-        "event": "{{trigger.raw_body}}"
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://context.internal/enrich",
+        "json": {
+          "providers": [
+            "endgame_mcp_or_cli",
+            "salesforce_headless_360",
+            "product_telemetry",
+            "support_system"
+          ]
+        }
       }
     },
     {
       "id": "segment_filter",
-      "type": "filter",
+      "app": "filter_by_zapier",
+      "event": "only_continue_if",
       "rule": "segment in ['low_touch','no_touch']"
     },
     {
       "id": "score_account",
-      "type": "code",
-      "runtime": "javascript",
-      "logic": "churn_score=Math.round((0.5*health_decline)+(0.3*renewal_risk)+(0.2*support_escalation)); expansion_score=Math.round((0.4*adoption_growth)+(0.35*intent_signal)+(0.25*seat_momentum)); play=(churn_score>=76)?'churn_prevent_nudge':((expansion_score>=72 && churn_score<60)?'expansion_probe':'monitor_only');"
+      "app": "code_by_zapier",
+      "event": "run_javascript"
     },
     {
       "id": "compose_outreach",
-      "type": "webhook_post",
-      "url": "https://planner.internal/compose",
-      "payload": {
-        "account_id": "{{subject.id}}",
-        "play": "{{steps.score_account.play}}"
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://planner.internal/compose"
       }
     },
     {
       "id": "approval_loop",
-      "type": "webhook_post",
-      "url": "https://approval.internal/request",
-      "payload": {
-        "event_id": "{{event_id}}",
-        "account_id": "{{subject.id}}",
-        "play": "{{steps.score_account.play}}",
-        "actions": [
-          "outbound_email_send",
-          "crm_note_append"
-        ],
-        "timeout_seconds": 1800
+      "app": "human_in_the_loop",
+      "event": "request_approval",
+      "fallback": {
+        "app": "webhooks_by_zapier",
+        "event": "post",
+        "url": "https://approval.internal/request"
       }
     },
     {
       "id": "approval_paths",
-      "type": "paths",
-      "branches": [
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
         {
           "name": "approved",
           "condition": "approval_status == 'approved'",
@@ -106,11 +98,13 @@
             },
             {
               "id": "emit_executed",
-              "type": "webhook_post",
-              "url": "https://events.internal/emit",
-              "payload": {
-                "event_type": "tier3.coverage.executed",
-                "event_id": "{{event_id}}"
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "tier3.coverage.executed"
+                }
               }
             }
           ]
@@ -121,12 +115,13 @@
           "actions": [
             {
               "id": "emit_blocked",
-              "type": "webhook_post",
-              "url": "https://events.internal/emit",
-              "payload": {
-                "event_type": "tier3.coverage.blocked",
-                "event_id": "{{event_id}}",
-                "reason": "approval_rejected_or_timeout"
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "tier3.coverage.blocked"
+                }
               }
             }
           ]

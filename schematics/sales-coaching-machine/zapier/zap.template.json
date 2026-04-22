@@ -1,13 +1,17 @@
 {
-  "title": "Sales Coaching - Call Completed",
-  "version": "1.1.0",
+  "zap_name": "Sales Coaching - Call Completed",
+  "version": "1.2.0",
   "machine_id": "sales-coaching-machine",
+  "description": "Processes call-completed events to generate directive-aligned coaching actions with approval-gated CRM writes.",
   "trigger": {
-    "app": "webhooks",
+    "app": "webhooks_by_zapier",
     "event": "catch_hook",
-    "settings": {
-      "hook_path": "sales-coaching-call-completed"
-    }
+    "path": "/sales-coaching/call-completed",
+    "accepted_sources": [
+      "gong",
+      "zoom",
+      "chorus"
+    ]
   },
   "gtm_event_v1_mapping": {
     "required": [
@@ -25,76 +29,77 @@
   "steps": [
     {
       "id": "filter_call_completed",
-      "app": "filter",
+      "app": "filter_by_zapier",
       "event": "only_continue_if",
       "conditions": [
         {
-          "field": "type",
+          "field": "event_type",
           "operator": "equals",
           "value": "call.completed"
         },
         {
-          "field": "call.opportunity_id",
+          "field": "attributes.opportunity_id",
           "operator": "exists"
         }
       ]
     },
     {
       "id": "normalize_gtm_event",
-      "app": "code",
-      "event": "run_javascript",
-      "input": {
-        "script": "const input = inputData.payload; return {schema_version: 'gtm_event_v1', event_id: input.id, event_type: input.type, source: 'gong', occurred_at: input.call.occurred_at, ingested_at: new Date().toISOString(), trace: {trace_id: `trace_${input.id}`}, subject: {id: input.call.id, entity_type: 'call'}, attributes: {opportunity_id: input.call.opportunity_id, account_id: input.call.account_id, rep_email: input.call.rep_email, directive_set_version: 'sko_2026_q2_v3'}};"
-      }
+      "app": "code_by_zapier",
+      "event": "run_javascript"
+    },
+    {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "sales-coaching:${event_id}"
     },
     {
       "id": "fetch_context",
-      "app": "webhooks",
+      "app": "webhooks_by_zapier",
       "event": "post",
       "request": {
-        "url": "https://api.endgame.example/v1/context/sales-coaching",
+        "url": "https://context.internal/sales-coaching/enrich",
         "json": {
-          "trace": "{{steps.normalize_gtm_event.trace}}",
-          "subject": "{{steps.normalize_gtm_event.subject}}",
-          "attributes": "{{steps.normalize_gtm_event.attributes}}"
+          "event": "{{steps.normalize_gtm_event.output}}",
+          "context_providers": [
+            "endgame_mcp_or_cli",
+            "salesforce_headless_360",
+            "enablement_provider",
+            "call_intelligence_provider"
+          ]
         }
       }
     },
     {
       "id": "directive_alignment",
-      "app": "webhooks",
+      "app": "webhooks_by_zapier",
       "event": "post",
       "request": {
-        "url": "https://api.directive-alignment.example/v1/check",
-        "json": {
-          "recommendation": "Re-validate economic buyer + agreed pain metrics on next call",
-          "directive_set_version": "{{steps.normalize_gtm_event.attributes.directive_set_version}}",
-          "context": "{{steps.fetch_context.body}}"
-        }
+        "url": "https://cogs.internal/directive_alignment/v1/execute"
       }
     },
     {
       "id": "approval_loop",
-      "app": "webhooks",
-      "event": "post",
-      "request": {
-        "url": "https://approval.internal/request",
-        "json": {
-          "event_id": "{{steps.normalize_gtm_event.event_id}}",
-          "opportunity_id": "{{steps.normalize_gtm_event.attributes.opportunity_id}}",
-          "rep_email": "{{steps.normalize_gtm_event.attributes.rep_email}}",
-          "alignment_status": "{{steps.directive_alignment.body.status}}",
-          "alignment_score": "{{steps.directive_alignment.body.score}}",
-          "proposed_actions": [
-            "create_salesforce_task"
-          ],
-          "timeout_seconds": 1800
-        }
+      "app": "human_in_the_loop",
+      "event": "request_approval",
+      "fallback": {
+        "app": "webhooks_by_zapier",
+        "event": "post",
+        "url": "https://approval.internal/request"
+      },
+      "request_payload": {
+        "event_id": "{{event_id}}",
+        "opportunity_id": "{{attributes.opportunity_id}}",
+        "alignment_score": "{{steps.directive_alignment.body.score}}",
+        "proposed_actions": [
+          "create_salesforce_task"
+        ]
       }
     },
     {
       "id": "alignment_paths",
-      "app": "paths",
+      "app": "paths_by_zapier",
       "event": "branch",
       "paths": [
         {
@@ -106,172 +111,98 @@
               "value": "pass"
             },
             {
-              "field": "{{steps.directive_alignment.body.score}}",
-              "operator": "greater_than_or_equal",
-              "value": 0.85
-            },
-            {
-              "field": "{{steps.approval_loop.body.approval_status}}",
+              "field": "{{steps.approval_loop.approval_status}}",
               "operator": "equals",
               "value": "approved"
             }
           ],
           "actions": [
             {
+              "id": "create_salesforce_task",
               "app": "salesforce",
               "event": "create_record",
               "object": "Task",
-              "fields": {
-                "Subject": "Coaching: Discovery and MEDDPICC Re-validation",
-                "Description": "Directive-aligned recommendation generated from completed call",
-                "WhatId": "{{steps.normalize_gtm_event.attributes.opportunity_id}}",
-                "OwnerEmail__c": "{{steps.normalize_gtm_event.attributes.rep_email}}",
-                "TraceId__c": "{{steps.normalize_gtm_event.trace.trace_id}}"
-              }
+              "idempotency_key": "{{event_id}}"
             },
             {
               "id": "emit_approved_event",
-              "app": "webhooks",
+              "app": "webhooks_by_zapier",
               "event": "post",
               "request": {
-                "url": "https://event-bus.example/v1/events",
+                "url": "https://events.internal/emit",
                 "json": {
-                  "event_type": "coaching.recommendation.created",
-                  "source": "zapier",
-                  "trace": "{{steps.normalize_gtm_event.trace}}",
-                  "attributes": {
-                    "alignment_status": "{{steps.directive_alignment.body.status}}",
-                    "alignment_score": "{{steps.directive_alignment.body.score}}",
-                    "approval_status": "{{steps.approval_loop.body.approval_status}}"
-                  }
+                  "event_type": "coaching.recommendation.created"
                 }
               }
             }
           ]
         },
         {
-          "name": "blocked_not_approved",
+          "name": "blocked",
           "conditions": [
             {
-              "field": "{{steps.approval_loop.body.approval_status}}",
+              "field": "{{steps.approval_loop.approval_status}}",
               "operator": "does_not_equal",
               "value": "approved"
             }
           ],
           "actions": [
             {
+              "id": "notify_manager",
               "app": "slack",
-              "event": "send_channel_message",
-              "fields": {
-                "channel": "#revops-escalations",
-                "message": "Coaching action blocked for {{steps.normalize_gtm_event.subject.id}} (alignment={{steps.directive_alignment.body.status}}, approval={{steps.approval_loop.body.approval_status}})."
-              }
+              "event": "send_channel_message"
             },
             {
               "id": "emit_blocked_event",
-              "app": "webhooks",
+              "app": "webhooks_by_zapier",
               "event": "post",
               "request": {
-                "url": "https://event-bus.example/v1/events",
+                "url": "https://events.internal/emit",
                 "json": {
-                  "event_type": "coaching.recommendation.blocked",
-                  "source": "zapier",
-                  "trace": "{{steps.normalize_gtm_event.trace}}",
-                  "attributes": {
-                    "alignment_status": "{{steps.directive_alignment.body.status}}",
-                    "alignment_score": "{{steps.directive_alignment.body.score}}",
-                    "approval_status": "{{steps.approval_loop.body.approval_status}}"
-                  }
-                }
-              }
-            }
-          ]
-        },
-        {
-          "name": "blocked_misaligned",
-          "conditions": [
-            {
-              "field": "{{steps.directive_alignment.body.status}}",
-              "operator": "does_not_equal",
-              "value": "pass"
-            }
-          ],
-          "actions": [
-            {
-              "app": "slack",
-              "event": "send_channel_message",
-              "fields": {
-                "channel": "#revops-escalations",
-                "message": "Coaching action blocked for {{steps.normalize_gtm_event.subject.id}} (alignment={{steps.directive_alignment.body.status}}, approval={{steps.approval_loop.body.approval_status}})."
-              }
-            },
-            {
-              "id": "emit_blocked_event",
-              "app": "webhooks",
-              "event": "post",
-              "request": {
-                "url": "https://event-bus.example/v1/events",
-                "json": {
-                  "event_type": "coaching.recommendation.blocked",
-                  "source": "zapier",
-                  "trace": "{{steps.normalize_gtm_event.trace}}",
-                  "attributes": {
-                    "alignment_status": "{{steps.directive_alignment.body.status}}",
-                    "alignment_score": "{{steps.directive_alignment.body.score}}",
-                    "approval_status": "{{steps.approval_loop.body.approval_status}}"
-                  }
+                  "event_type": "coaching.recommendation.blocked"
                 }
               }
             }
           ]
         }
       ]
+    },
+    {
+      "id": "idempotency_store",
+      "app": "storage_by_zapier",
+      "event": "set_value",
+      "key_template": "sales-coaching:${event_id}",
+      "value_fields": [
+        "event_id",
+        "approval_status",
+        "alignment_status",
+        "trace.trace_id",
+        "trace.run_id"
+      ]
     }
   ],
-  "zapier_runtime_constraints": {
+  "zapier_runtime_profile": {
     "paths": {
-      "max_path_branches_per_group": 10,
-      "max_nested_path_steps_per_zap": 3,
-      "execution": "sequential_left_to_right",
+      "max_branches_per_group": 10,
+      "max_nested_paths_steps": 3,
+      "max_total_steps": 100,
       "must_be_final_step": true
     },
-    "filters": {
-      "consume_tasks": false,
-      "behavior": "stops_downstream_actions_when_conditions_fail"
-    },
-    "code": {
-      "supported_languages": [
-        "javascript",
-        "python"
-      ],
-      "javascript_runtime": "nodejs_22",
-      "io_limit_mb": 6,
-      "plan_specific_limits": true
-    },
     "webhooks": {
-      "catch_raw_hook_max_mb": 2,
-      "max_trigger_payload_mb": 10,
-      "max_action_payload_mb": 5,
-      "rate_limit": {
-        "requests_per_5_minutes_per_user": 20000,
-        "legacy_requests_per_5_minutes_per_zap": 1000
+      "raw_hook_max_mb": 2,
+      "payload_limit_mb": {
+        "triggers": 10,
+        "actions": 5
       }
     },
     "replay": {
-      "max_autoreplay_attempts": 5,
-      "filter_and_paths_replay_supported": false,
-      "replay_window_days": 60
-    },
-    "templates": {
-      "classic_template_includes_values": false,
-      "classic_template_supports_code_steps": false,
-      "guided_templates_include_values": true
-    },
-    "import_export": {
-      "team_or_enterprise_required": true,
-      "json_only": true,
-      "non_admin_export_scope": "owned_zaps_only",
-      "admin_export_scope": "all_account_zaps"
+      "manual_replay_available": true,
+      "autoreplay_available_on": [
+        "professional",
+        "team",
+        "enterprise"
+      ],
+      "human_in_the_loop_may_not_autoreplay_in_some_configurations": true
     }
   }
 }

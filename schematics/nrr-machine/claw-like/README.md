@@ -1,55 +1,59 @@
 # Claw-like Adapter (nrr-machine)
 
-`claw-like` is the scheduled runtime for `nrr-machine` when no visual flow orchestrator is used.
-`HEARTBEAT.md` is the contract source for cadence, liveness, stale detection, and escalation.
+## Purpose
+Run retention and expansion scoring loops with approval-gated outbound and CRM actions.
 
-## Runtime Model
-1. Parse `schedule_cron` and `timezone` from `HEARTBEAT.md` and compute `expected_tick_at`.
-2. Enforce one active run at a time (`run_lock=forbid-overlap`) so a delayed run cannot overlap the next tick.
-3. Start run with immutable metadata: `run_id`, `machine_id`, `scheduled_for`, `started_at`.
-4. Execute pipeline stages with stage-level checkpoints:
-- discover candidate accounts
-- normalize events to canonical contract
-- compute no-touch/low-touch score decisions
-- queue side-effect intents
-- pass side-effect intents through approval gate
-- execute approved actions only
-- emit machine output events and heartbeat success
-5. Mark run successful only if terminal heartbeat is emitted after pipeline completion.
+## Heartbeat Loop (Executable Pattern)
+1. Scheduler evaluates cron in timezone and computes expected_tick_at.
+2. Runner acquires non-blocking distributed lock (claw.nrr); if lock exists, mark skipped_overlap and exit.
+3. Load cursor window (lookback: 45m) and build deterministic candidate set.
+4. Run deterministic steps first: normalize to gtm_event_v1, schema validation, dedupe, policy prechecks.
+5. Run smart-cog gates from machine contract (for example: enrich_account_health, deal_score_reasoner, directive_alignment, route_exec_alert, approval_loop).
+6. Build proposed_actions and apply HITL requirements before risky side effects.
+7. Execute approved side effects with idempotency keys; route permanent failures to DLQ.
+8. Emit terminal machine event(s), then heartbeat success record.
 
-## Approval and Exec Safety
-- Irreversible actions (outbound email, Salesforce writes) are approval-gated and must not bypass policy.
-- Follow OpenClaw exec-approval interlock semantics: policy + allowlist + approval decision must all allow execution.
-- If a prompt-required action cannot reach an approval UI, fallback is deny (`askFallback=deny`) and the action is blocked.
-- Approval timeout is a denied action outcome, not a silent success.
-- Any denied or timed-out action is recorded with reason and never auto-promoted in the same run.
+## Cadence and Windowing
+- Schedule: */15 * * * * (America/Los_Angeles)
+- Cadence note: 15-minute cadence for fast reaction to risk and expansion signals.
+- Cursor lookback: 45m
+- Grace window: 120 seconds
+- Stale threshold: 2700 seconds
 
-## Safe-Mode Behavior
-- Enter safe mode when stale, on repeated transient failures, or after approval subsystem outage.
-- In safe mode:
-- continue discovery, normalization, and scoring
-- suppress outbound email and Salesforce writes
-- emit diagnostics (`nrr.machine.safe_mode`) with blocker reason and expiry
-- Exit safe mode only after one full successful run with approval channel healthy.
+## Lock and Idempotency
+- Overlap policy: forbid overlap (single active run).
+- Lock strategy: transaction-scoped advisory lock (or equivalent lease lock) with TTL > max_run_seconds.
+- Run idempotency key: machine_id + expected_tick_at.
+- Side-effect idempotency key: event_id + action_type + target_id.
+- Replays are safe: already-committed side effects are skipped, not re-applied.
 
-## Retries
-- Scheduler/bootstrap transient failures: 2 retries (10s, 30s).
-- Account processing transient failures: 3 retries (5s, 20s, 60s).
-- Approval transport transient failures: 2 retries (10s, 30s).
-- Non-retryable classes: validation errors, policy denies, approval timeouts, contract incompatibility.
+## Retry and Dead-letter
+- Retry classes:
+  - bootstrap/scheduler transient: 2 attempts (10s, 30s)
+  - provider/tool transient: 3 attempts (15s, 45s, 120s)
+  - approval transport transient: 2 attempts (15s, 45s)
+- Non-retryable classes: schema failure, policy deny, HITL timeout deny.
+- Dead-letter sink: dlq.nrr
+- DLQ payload minimum fields: machine_id, run_id, event_id, stage, error_code, retry_count, first_seen_at.
 
-## Stale Handling
-- `grace_period_seconds` allows normal scheduler jitter after each expected tick.
-- If no successful heartbeat arrives within `stale_after_seconds`, transition to stale.
-- On stale transition:
-- emit `nrr.machine.stale`
-- alert all `alert_channels`
-- force safe mode (score-only) until recovery
-- Clear stale only after one complete successful run and heartbeat emission.
+## HITL and Risk Controls
+- Risky actions requiring approval: outbound_email_send, sfdc_writeback
+- HITL timeout: 1800 seconds.
+- HITL outcomes:
+  - approved: continue side effects.
+  - rejected or timeout: emit blocked/deferred terminal outcome; do not execute risky actions.
+- During approval outage, machine enters safe mode (read/score only).
 
-## Operators
-- Recommended checks:
-- `openclaw cron list`
-- `openclaw cron runs --id <job-id> --limit 20`
-- `openclaw system heartbeat last`
-- `openclaw approvals get`
+## Safe Mode
+- Enter safe mode on stale transition, repeated dependency failures, or approval subsystem outage.
+- In safe mode, deterministic enrichment and scoring continue, but risky side effects stay disabled.
+- Emit diagnostics event: nrr.machine.safe_mode
+- Exit safe mode after one full healthy run with successful heartbeat.
+
+## References
+- Kubernetes CronJob (approx scheduling, idempotency, concurrency policy, time zones): https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+- APScheduler (misfire_grace_time, coalescing, max running jobs): https://apscheduler.readthedocs.io/en/master/userguide.html
+- PostgreSQL advisory locks (try-lock and transaction/session semantics): https://www.postgresql.org/docs/current/explicit-locking.html
+- PostgreSQL advisory lock functions: https://www.postgresql.org/docs/9.5/functions-admin.html
+- Amazon SQS DLQ and maxReceiveCount: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html
+- LangGraph durable execution and HITL pause/resume: https://docs.langchain.com/oss/python/langgraph/durable-execution

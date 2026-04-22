@@ -1,41 +1,142 @@
 {
-  "name": "renewal-risk-monitoring-machine-daily-v1",
+  "name": "renewal-risk-monitoring-machine-daily-v2",
   "machine_id": "renewal-risk-monitoring-machine",
   "artifact_type": "make_scenario_blueprint_reference",
   "make_runtime": {
     "scheduling": {
-      "mode": "daily",
-      "cron": "0 7 * * *",
-      "timezone": "America/Los_Angeles"
+      "mode": "daily_plus_webhook",
+      "daily_cron": "0 7 * * *",
+      "timezone": "America/Los_Angeles",
+      "webhook_path": "renewal-risk-events",
+      "max_runs_per_minute": 30,
+      "sequential_processing": true
+    },
+    "retry_model": {
+      "store_incomplete_executions": true,
+      "auto_retry_errors": [
+        "RateLimitError",
+        "ConnectionError",
+        "ModuleTimeoutError"
+      ]
     }
   },
-  "flow": [
+  "modules": [
     {
       "id": 1,
-      "module": "scheduler:daily",
-      "name": "Daily Trigger"
+      "module": "scheduler:everyDay",
+      "name": "Daily Renewal Sweep"
     },
     {
       "id": 2,
-      "module": "tools:validator",
-      "name": "Validate gtm_event_v1"
+      "module": "json:createJSON",
+      "name": "Normalize gtm_event_v1"
     },
     {
       "id": 3,
       "module": "http:makeRequest",
-      "name": "Build Recommended Play",
+      "name": "Fetch Renewal Context",
       "parameters": {
-        "url": "https://planner.internal/compose",
-        "method": "POST"
+        "url": "https://context.internal/renewal-risk/enrich",
+        "method": "POST",
+        "body": "{{toJSON(2)}}"
       }
     },
     {
       "id": 4,
       "module": "http:makeRequest",
+      "name": "Score Renewal Risk",
+      "parameters": {
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "method": "POST",
+        "body": "{{3.body}}"
+      }
+    },
+    {
+      "id": 5,
+      "module": "flow:router",
+      "name": "Risk Router",
+      "routes": [
+        {
+          "name": "critical",
+          "condition": "{{4.body.score}} >= 80"
+        },
+        {
+          "name": "high",
+          "condition": "{{4.body.score}} >= 65"
+        },
+        {
+          "name": "monitor",
+          "condition": "fallback"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "module": "http:makeRequest",
+      "name": "Build Recommended Play",
+      "parameters": {
+        "url": "https://planner.internal/renewal-risk/compose",
+        "method": "POST",
+        "body": "{{4.body}}"
+      }
+    },
+    {
+      "id": 7,
+      "module": "slack:createAMessage",
       "name": "CSM Slack Notify",
       "parameters": {
-        "url": "https://slack.internal/notify",
-        "method": "POST"
+        "channel": "#renewal-monitoring"
+      }
+    },
+    {
+      "id": 8,
+      "module": "http:makeRequest",
+      "name": "Approval Loop",
+      "parameters": {
+        "url": "https://approval.internal/request",
+        "method": "POST",
+        "body": "{\"event_id\":\"{{2.event_id}}\",\"actions\":[\"outbound_email_send\",\"crm_renewal_field_update\"],\"timeout_seconds\":1800}"
+      }
+    },
+    {
+      "id": 9,
+      "module": "flow:router",
+      "name": "Approval Router",
+      "routes": [
+        {
+          "name": "approved",
+          "condition": "{{8.body.approval_status}} = approved"
+        },
+        {
+          "name": "blocked",
+          "condition": "fallback"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "module": "gmail:sendAnEmail",
+      "name": "Send Renewal Outreach",
+      "route": "approved"
+    },
+    {
+      "id": 11,
+      "module": "salesforce:updateARecord",
+      "name": "Update Renewal Fields",
+      "route": "approved",
+      "parameters": {
+        "object": "Account",
+        "record_id": "{{2.subject.id}}"
+      }
+    },
+    {
+      "id": 12,
+      "module": "http:makeRequest",
+      "name": "Emit Outcome Event",
+      "parameters": {
+        "url": "https://events.internal/emit",
+        "method": "POST",
+        "body": "{\"event_type\":\"{{if(9.route = \\\"approved\\\"; \\\"renewal.risk.play.executed\\\"; \\\"renewal.risk.play.blocked\\\")}}\",\"event_id\":\"{{2.event_id}}\"}"
       }
     }
   ]

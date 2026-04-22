@@ -1,91 +1,96 @@
 {
   "zap_name": "Stage Change Deal Review Machine",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "machine_id": "stage-change-deal-review-machine",
-  "description": "Reviews qualification/risk/missing fields on stage progression and branches to approved writeback or Slack findings.",
+  "description": "Reviews stage progression risk and applies approval-gated CRM updates.",
   "trigger": {
-    "app": "webhooks_by_zapier",
-    "event": "catch_hook",
-    "path": "/stage-change-deal-review/events",
+    "primary": {
+      "app": "webhooks_by_zapier",
+      "event": "catch_hook",
+      "path": "/stage-change-deal-review/events"
+    },
+    "alternate": {
+      "app": "salesforce",
+      "event": "updated_record",
+      "object": "Opportunity"
+    },
     "accepts_event_types": [
       "deal.stage_changed",
       "opportunity.stage_changed"
     ]
   },
-  "gtm_event_v1_mapping": {
-    "required": [
-      "schema_version",
-      "event_id",
-      "event_type",
-      "source",
-      "occurred_at",
-      "ingested_at",
-      "trace",
-      "subject",
-      "attributes"
-    ]
-  },
   "steps": [
     {
       "id": "normalize_validate",
-      "type": "code",
-      "runtime": "javascript"
+      "app": "code_by_zapier",
+      "event": "run_javascript"
     },
     {
       "id": "idempotency_lookup",
-      "type": "storage_get",
-      "provider": "storage_by_zapier",
+      "app": "storage_by_zapier",
+      "event": "get_value",
       "key_template": "stage-change-deal-review:${event_id}"
     },
     {
       "id": "enrich_account_health",
-      "type": "webhook_action",
-      "url": "https://cogs.internal/enrich_account_health/v1/execute",
-      "method": "POST"
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://cogs.internal/enrich_account_health/v1/execute"
+      }
     },
     {
       "id": "deal_score_reasoner",
-      "type": "webhook_action",
-      "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
-      "method": "POST"
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute"
+      }
     },
     {
       "id": "directive_alignment",
-      "type": "webhook_action",
-      "url": "https://cogs.internal/directive_alignment/v1/execute",
-      "method": "POST"
-    },
-    {
-      "id": "route_exec_alert",
-      "type": "webhook_action",
-      "url": "https://cogs.internal/route_exec_alert/v1/execute",
-      "method": "POST"
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://cogs.internal/directive_alignment/v1/execute"
+      }
     },
     {
       "id": "approval_loop",
-      "type": "webhook_action",
-      "url": "https://approval.internal/request",
-      "method": "POST"
+      "app": "human_in_the_loop",
+      "event": "request_approval",
+      "fallback": {
+        "app": "webhooks_by_zapier",
+        "event": "post",
+        "url": "https://approval.internal/request"
+      }
     },
     {
       "id": "path_on_approval",
-      "type": "paths",
-      "branches": [
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
         {
           "name": "approved",
           "condition": "approval_status == 'approved'",
           "actions": [
             {
               "id": "sfdc_writeback",
-              "type": "salesforce_action",
-              "action": "update_record",
-              "object": "Opportunity"
+              "app": "salesforce",
+              "event": "update_record",
+              "object": "Opportunity",
+              "idempotency_key": "{{event_id}}"
             },
             {
               "id": "emit_writeback_applied",
-              "type": "webhook_post",
-              "url": "https://events.internal/v1/publish",
-              "payload": { "event_type": "deal.stage_review.writeback_applied" }
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/publish",
+                "json": {
+                  "event_type": "deal.stage_review.writeback_applied"
+                }
+              }
             }
           ]
         },
@@ -100,18 +105,18 @@
             },
             {
               "id": "emit_findings_posted",
-              "type": "webhook_post",
-              "url": "https://events.internal/v1/publish",
-              "payload": { "event_type": "deal.stage_review.findings_posted" }
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/publish",
+                "json": {
+                  "event_type": "deal.stage_review.findings_posted"
+                }
+              }
             }
           ]
         }
       ]
     }
-  ],
-  "retries": {
-    "cog_transport": 3,
-    "approval_transport": 2,
-    "action_transport": 2
-  }
+  ]
 }

@@ -1,42 +1,129 @@
 {
-  "title": "Pipeline Review Intelligence Machine",
-  "version": "1.0.0",
+  "zap_name": "Pipeline Review Intelligence Machine",
+  "version": "1.1.0",
   "machine_id": "pipeline-review-intelligence-machine",
+  "description": "Builds pipeline review recommendations with approval-gated actions.",
   "trigger": {
-    "app": "webhooks",
-    "event": "catch_hook",
-    "path": "/pipeline-review-intelligence-machine",
+    "primary": {
+      "app": "webhooks_by_zapier",
+      "event": "catch_hook",
+      "path": "/pipeline-review/events"
+    },
+    "alternate": {
+      "app": "schedule_by_zapier",
+      "event": "every_weekday"
+    },
     "accepts_event_types": [
       "pipeline.review.requested",
       "deal.updated",
       "activity.logged"
     ]
   },
-  "gtm_event_v1_mapping": {
-    "required": [
-      "schema_version",
-      "event_id",
-      "event_type",
-      "source",
-      "occurred_at",
-      "ingested_at",
-      "trace",
-      "subject",
-      "attributes"
-    ]
-  },
   "steps": [
-    { "id": "normalize_validate", "type": "code", "name": "Normalize to gtm_event_v1" },
-    { "id": "enrich_account_health", "type": "webhook_action", "url": "https://cogs.internal/enrich_account_health/v1/execute" },
-    { "id": "deal_score_reasoner", "type": "webhook_action", "url": "https://cogs.internal/deal_score_reasoner/v1/execute" },
-    { "id": "directive_alignment", "type": "webhook_action", "url": "https://cogs.internal/directive_alignment/v1/execute" },
-    { "id": "compose_outreach_message", "type": "webhook_action", "url": "https://cogs.internal/compose_outreach_message/v1/execute" },
-    { "id": "route_exec_alert", "type": "webhook_action", "url": "https://cogs.internal/route_exec_alert/v1/execute" },
-    { "id": "approval_loop", "type": "webhook_action", "url": "https://approvals.internal/v1/request" },
-    { "id": "emit_output_event", "type": "webhook_action", "url": "https://events.internal/v1/publish" }
-  ],
-  "idempotency": {
-    "store": "storage_by_zapier",
-    "key_template": "pipeline-review-intelligence:${event_id}"
-  }
+    {
+      "id": "normalize_validate",
+      "app": "code_by_zapier",
+      "event": "run_javascript"
+    },
+    {
+      "id": "filter_supported",
+      "app": "filter_by_zapier",
+      "event": "only_continue_if",
+      "rule": "event_type in ['pipeline.review.requested','deal.updated','activity.logged']"
+    },
+    {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "pipeline-review:${event_id}"
+    },
+    {
+      "id": "enrich_account_health",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://cogs.internal/enrich_account_health/v1/execute"
+      }
+    },
+    {
+      "id": "deal_score_reasoner",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute"
+      }
+    },
+    {
+      "id": "directive_alignment",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://cogs.internal/directive_alignment/v1/execute"
+      }
+    },
+    {
+      "id": "compose_manager_packet",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://cogs.internal/compose_pipeline_packet/v1/execute"
+      }
+    },
+    {
+      "id": "approval_loop",
+      "app": "human_in_the_loop",
+      "event": "request_approval",
+      "fallback": {
+        "app": "webhooks_by_zapier",
+        "event": "post",
+        "url": "https://approvals.internal/v1/request"
+      }
+    },
+    {
+      "id": "path_on_approval",
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
+        {
+          "name": "approved",
+          "condition": "approval_status == 'approved'",
+          "actions": [
+            {
+              "id": "send_manager_digest",
+              "app": "slack",
+              "event": "send_channel_message"
+            },
+            {
+              "id": "emit_executed",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "pipeline.review.prep.executed"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "blocked",
+          "condition": "approval_status != 'approved'",
+          "actions": [
+            {
+              "id": "emit_blocked",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "pipeline.review.prep.deferred"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

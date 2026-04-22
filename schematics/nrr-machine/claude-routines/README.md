@@ -1,34 +1,35 @@
-# Claude Routines Adapter (nrr-machine)
+# Claude Routines Runtime (nrr-machine)
 
-Claude Code routine implementation of `nrr-machine`, updated for current Claude routines behavior in April 2026.
+## Purpose
+Runtime implementation for NRR intervention selection and execution in Claude routines with strict approval gates for outbound/CRM actions.
 
-## Runtime Model (Current Claude Behavior)
-- Runs as a Claude Code cloud session (Anthropic-managed infrastructure).
-- Trigger options: schedule, API, and GitHub event.
-- Routine runs are autonomous: no in-run permission prompts or approval-mode picker.
-- Routines are in research preview; API surface, limits, and token semantics can change.
+## Runtime Shape
+- Autonomous cloud sessions via routine triggers.
+- Trigger mix:
+  - Schedule for low/no-touch rescoring.
+  - API for event-driven intervention.
+  - Optional GitHub for playbook/template lifecycle.
 
-## Artifacts
-- Routine specification: `routine.md`
+## Tool and MCP Wiring
+- Context:
+  - `endgame_mcp`, CRM (`salesforce_headless_360`), usage/billing readers.
+- Decisioning:
+  - risk + expansion score tools, directive alignment.
+- Actions:
+  - outbound messaging, CRM updates, alert routing, event emit.
 
-## Tool and Connector Requirements
-- Endgame context: `endgame_mcp`, `endgame-cli`
-- CRM context/actions: `salesforce_headless_360`
-- Signals: telemetry and billing readers
-- Approval gate: `approval_loop`
-- Output emission: `event_emitter`
+## Approval Checkpoints
+- `approval_loop` required before:
+  - outbound email/sequence delivery.
+  - commercial-impact CRM field updates.
+- Denied/expired approvals emit blocked event and halt side effects.
 
-## Trigger Paths
-- API-triggered routine for machine events (`account.health_changed`, `usage.declined`, `renewal.window_opened`) from upstream ingestion.
-- Optional schedule trigger for low-touch/no-touch cohort rescoring.
+## External API/MCP Notes
+- API trigger uses per-routine bearer token and `/fire` endpoint.
+- Keep API payload in `text`; routine parses/marshals into `attributes`.
 
-## Mandatory Policies
-- Keep `gtm_event_v1` keys and semantics intact.
-- Segment filter (`low_touch`, `no_touch`) must pass before scoring.
-- Explicit `approval_loop` decision required before outbound communication or SFDC write.
-- Treat Claude routine autonomy as execution transport only, not business approval.
-
-## Observability Guidance
-- Capture stage-level timings and policy outcomes.
-- Log `run_id`, `event_id`, `trace_id`, score details, selected play, approval outcome.
-- Emit blocked/failed events with machine-readable reason codes.
+## References
+- https://code.claude.com/docs/en/routines
+- https://code.claude.com/docs/en/mcp
+- https://code.claude.com/docs/en/permissions
+- https://code.claude.com/docs/en/sub-agents

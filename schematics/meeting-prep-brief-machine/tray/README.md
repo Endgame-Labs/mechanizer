@@ -3,7 +3,7 @@
 Tray runtime for `meeting-prep-brief-machine` that composes prep briefs from revenue context, then gates delivery via approval when the brief can drive outbound actions.
 
 ## Artifact
-- `workflow.placeholder.json`: Tray workflow artifact (kept at current filename for compatibility).
+- `workflow.json`: Tray workflow artifact (kept at current filename for compatibility).
 
 ## Runtime Design
 1. Callable Trigger ingests `gtm_event_v1` (parent orchestrator).

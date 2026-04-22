@@ -27,13 +27,15 @@ n8n implementation for SDR outbound research, personalized drafting, approval-ga
 5. `compose_outreach_message`.
 6. `route_exec_alert`.
 7. `approval_loop`.
-8. Approved branch emits `sdr.sequence.ready`.
-9. Response path emits `sdr.response.routed` when qualified.
+8. `Approved?` gate branches terminal behavior.
+9. Approved branch emits `sdr.sequence.ready` or `sdr.response.routed` based on source event type.
+10. Non-approved branch emits `sdr.outbound.blocked`.
 
 ## Error Handling
 - Enable retries for API calls.
 - Use `event_id` as idempotency key for side effects.
 - Configure an Error Trigger workflow for dead-letter and alerts.
+- Webhook is configured with `onReceived` response mode to avoid response-node deadlocks for unsupported events.
 
 ## References
 - n8n Webhook node: https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/
@@ -45,3 +47,5 @@ n8n implementation for SDR outbound research, personalized drafting, approval-ga
 - n8n credentials: https://docs.n8n.io/credentials/
 - n8n import/export workflows: https://docs.n8n.io/workflows/export-import/
 - n8n source control environments: https://docs.n8n.io/source-control-environments/
+- n8n Salesforce node: https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.salesforce/
+- n8n Slack node: https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.slack/

@@ -1,23 +1,23 @@
 # Zapier Adapter (new-hire-ramp-accelerator-machine)
 
-Zapier starter for contract-first onboarding package generation with explicit approval before side effects.
+Zapier implementation for new-hire onboarding package generation with approval before CRM or outbound updates.
 
 ## Artifact
 - `zap.template.json`
 
-## Trigger Paths
-1. Realtime inbound webhook (`gtm_event_v1`).
-2. Scheduled reconciliation every 4 hours.
-
 ## Core Flow
-1. Validate `gtm_event_v1` contract fields.
-2. Filter supported events.
-3. Build territory/book onboarding package.
-4. Request approval for package writes and CRM mutations.
-5. On approval, persist package and emit `rep.onboarding.package_generated`.
-6. On reject/timeout, emit `rep.onboarding.package_blocked`.
+1. Trigger from webhook or scheduled reconciliation.
+2. Validate contract, filter supported events, dedupe on `event_id`.
+3. Build onboarding package from context providers.
+4. Request approval before writing package records or CRM updates.
+5. Branch approved/blocked and emit terminal event.
 
-## Reliability Notes
-- Use `event_id` dedupe.
-- Keep side-effect retries idempotent.
-- Preserve `trace_id` in all logs and emitted events.
+## Zapier Notes
+- Use `Storage by Zapier` for dedupe.
+- Keep `Paths` as final step.
+- For shared post-branch actions, use Sub-Zaps.
+
+## References
+- https://help.zapier.com/hc/en-us/articles/8496308527629-Create-reusable-Zap-steps-with-Sub-Zaps
+- https://help.zapier.com/hc/en-us/articles/8496288555917-Add-branching-logic-to-Zaps-with-Paths
+- https://help.zapier.com/hc/en-us/articles/38731264910733-Collect-data-for-your-workflow-with-Human-in-the-Loop

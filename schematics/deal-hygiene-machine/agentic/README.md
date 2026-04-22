@@ -1,36 +1,68 @@
 # Agentic Adapter (deal-hygiene-machine)
 
+Runtime-agnostic orchestration contract for `deal-hygiene-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
+
 ## Purpose
-Provider-neutral manager-worker orchestration that preserves deterministic `gtm_event_v1` contract boundaries.
+Detect and remediate deal-quality issues with approval-gated CRM writeback.
 
 ## Runtime Pattern
-- Manager-worker graph with resumable state (checkpoint per phase).
-- Tool/resource access via MCP-compatible clients when available (`tools`, `resources`, optional `prompts`).
-- Long-running steps may run async/background, but terminal emission remains synchronous with contract completion.
+- **Planner**: validates `gtm_event_v1`, decomposes into tool steps, and sets risk tier.
+- **Executor**: runs tools with checkpointed state and idempotency keys.
+- **Evaluator**: verifies policy, evidence, and output schema before side effects + emit.
+- **Manager ownership**: only manager node can approve terminal actions and emit final events.
 
-## Tool Inventory
-- `validate_gtm_event`: schema validator for `gtm_event_v1`.
-- `endgame_mcp_context_fetch`: pulls notes, directives, account context.
-- `crm_snapshot_fetch`: retrieves latest opportunity/account state.
-- `enrich_account_health`, `deal_score_reasoner`, `directive_alignment`, `route_exec_alert`: smart-cog executors.
-- `approval_loop`: human-in-the-loop review gate.
-- `sfdc_writeback`: mutation action (approved branch only).
-- `emit_gtm_event`: normalized output publisher.
+## Event and Tool Contracts
+- Input/output envelope: `gtm_event_v1`.
+- Required event fields at ingest: `schema_version`, `event_id`, `event_type`, `source`, `occurred_at`, `ingested_at`, `trace.trace_id`, `subject.entity_type`, `subject.entity_id`.
+- Tool definitions use explicit JSON Schema contracts and deterministic response shapes.
+- Prefer strict tool schemas (no undeclared fields) for mutation-capable tools.
 
-## Guardrails
-- Hard fail on required contract key violations before model/tool execution.
-- Apply tool-risk policy tiers:
-  - Low risk: read-only context fetches can auto-run.
-  - Medium risk: mutation drafts require manager review.
-  - High risk: external writes/messages require HITL `approve|reject|edit`.
-- Prohibit writeback tools until `approval_loop.status == approved`.
-- Preserve immutable `event_id` and upstream `trace.trace_id` across all phases.
+### Tool Class Policy
+- `read_context`: MCP reads, warehouse/CRM snapshot reads.
+- `reasoning_transform`: scoring/summarization/cog transforms.
+- `write_action`: CRM updates, task creation, email/sequence sends.
+- `control`: approval gate, dedupe store, event emitter.
 
-## Execution Model
-- See `runbook.md` for explicit phase sequencing, retry policy, and approval semantics.
-- All terminal states emit a `gtm_event_v1` event (`remediated`, `deferred`, `failed_validation`, or `failed`).
+## Provider Support Posture
 
-## Tracing and Evals Hooks
-- Emit phase spans for validation, context, cog execution, approval, and writeback.
-- Record trace attributes required for evaluation: policy outcomes, approval decision, retry count, and terminal type.
-- Use offline and online evals to score directive alignment, remediation correctness, and false-positive/false-negative rates.
+### OpenAI-Style Agents
+- Supported pattern: Responses API / Agents SDK with function tools + MCP + optional shell tool.
+- `tool_choice` may be used to constrain tool invocation behavior.
+- Use background mode for long-running or delayed-approval runs.
+- For MCP connectors, keep sensitive tool calls approval-gated.
+
+### Claude-Compatible Agents
+- Supported pattern: Messages API tool loop (`stop_reason: "tool_use"` -> execute -> `tool_result`).
+- Tool contracts use `name` + `input_schema`; set strict tool behavior when needed.
+- MCP connector supports remote MCP tool calling directly; local stdio/prompt/resource flows require client-managed MCP integration.
+
+### Non-Provider Runtime Engines
+- LangGraph/Temporal-style durable execution is valid if checkpoints are deterministic and idempotent.
+- Persist run state between planner/executor/evaluator phases to support retries and HITL resumes.
+
+## MCP + CLI Integration Pattern
+- Discover and cache tools via `tools/list`; invoke via `tools/call`.
+- Fetch contextual docs/data via `resources/list` + `resources/read`.
+- Load reusable instruction templates via `prompts/list` + `prompts/get` (client-managed where required).
+- For CLI wrappers, enforce allowlist commands, timeout budgets, and stdout/stderr capture for audit.
+
+## Approval/HITL Policy
+All CRM field mutations require HITL approval. Read-only scoring and alerts may auto-run when policy checks pass.
+
+## Scheduled and Background Loop Pattern (Optional)
+- Trigger modes: event-driven, cron-driven, or hybrid.
+- For schedules, run planner in bounded windows and emit explicit no-op heartbeat events when no action is required.
+- Long-running work may continue in background, but terminal contract emission must remain idempotent and replay-safe.
+
+## References
+- OpenAI Agents SDK: https://developers.openai.com/api/docs/guides/agents
+- OpenAI Using tools: https://developers.openai.com/api/docs/guides/tools
+- OpenAI Function calling (strict mode): https://developers.openai.com/api/docs/guides/function-calling
+- OpenAI MCP and Connectors: https://developers.openai.com/api/docs/guides/tools-connectors-mcp
+- OpenAI Background mode: https://developers.openai.com/api/docs/guides/background
+- OpenAI Shell tool: https://developers.openai.com/api/docs/guides/tools-shell
+- Anthropic tool use overview: https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview
+- Anthropic define tools/tool_choice: https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools
+- Anthropic MCP connector: https://platform.claude.com/docs/en/agents-and-tools/mcp-connector
+- MCP spec (tools/resources/prompts): https://modelcontextprotocol.io/specification
+- LangGraph durable execution: https://docs.langchain.com/oss/python/langgraph/durable-execution

@@ -1,49 +1,118 @@
 {
-  "zap_name": "Renewal Risk Monitoring Machine - Daily",
-  "version": "1.0.0",
+  "zap_name": "Renewal Risk Monitoring Machine",
+  "version": "1.1.0",
   "machine_id": "renewal-risk-monitoring-machine",
-  "description": "Daily renewal-risk monitoring with mandatory CSM alert, high-severity exec routing, and optional approved downstream actions.",
+  "description": "Scores renewal risk and routes intervention actions through approval.",
   "trigger": {
-    "app": "schedule_by_zapier",
-    "event": "every_day",
-    "time": "07:00"
-  },
-  "gtm_event_v1_mapping": {
-    "required": [
-      "event_id",
-      "event_type",
-      "source",
-      "occurred_at",
-      "trace",
-      "subject",
-      "attributes"
-    ]
+    "primary": {
+      "app": "schedule_by_zapier",
+      "event": "every_day",
+      "time": "07:00",
+      "timezone": "America/Los_Angeles"
+    },
+    "alternate": {
+      "app": "webhooks_by_zapier",
+      "event": "catch_hook",
+      "path": "/renewal-risk-monitoring/events"
+    }
   },
   "steps": [
     {
       "id": "validate_contract",
-      "type": "code",
-      "runtime": "javascript"
+      "app": "code_by_zapier",
+      "event": "run_javascript"
+    },
+    {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "renewal-risk-monitoring:${event_id}"
     },
     {
       "id": "build_recommended_play",
-      "type": "webhook_post",
-      "url": "https://planner.internal/compose"
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://planner.internal/compose"
+      }
     },
     {
       "id": "notify_csm_slack",
-      "type": "webhook_post",
-      "url": "https://slack.internal/notify"
+      "app": "slack",
+      "event": "send_channel_message"
     },
     {
       "id": "route_exec_alert_if_high",
-      "type": "webhook_post",
-      "url": "https://exec-alert.internal/route"
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
+        {
+          "name": "high",
+          "condition": "risk_score >= 80",
+          "actions": [
+            {
+              "app": "slack",
+              "event": "send_channel_message"
+            }
+          ]
+        },
+        {
+          "name": "normal",
+          "condition": "risk_score < 80",
+          "actions": []
+        }
+      ]
     },
     {
       "id": "approval_loop",
-      "type": "webhook_post",
-      "url": "https://approval.internal/request"
+      "app": "human_in_the_loop",
+      "event": "request_approval",
+      "fallback": {
+        "app": "webhooks_by_zapier",
+        "event": "post",
+        "url": "https://approval.internal/request"
+      }
+    },
+    {
+      "id": "path_on_approval",
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
+        {
+          "name": "approved",
+          "condition": "approval_status == 'approved'",
+          "actions": [
+            {
+              "id": "emit_executed",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "renewal.risk.play.executed"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "blocked",
+          "condition": "approval_status != 'approved'",
+          "actions": [
+            {
+              "id": "emit_blocked",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "renewal.risk.play.blocked"
+                }
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "name": "new-hire-ramp-accelerator-machine-v1",
+  "name": "new-hire-ramp-accelerator-machine-v2",
   "active": false,
   "settings": {
     "executionOrder": "v1",
@@ -9,7 +9,11 @@
   "meta": {
     "machine_id": "new-hire-ramp-accelerator-machine",
     "schema_version": "gtm_event_v1",
-    "idempotency_key": "event_id"
+    "idempotency_key": "event_id",
+    "n8n_notes": {
+      "error_workflow": "Attach Error Trigger workflow in Workflow Settings",
+      "queue_mode_ready": true
+    }
   },
   "nodes": [
     {
@@ -17,7 +21,10 @@
       "name": "Webhook Ingest",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [120, 280],
+      "position": [
+        120,
+        280
+      ],
       "parameters": {
         "httpMethod": "POST",
         "path": "new-hire-ramp/events",
@@ -29,7 +36,10 @@
       "name": "Schedule Reconcile Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
-      "position": [120, 520],
+      "position": [
+        120,
+        520
+      ],
       "parameters": {
         "rule": {
           "interval": [
@@ -43,25 +53,101 @@
     },
     {
       "id": "3",
-      "name": "Normalize + Validate",
+      "name": "Build Scheduled gtm_event_v1",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [360, 280],
+      "position": [
+        360,
+        520
+      ],
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const e = $json;\nconst required = ['event_id','event_type','source','occurred_at','trace','subject'];\nfor (const k of required) { if (!e[k]) throw new Error(`Missing ${k}`); }\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nreturn { ...e, machine_id: 'new-hire-ramp-accelerator-machine', schema_version: 'gtm_event_v1', ingested_at: e.ingested_at || new Date().toISOString() };"
+        "jsCode": "const now = new Date().toISOString();\nreturn {\n  event_id: `new-hire-ramp-refresh-${Date.now()}`,\n  event_type: 'rep.onboarding.package_requested',\n  source: 'new_hire_scheduler',\n  occurred_at: now,\n  ingested_at: now,\n  trace: { trace_id: `trace_new_hire_ramp_${Date.now()}` },\n  subject: { entity_type: 'rep', entity_id: 'new_hire_cohort' },\n  attributes: { refresh_mode: 'scheduled' }\n};"
       }
     },
     {
       "id": "4",
-      "name": "Package Pipeline (Placeholder)",
+      "name": "Normalize + Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        280
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst required = ['event_id','event_type','source','occurred_at','trace','subject'];\nfor (const k of required) { if (!e[k]) throw new Error(`Missing ${k}`); }\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nconst supported = ['rep.onboarding.package_requested','rep.created','rep.territory_assigned'];\nif (!supported.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nreturn {\n  ...e,\n  machine_id: 'new-hire-ramp-accelerator-machine',\n  schema_version: 'gtm_event_v1',\n  ingested_at: e.ingested_at || new Date().toISOString(),\n  trace: { ...e.trace, run_id: e.trace?.run_id || `${e.event_id}:${Date.now()}` }\n};"
+      }
+    },
+    {
+      "id": "5",
+      "name": "Idempotency Lookup",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [600, 280],
+      "position": [
+        600,
+        280
+      ],
       "parameters": {
         "method": "POST",
-        "url": "https://cogs.internal/new-hire-ramp/pipeline/v1/execute",
+        "url": "https://idempotency.internal/v1/lookup",
+        "sendBody": true,
+        "jsonBody": "={{ { machine_id: 'new-hire-ramp-accelerator-machine', event_id: $json.event_id, event_type: $json.event_type } }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "6",
+      "name": "Already Terminal?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        840,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.status || ''}}",
+              "operation": "notEmpty"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7",
+      "name": "Emit rep.onboarding.skipped_duplicate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1080,
+        460
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'rep.onboarding.skipped_duplicate' } }}"
+      }
+    },
+    {
+      "id": "8",
+      "name": "enrich_account_health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1080,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/enrich_account_health/v1/execute",
         "sendBody": true,
         "jsonBody": "={{$json}}"
       },
@@ -70,31 +156,314 @@
       "waitBetweenTries": 5000
     },
     {
-      "id": "5",
+      "id": "9",
+      "name": "directive_alignment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1320,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "10",
+      "name": "compose_outreach_message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1560,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/compose_outreach_message/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "11",
+      "name": "route_exec_alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1800,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/route_exec_alert/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "12",
       "name": "approval_loop",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [840, 280],
+      "position": [
+        2040,
+        120
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://approval.internal/request",
         "sendBody": true,
-        "jsonBody": "={{ { event_id: $json.event_id, machine_id: 'new-hire-ramp-accelerator-machine', proposed_actions: $json.proposed_actions || ['onboarding_package_upsert','crm_task_create'] } }}"
+        "jsonBody": "={{ { ...$json, timeout_seconds: 1800, actions: ['onboarding_package_upsert', 'crm_task_create'] } }}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000
+    },
+    {
+      "id": "13",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2280,
+        120
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.approval_status || $json.attributes?.approval_status || ''}}",
+              "operation": "equal",
+              "value2": "approved"
+            }
+          ]
+        }
       }
     },
     {
-      "id": "6",
+      "id": "14",
+      "name": "Create CRM Task",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 2,
+      "position": [
+        2520,
+        40
+      ],
+      "parameters": {
+        "operation": "create",
+        "sobject": "Task",
+        "fields": {
+          "Subject": "New Hire Ramp Package Ready",
+          "Description": "={{$json.attributes?.plan_summary || 'Ramp package generated and ready for manager review'}}",
+          "Status": "Not Started"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 15000
+    },
+    {
+      "id": "15",
       "name": "Emit rep.onboarding.package_generated",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1080, 280],
+      "position": [
+        2760,
+        40
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://events.internal/v1/publish",
         "sendBody": true,
         "jsonBody": "={{ { ...$json, event_type: 'rep.onboarding.package_generated' } }}"
       }
+    },
+    {
+      "id": "16",
+      "name": "Emit rep.onboarding.package_blocked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2520,
+        240
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'rep.onboarding.package_blocked', approval_status: $json.approval_status || 'rejected_or_timeout' } }}"
+      }
     }
   ],
-  "connections": {}
+  "connections": {
+    "Webhook Ingest": {
+      "main": [
+        [
+          {
+            "node": "Normalize + Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Reconcile Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Scheduled gtm_event_v1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Scheduled gtm_event_v1": {
+      "main": [
+        [
+          {
+            "node": "Normalize + Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize + Validate": {
+      "main": [
+        [
+          {
+            "node": "Idempotency Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Idempotency Lookup": {
+      "main": [
+        [
+          {
+            "node": "Already Terminal?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Already Terminal?": {
+      "main": [
+        [
+          {
+            "node": "Emit rep.onboarding.skipped_duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "enrich_account_health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "enrich_account_health": {
+      "main": [
+        [
+          {
+            "node": "directive_alignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "directive_alignment": {
+      "main": [
+        [
+          {
+            "node": "compose_outreach_message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "compose_outreach_message": {
+      "main": [
+        [
+          {
+            "node": "route_exec_alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "route_exec_alert": {
+      "main": [
+        [
+          {
+            "node": "approval_loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "approval_loop": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Create CRM Task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Emit rep.onboarding.package_blocked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create CRM Task": {
+      "main": [
+        [
+          {
+            "node": "Emit rep.onboarding.package_generated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
 }

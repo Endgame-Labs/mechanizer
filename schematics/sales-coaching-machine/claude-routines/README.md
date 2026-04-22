@@ -1,28 +1,33 @@
-# Claude Routines Adapter (sales-coaching-machine)
+# Claude Routines Runtime (sales-coaching-machine)
 
-Routine-centric implementation for Claude-driven coaching generation, aligned to current Claude routine behavior in April 2026.
+## Purpose
+Operational runtime guide for coaching recommendation generation with evidence checks and approval-gated CRM/task side effects.
 
-## Runtime Model (Current Claude Behavior)
-- Runs as a Claude Code cloud routine session.
-- Supported triggers: schedule, API, and GitHub events.
-- Routine runs are autonomous with no in-run permission prompts.
-- Routines are research preview features; behavior and limits may change.
+## Runtime Shape
+- Runs as unattended cloud routine sessions.
+- Trigger mix:
+  - API for call/deal events.
+  - Schedule for manager digest generation.
+  - Optional GitHub for rubric/template maintenance.
 
-## Implementation Steps
-1. Use [`routine.md`](./routine.md) as the execution definition.
-2. Bind tool endpoints:
-- `get_endgame_context`
-- `extract_call_insights`
-- `check_directive_alignment`
-- `approval_loop`
-- `create_salesforce_task`
-- `emit_event`
-3. Enforce precheck: input must match `gtm_event_v1`.
-4. Run quality and approval gates from `routine.md` before any CRM write.
-5. Keep fallback branches enabled for missing context or alignment-service degradation.
+## Tool and MCP Wiring
+- Context:
+  - `endgame_mcp`, transcript/call insights, CRM read.
+- Decisioning:
+  - coaching scorer + directive alignment.
+- Actions:
+  - `create_salesforce_task`, manager notification, `event_emitter`.
 
-## Required Guarantees
-- Contract keys are never renamed or removed.
-- Trace lineage (`trace_id`) is copied to every tool call.
-- Alignment failures cannot auto-create CRM tasks.
-- Claude routine autonomy does not bypass manager approval policy.
+## Approval Checkpoints
+- `approval_loop` required before CRM task creation or outbound manager notifications that change workflow state.
+- Rejected/expired -> emit `coaching.recommendation.blocked` and route to review queue.
+
+## External API/MCP Notes
+- API trigger body `text` should include call/opportunity refs; parser resolves IDs.
+- Restrict MCP servers so research tools are separate from write tools.
+
+## References
+- https://code.claude.com/docs/en/routines
+- https://code.claude.com/docs/en/mcp
+- https://code.claude.com/docs/en/permissions
+- https://code.claude.com/docs/en/sub-agents

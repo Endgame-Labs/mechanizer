@@ -1,37 +1,80 @@
 # HEARTBEAT
 
 machine_id: pipeline-review-intelligence-machine
-heartbeat_version: v1
+heartbeat_version: v2
 schedule_cron: "0 7 * * 1"
 timezone: "America/Los_Angeles"
-grace_period_seconds: 300
+grace_period_seconds: 900
 stale_after_seconds: 1209600
+max_run_seconds: 5400
+overlap_policy: forbid
 owner: "revenue-ops"
 alert_channels:
   - "slack:#revops-pipeline-alerts"
   - "email:revops-oncall@example.com"
 
+lock:
+  strategy: advisory_or_lease_lock
+  key: "claw.pipeline_review_intelligence"
+  acquire_mode: try_lock
+  lease_seconds: 5700
+
+idempotency:
+  run_key: "machine_id+expected_tick_at"
+  action_key: "event_id+action_type+target_id"
+
+cursor:
+  lookback_window: "14d"
+  watermark_field: "last_successful_occurred_at"
+
+retry_policy:
+  bootstrap: "2 attempts (10s,30s)"
+  provider_transient: "3 attempts (15s,45s,120s)"
+  approval_transport: "2 attempts (15s,45s)"
+  non_retryable: [schema_failure, policy_deny, approval_timeout]
+
+dead_letter:
+  enabled: true
+  sink: "dlq.pipeline-review-intelligence"
+  max_receive_count: 5
+
+hitl:
+  required_for: "executive_summary_send, crm_bulk_write"
+  timeout_seconds: 1800
+  timeout_fallback: deny
+
+safe_mode:
+  enter_on: [stale_transition, repeated_transient_failures, approval_subsystem_outage]
+  blocks: [crm_writes, outbound_sends, irreversible_actions]
+  diagnostics_event: "pipeline.review.machine.safe_mode"
+
+stale_handling:
+  stale_event: "pipeline.review.machine.stale"
+  clear_condition: "one complete healthy run with heartbeat success"
+
 ## Cron Semantics
-- Format: `minute hour day_of_month month day_of_week`
-- `0 7 * * 1` runs every Monday at 07:00 in the declared timezone.
+- Cron format: minute hour day_of_month month day_of_week
+- Scheduler uses timezone from this file.
+- Overlap is forbidden; skipped overlapping ticks count as missed schedules.
 
-## Runtime Contract
-- One due run per week.
-- Overlap policy: `forbid`.
-- Success requires full summary generation, routing, approval handling, and terminal event emission.
+## Success Criteria
+A run is successful only when all are true:
+1. deterministic validation and dedupe complete,
+2. smart-cog gates complete,
+3. HITL decisions resolved for risky actions,
+4. approved side effects executed idempotently,
+5. terminal event(s) emitted,
+6. heartbeat write succeeds.
 
-## Approval Contract
-- Outbound manager summary delivery and high-impact mutations are approval-gated.
-- Approval timeout defaults to 30 minutes and resolves as denied.
+## Alerting Rules
+- Warn after 1 missed due tick beyond grace window.
+- Page after 2 consecutive missed due ticks or stale transition.
+- Alert payload includes machine_id, run_id, expected_tick_at, last_success_at, failure_stage.
 
-## Retry Contract
-- Scheduler/bootstrap transient failures: 2 retries (30s, 120s).
-- Fetch/transform transient failures: 3 retries (10s, 60s, 180s).
-- Approval transport transient failures: 2 retries (30s, 120s).
-
-## Stale and Alert Rules
-- Mark stale when no successful heartbeat for `stale_after_seconds` (14 days).
-- On stale transition:
-- emit `pipeline_review_intelligence.machine.stale`
-- alert all configured channels
-- enforce safe mode until a healthy run completes
+## References
+- Kubernetes CronJob: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+- APScheduler user guide: https://apscheduler.readthedocs.io/en/master/userguide.html
+- PostgreSQL explicit/advisory locking: https://www.postgresql.org/docs/current/explicit-locking.html
+- PostgreSQL advisory lock functions: https://www.postgresql.org/docs/9.5/functions-admin.html
+- Amazon SQS DLQ: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html
+- LangGraph durable execution: https://docs.langchain.com/oss/python/langgraph/durable-execution

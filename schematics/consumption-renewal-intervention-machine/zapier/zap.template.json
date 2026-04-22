@@ -1,44 +1,121 @@
 {
-  "zap_name": "Consumption Renewal Intervention Machine - Daily",
-  "version": "1.0.0",
+  "zap_name": "Consumption Renewal Intervention Machine",
+  "version": "1.1.0",
   "machine_id": "consumption-renewal-intervention-machine",
-  "description": "Daily under-consumption renewal intervention planning with mandatory Slack notify and optional approved downstream actions.",
+  "description": "Detects under-consumption signals and proposes intervention plays with approval-gated side effects.",
   "trigger": {
-    "app": "schedule_by_zapier",
-    "event": "every_day",
-    "time": "07:00"
-  },
-  "gtm_event_v1_mapping": {
-    "required": [
-      "event_id",
-      "event_type",
-      "source",
-      "occurred_at",
-      "trace",
-      "subject",
-      "attributes"
-    ]
+    "primary": {
+      "app": "schedule_by_zapier",
+      "event": "every_day",
+      "time": "07:00",
+      "timezone": "America/Los_Angeles"
+    },
+    "alternate": {
+      "app": "webhooks_by_zapier",
+      "event": "catch_hook",
+      "path": "/consumption-renewal-intervention/events"
+    }
   },
   "steps": [
     {
       "id": "validate_contract",
-      "type": "code",
-      "runtime": "javascript"
+      "app": "code_by_zapier",
+      "event": "run_javascript"
+    },
+    {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "consumption-renewal-intervention:${event_id}"
+    },
+    {
+      "id": "fetch_context",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://context.internal/consumption-renewal/enrich",
+        "json": {
+          "context_providers": [
+            "endgame_mcp_or_cli",
+            "salesforce_headless_360",
+            "product_telemetry"
+          ]
+        }
+      }
+    },
+    {
+      "id": "score_intervention",
+      "app": "code_by_zapier",
+      "event": "run_javascript"
     },
     {
       "id": "build_intervention_plan",
-      "type": "webhook_post",
-      "url": "https://planner.internal/compose"
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://planner.internal/compose"
+      }
     },
     {
       "id": "notify_slack",
-      "type": "webhook_post",
-      "url": "https://slack.internal/notify"
+      "app": "slack",
+      "event": "send_channel_message"
     },
     {
       "id": "approval_loop",
-      "type": "webhook_post",
-      "url": "https://approval.internal/request"
+      "app": "human_in_the_loop",
+      "event": "request_approval",
+      "fallback": {
+        "app": "webhooks_by_zapier",
+        "event": "post",
+        "url": "https://approval.internal/request"
+      }
+    },
+    {
+      "id": "path_on_approval",
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
+        {
+          "name": "approved",
+          "condition": "approval_status == 'approved'",
+          "actions": [
+            {
+              "id": "send_customer_nudge",
+              "app": "gmail",
+              "event": "send_email"
+            },
+            {
+              "id": "emit_executed",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "consumption.renewal.intervention.executed"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "blocked",
+          "condition": "approval_status != 'approved'",
+          "actions": [
+            {
+              "id": "emit_blocked",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "consumption.renewal.intervention.blocked"
+                }
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

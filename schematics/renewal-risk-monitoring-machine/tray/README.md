@@ -1,7 +1,7 @@
 # Tray Adapter (renewal-risk-monitoring-machine)
 
 ## Artifact
-- `workflow.placeholder.json`
+- `workflow.json`
 
 ## Trigger Design
 - Scheduled trigger at 07:00 PT for daily renewal-near account sweep.

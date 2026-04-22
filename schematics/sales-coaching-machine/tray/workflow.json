@@ -1,214 +1,238 @@
 {
   "name": "sales-coaching-machine-call-complete",
   "machine_id": "sales-coaching-machine",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "trigger": {
     "type": "callable",
     "operation": "trigger_and_respond",
-    "input_schema": {
-      "type": "object",
-      "required": [
-        "id",
-        "type",
-        "call"
-      ],
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "call.completed"
-          ]
-        },
-        "call": {
-          "type": "object",
-          "required": [
-            "id",
-            "occurred_at",
-            "opportunity_id",
-            "rep_email"
-          ],
-          "properties": {
-            "id": {
-              "type": "string"
-            },
-            "occurred_at": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "opportunity_id": {
-              "type": "string"
-            },
-            "account_id": {
-              "type": "string"
-            },
-            "rep_email": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "output_schema": {
-      "type": "object",
-      "required": [
-        "event_type",
-        "trace",
-        "attributes"
-      ]
-    }
+    "name": "sales_coaching_ingest",
+    "input_schema": "gtm_event_v1",
+    "accepts_event_types": [
+      "call.completed"
+    ]
+  },
+  "contract": {
+    "idempotency_key": "event_id",
+    "approval_required_for_side_effects": true
   },
   "steps": [
     {
-      "id": "validate_event_type",
-      "type": "boolean_condition",
-      "input": {
-        "left": "$.steps.trigger.body.type",
-        "operator": "equals",
-        "right": "call.completed"
-      }
-    },
-    {
-      "id": "normalize_gtm_event",
+      "id": "normalize_validate",
       "type": "script",
       "language": "javascript",
-      "code": "return {event_id: $.steps.trigger.body.id, event_type: $.steps.trigger.body.type, source: 'gong', occurred_at: $.steps.trigger.body.call.occurred_at, ingested_at: $.meta.timestamp, trace: {trace_id: $.steps.trigger.body.trace?.trace_id || $.meta.run_id, run_id: $.meta.run_id, parent_id: $.steps.trigger.body.trace?.parent_id || null}, subject: {type: 'call', id: $.steps.trigger.body.call.id}, attributes: {opportunity_id: $.steps.trigger.body.call.opportunity_id, account_id: $.steps.trigger.body.call.account_id, rep_email: $.steps.trigger.body.call.rep_email, directive_set_version: 'sko_2026_q2_v3'}};"
+      "notes": "Validate call.completed payload and normalize trace/subject/attributes."
     },
     {
-      "id": "fetch_endgame_context",
-      "type": "http_client",
-      "config": {
-        "method": "POST",
-        "url": "https://api.endgame.example/v1/context/sales-coaching",
-        "timeout_seconds": 20,
-        "error_mode": "automatic",
-        "body": {
-          "trace": "$.steps.normalize_gtm_event.trace",
-          "subject": "$.steps.normalize_gtm_event.subject",
-          "attributes": "$.steps.normalize_gtm_event.attributes"
-        }
+      "id": "idempotency_get",
+      "type": "data_storage.get_value",
+      "input": {
+        "scope": "project",
+        "key": "sales-coaching:${steps.normalize_validate.output.event_id}",
+        "default": null
       }
     },
     {
-      "id": "directive_alignment_check",
-      "type": "http_client",
-      "config": {
-        "method": "POST",
-        "url": "https://api.directive-alignment.example/v1/check",
-        "timeout_seconds": 20,
-        "error_mode": "automatic",
-        "body": {
-          "recommendation": "Re-open discovery around pain timeline before proposal revision",
-          "directive_set_version": "$.steps.normalize_gtm_event.attributes.directive_set_version",
-          "context": "$.steps.fetch_endgame_context.body"
-        }
-      }
-    },
-    {
-      "id": "branch_on_alignment",
+      "id": "branch_if_new",
       "type": "branch",
       "branches": [
         {
-          "name": "pass",
-          "when": "$.steps.directive_alignment_check.body.status == 'pass' && $.steps.directive_alignment_check.body.score >= 0.85",
-          "steps": [
-            {
-              "id": "create_salesforce_task",
-              "type": "salesforce.create_record",
-              "error_handling": "manual",
-              "input": {
-                "object": "Task",
-                "fields": {
-                  "Subject": "Coaching: Re-validate pain and buying process",
-                  "Description": "Directive-aligned recommendation from completed call",
-                  "WhatId": "$.steps.normalize_gtm_event.attributes.opportunity_id",
-                  "OwnerEmail__c": "$.steps.normalize_gtm_event.attributes.rep_email",
-                  "TraceId__c": "$.steps.normalize_gtm_event.trace.trace_id"
-                }
-              }
-            }
-          ]
+          "name": "new",
+          "when": "steps.idempotency_get.output == null"
         },
         {
-          "name": "fail",
-          "when": "$.steps.directive_alignment_check.body.status != 'pass'",
-          "steps": [
-            {
-              "id": "notify_slack_escalation",
-              "type": "slack.post_message",
-              "input": {
-                "channel": "#revops-escalations",
-                "text": "Directive alignment failed for call $.steps.normalize_gtm_event.subject.id"
-              }
-            }
-          ]
+          "name": "duplicate",
+          "when": "steps.idempotency_get.output != null"
         }
       ]
     },
     {
+      "id": "context_enrichment_cog",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_context_enrichment",
+      "input": {
+        "event": "${steps.normalize_validate.output}",
+        "providers": [
+          "endgame_mcp",
+          "salesforce_headless_360",
+          "gong_or_zoom"
+        ]
+      }
+    },
+    {
+      "id": "coaching_recommendation_cog",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_coaching_recommendation",
+      "input": {
+        "event": "${steps.normalize_validate.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "id": "directive_alignment_cog",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_directive_alignment",
+      "input": {
+        "recommendation": "${steps.coaching_recommendation_cog.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "id": "alignment_branch",
+      "branch": "new",
+      "type": "branch",
+      "branches": [
+        {
+          "name": "high_confidence",
+          "when": "steps.directive_alignment_cog.output.score >= 0.85"
+        },
+        {
+          "name": "low_confidence",
+          "when": "steps.directive_alignment_cog.output.score < 0.85"
+        }
+      ]
+    },
+    {
+      "id": "approval_loop_cog",
+      "branch": "high_confidence",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_approval_loop",
+      "input": {
+        "machine_id": "sales-coaching-machine",
+        "event_id": "${steps.normalize_validate.output.event_id}",
+        "actions": [
+          "salesforce.create_record",
+          "slack.post_message"
+        ],
+        "proposal": "${steps.coaching_recommendation_cog.output}",
+        "timeout_seconds": 1200
+      }
+    },
+    {
+      "id": "approved_branch",
+      "branch": "high_confidence",
+      "type": "branch",
+      "branches": [
+        {
+          "name": "approved",
+          "when": "steps.approval_loop_cog.output.approval_status == 'approved'"
+        },
+        {
+          "name": "blocked",
+          "when": "steps.approval_loop_cog.output.approval_status != 'approved'"
+        }
+      ]
+    },
+    {
+      "id": "create_salesforce_task",
+      "branch": "approved",
+      "type": "salesforce.create_record",
+      "error_handling": "manual",
+      "input": {
+        "object": "Task",
+        "fields": {
+          "Subject": "Coaching recommendation from completed call",
+          "Description": "${steps.coaching_recommendation_cog.output.summary}",
+          "WhatId": "${steps.normalize_validate.output.attributes.opportunity_id}"
+        }
+      }
+    },
+    {
+      "id": "notify_manager_slack",
+      "branch": "approved",
+      "type": "slack.post_message",
+      "error_handling": "manual",
+      "input": {
+        "channel": "#sales-coaching",
+        "text": "${steps.coaching_recommendation_cog.output.summary}"
+      }
+    },
+    {
+      "id": "escalate_alignment_gap",
+      "branch": "low_confidence",
+      "type": "slack.post_message",
+      "input": {
+        "channel": "#revops-escalations",
+        "text": "Low-confidence coaching recommendation for call ${steps.normalize_validate.output.subject.id}."
+      }
+    },
+    {
       "id": "emit_output",
-      "type": "http_client",
-      "config": {
+      "branch": "new",
+      "type": "http.client",
+      "input": {
         "method": "POST",
         "url": "https://event-bus.example/v1/events",
         "body": {
           "schema_version": "gtm_event_v1",
           "event_type": "coaching.recommendation.created",
           "source": "tray",
-          "occurred_at": "$.steps.normalize_gtm_event.occurred_at",
-          "ingested_at": "$.meta.timestamp",
-          "trace": "$.steps.normalize_gtm_event.trace",
-          "subject": "$.steps.normalize_gtm_event.subject",
+          "trace": "${steps.normalize_validate.output.trace}",
+          "subject": "${steps.normalize_validate.output.subject}",
           "attributes": {
-            "alignment_status": "$.steps.directive_alignment_check.body.status",
-            "alignment_score": "$.steps.directive_alignment_check.body.score"
+            "alignment_score": "${steps.directive_alignment_cog.output.score}",
+            "approval_status": "${steps.approval_loop_cog.output.approval_status || 'not_required'}"
           }
         }
       }
     },
     {
-      "id": "callable_response",
+      "id": "idempotency_set",
+      "branch": "new",
+      "type": "data_storage.set_value",
+      "input": {
+        "scope": "project",
+        "key": "sales-coaching:${steps.normalize_validate.output.event_id}",
+        "value": {
+          "status": "completed",
+          "updated_at": "${meta.now}"
+        }
+      }
+    },
+    {
+      "id": "response_duplicate",
+      "branch": "duplicate",
+      "type": "callable_workflow_response",
+      "body": {
+        "event_type": "coaching.recommendation.duplicate_ignored",
+        "status": "ignored"
+      }
+    },
+    {
+      "id": "response_new",
+      "branch": "new",
       "type": "callable_workflow_response",
       "body": {
         "event_type": "coaching.recommendation.created",
-        "trace": "$.steps.normalize_gtm_event.trace",
+        "trace": "${steps.normalize_validate.output.trace}",
         "attributes": {
-          "alignment_status": "$.steps.directive_alignment_check.body.status",
-          "alignment_score": "$.steps.directive_alignment_check.body.score"
+          "alignment_score": "${steps.directive_alignment_cog.output.score}",
+          "approval_status": "${steps.approval_loop_cog.output.approval_status || 'not_required'}"
         }
       }
     }
   ],
   "error_handler": {
     "mode": "automatic_default_with_manual_overrides",
-    "steps": [
-      {
-        "id": "dead_letter_write",
-        "type": "http_client",
-        "config": {
-          "method": "POST",
-          "url": "https://event-bus.example/v1/dead-letter",
-          "body": {
-            "machine_id": "sales-coaching-machine",
-            "trace_id": "$.meta.run_id",
-            "step_log_url": "$.errors.step_log_url",
-            "error": "$.error"
-          }
-        }
-      }
-    ]
-  },
-  "sdlc": {
-    "project_versioning": true,
-    "import_export_unit": "project",
-    "promotion": {
-      "manual_first_prod_import": true,
-      "api_automation_after_initial_mapping": true,
-      "required_checks": [
-        "imports_requirements",
-        "imports_previews"
+    "manual_paths_for": [
+      "create_salesforce_task",
+      "notify_manager_slack"
+    ],
+    "dead_letter": {
+      "workflow": "shared_dead_letter_handler",
+      "required_fields": [
+        "machine_id",
+        "event_id",
+        "trace_id",
+        "step_name",
+        "step_log_url",
+        "error"
       ]
     }
   }

@@ -1,164 +1,217 @@
 {
-  "name": "deal-hygiene-machine-v1",
+  "name": "deal-hygiene-machine",
   "machine_id": "deal-hygiene-machine",
-  "version": "1.1.0",
-  "trigger": {
-    "type": "callable",
-    "operation": "trigger",
-    "input_schema": "gtm_event_v1",
-    "accepts_event_types": [
+  "version": "1.2.0",
+  "tray": {
+    "trigger": {
+      "type": "callable",
+      "operation": "trigger_and_respond",
+      "name": "deal_hygiene_ingest",
+      "input_schema": "gtm_event_v1"
+    },
+    "response": {
+      "operation": "callable_workflow_response"
+    }
+  },
+  "contract": {
+    "idempotency_key": "event_id",
+    "approval_required_before_side_effects": true,
+    "accepted_event_types": [
       "deal.updated",
-      "call.completed",
+      "opportunity.stage_changed",
       "account.health_changed"
     ]
-  },
-  "config": {
-    "slo": {
-      "p95_end_to_end_seconds": 120
-    },
-    "idempotency_key": "event_id",
-    "approval_required_before_writes": true,
-    "timeouts": {
-      "http_step_seconds": 20,
-      "approval_wait_seconds": 1800
-    }
   },
   "steps": [
     {
       "id": "normalize_validate",
       "type": "script",
-      "script": "assert_required_gtm_event_v1_fields"
+      "language": "javascript",
+      "notes": "Validate gtm_event_v1 required fields and normalize trace context."
     },
     {
-      "id": "idempotency_check",
-      "type": "data_storage.get",
-      "key": "deal-hygiene:${steps.normalize_validate.output.event_id}"
+      "id": "idempotency_get",
+      "type": "data_storage.get_value",
+      "input": {
+        "scope": "project",
+        "key": "deal-hygiene:${steps.normalize_validate.output.event_id}",
+        "default": null
+      }
     },
     {
-      "id": "enrich_account_health",
-      "type": "http.client",
-      "method": "POST",
-      "url": "https://cogs.internal/enrich_account_health/v1/execute",
-      "body_path": "steps.normalize_validate.output"
-    },
-    {
-      "id": "deal_score_reasoner",
-      "type": "http.client",
-      "method": "POST",
-      "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
-      "body_path": "steps.enrich_account_health.output"
-    },
-    {
-      "id": "directive_alignment",
-      "type": "http.client",
-      "method": "POST",
-      "url": "https://cogs.internal/directive_alignment/v1/execute",
-      "body_path": "steps.deal_score_reasoner.output"
-    },
-    {
-      "id": "route_exec_alert",
-      "type": "http.client",
-      "method": "POST",
-      "url": "https://cogs.internal/route_exec_alert/v1/execute",
-      "body_path": "steps.directive_alignment.output"
-    },
-    {
-      "id": "approval_loop",
-      "type": "http.client",
-      "method": "POST",
-      "url": "https://approvals.internal/v1/request",
-      "body_path": "steps.route_exec_alert.output"
-    },
-    {
-      "id": "approval_branch",
+      "id": "branch_if_new",
       "type": "branch",
-      "conditions": [
+      "branches": [
         {
-          "name": "approved",
-          "expression": "steps.approval_loop.output.attributes.approval_status == 'approved'"
+          "name": "new_event",
+          "when": "steps.idempotency_get.output == null"
         },
         {
-          "name": "deferred",
-          "expression": "steps.approval_loop.output.attributes.approval_status != 'approved'"
+          "name": "duplicate_event",
+          "when": "steps.idempotency_get.output != null"
         }
       ]
     },
     {
-      "id": "sfdc_writeback",
-      "type": "salesforce.update_record",
-      "branch": "approved",
-      "object": "Opportunity",
-      "record_id_path": "steps.approval_loop.output.subject.opportunity_id",
-      "field_map": {
-        "CloseDate": "steps.approval_loop.output.attributes.proposed_mutations.close_date",
-        "NextStep": "steps.approval_loop.output.attributes.proposed_mutations.next_step"
-      },
-      "error_handling": "manual"
-    },
-    {
-      "id": "emit_output_event",
-      "type": "http.client",
-      "method": "POST",
-      "url": "https://events.internal/v1/publish",
-      "body_template": {
-        "schema_version": "gtm_event_v1",
-        "event_id": "{{steps.normalize_validate.output.event_id}}",
-        "event_type": "{{branch == 'approved' ? 'deal.hygiene.remediated' : 'deal.hygiene.deferred'}}",
-        "source": "tray",
-        "occurred_at": "{{steps.normalize_validate.output.occurred_at}}",
-        "ingested_at": "{{now}}",
-        "trace": {
-          "trace_id": "{{steps.normalize_validate.output.trace.trace_id}}",
-          "run_id": "{{workflow.run_id}}"
-        },
-        "subject": "{{steps.normalize_validate.output.subject}}",
-        "attributes": "{{steps.approval_loop.output.attributes}}"
+      "id": "context_enrichment_cog",
+      "type": "call_workflow",
+      "branch": "new_event",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_context_enrichment",
+      "input": {
+        "event": "${steps.normalize_validate.output}",
+        "providers": [
+          "endgame_mcp",
+          "salesforce_headless_360",
+          "gong",
+          "seismic_or_highspot"
+        ]
       }
     },
     {
-      "id": "idempotency_store",
-      "type": "data_storage.put",
-      "key": "deal-hygiene:${steps.normalize_validate.output.event_id}",
-      "value": {
-        "terminal_event_type": "{{steps.emit_output_event.request.body.event_type}}",
-        "updated_at": "{{now}}"
+      "id": "deal_scoring_cog",
+      "type": "call_workflow",
+      "branch": "new_event",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_deal_scoring",
+      "input": {
+        "event": "${steps.normalize_validate.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "id": "directive_alignment_cog",
+      "type": "call_workflow",
+      "branch": "new_event",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_directive_alignment",
+      "input": {
+        "score": "${steps.deal_scoring_cog.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "id": "compose_mutation_plan",
+      "type": "script",
+      "branch": "new_event",
+      "language": "javascript",
+      "notes": "Build proposed CRM field updates and reason codes."
+    },
+    {
+      "id": "approval_loop_cog",
+      "type": "call_workflow",
+      "branch": "new_event",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_approval_loop",
+      "input": {
+        "machine_id": "deal-hygiene-machine",
+        "event_id": "${steps.normalize_validate.output.event_id}",
+        "trace": "${steps.normalize_validate.output.trace}",
+        "actions": [
+          "salesforce.update_record"
+        ],
+        "proposed_changes": "${steps.compose_mutation_plan.output}",
+        "timeout_seconds": 1800
+      }
+    },
+    {
+      "id": "approval_branch",
+      "type": "branch",
+      "branch": "new_event",
+      "branches": [
+        {
+          "name": "approved",
+          "when": "steps.approval_loop_cog.output.approval_status == 'approved'"
+        },
+        {
+          "name": "blocked",
+          "when": "steps.approval_loop_cog.output.approval_status != 'approved'"
+        }
+      ]
+    },
+    {
+      "id": "salesforce_write",
+      "type": "salesforce.update_record",
+      "branch": "approved",
+      "error_handling": "manual",
+      "input": {
+        "object": "Opportunity",
+        "record_id": "${steps.normalize_validate.output.subject.id}",
+        "fields": "${steps.compose_mutation_plan.output.fields}",
+        "external_idempotency": "${steps.normalize_validate.output.event_id}"
+      }
+    },
+    {
+      "id": "emit_terminal_event",
+      "type": "http.client",
+      "branch": "new_event",
+      "input": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "body": {
+          "schema_version": "gtm_event_v1",
+          "event_type": "${steps.approval_loop_cog.output.approval_status == 'approved' ? 'deal.hygiene.remediated' : 'deal.hygiene.deferred'}",
+          "source": "tray",
+          "subject": "${steps.normalize_validate.output.subject}",
+          "trace": "${steps.normalize_validate.output.trace}",
+          "attributes": {
+            "approval_status": "${steps.approval_loop_cog.output.approval_status}",
+            "reason_codes": "${steps.compose_mutation_plan.output.reason_codes}"
+          }
+        }
+      }
+    },
+    {
+      "id": "idempotency_set",
+      "type": "data_storage.set_value",
+      "branch": "new_event",
+      "input": {
+        "scope": "project",
+        "key": "deal-hygiene:${steps.normalize_validate.output.event_id}",
+        "value": {
+          "status": "completed",
+          "approval_status": "${steps.approval_loop_cog.output.approval_status}",
+          "updated_at": "${meta.now}"
+        }
+      }
+    },
+    {
+      "id": "duplicate_event_response",
+      "type": "callable_workflow_response",
+      "branch": "duplicate_event",
+      "body": {
+        "event_type": "deal.hygiene.duplicate_ignored",
+        "status": "ignored",
+        "reason": "idempotency_key_seen"
+      }
+    },
+    {
+      "id": "return_response",
+      "type": "callable_workflow_response",
+      "branch": "new_event",
+      "body": {
+        "event_type": "${steps.approval_loop_cog.output.approval_status == 'approved' ? 'deal.hygiene.remediated' : 'deal.hygiene.deferred'}",
+        "trace": "${steps.normalize_validate.output.trace}",
+        "attributes": {
+          "approval_status": "${steps.approval_loop_cog.output.approval_status}"
+        }
       }
     }
   ],
   "error_handling": {
-    "default_step_mode": "automatic",
-    "manual_paths_for": [
-      "sfdc_writeback"
+    "default_mode": "automatic",
+    "manual_for_steps": [
+      "salesforce_write"
     ],
-    "dead_letter_target": "deal-hygiene-machine-dlq",
-    "alerting": {
-      "required_fields": [
-        "workflow_uuid",
+    "dead_letter": {
+      "workflow": "shared_dead_letter_handler",
+      "payload_fields": [
+        "machine_id",
+        "event_id",
+        "trace_id",
         "step_name",
         "step_log_url",
-        "message"
-      ]
-    }
-  },
-  "sdlc": {
-    "project_versioning": {
-      "enabled": true,
-      "annotate_versions": true
-    },
-    "import_export": {
-      "unit": "project",
-      "json_artifact": true,
-      "manual_first_prod_import": true
-    },
-    "promotion": {
-      "flow": [
-        "dev_test",
-        "save_version",
-        "export",
-        "import",
-        "requirements_check",
-        "preview",
-        "publish"
+        "error"
       ]
     }
   }

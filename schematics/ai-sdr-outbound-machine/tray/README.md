@@ -3,7 +3,7 @@
 Tray runtime for `ai-sdr-outbound-machine` combining deterministic outbound workflowing with smart-cog reasoning checkpoints and approval before execution.
 
 ## Artifact
-- `workflow.placeholder.json`: Tray workflow artifact (kept at current filename for compatibility).
+- `workflow.json`: Tray workflow artifact (kept at current filename for compatibility).
 
 ## Runtime Pattern
 1. Callable Trigger receives outbound intent events.

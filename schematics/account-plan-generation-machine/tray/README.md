@@ -3,7 +3,7 @@
 Tray runtime for `account-plan-generation-machine` using callable cogs for research, deterministic plan assembly, and approval-gated CRM/document writes.
 
 ## Artifact
-- `workflow.placeholder.json`: Tray workflow artifact (kept at current filename for compatibility).
+- `workflow.json`: Tray workflow artifact (kept at current filename for compatibility).
 
 ## Runtime Flow
 1. Callable Trigger receives `gtm_event_v1`.

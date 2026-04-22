@@ -1,163 +1,228 @@
 {
   "workflow_name": "nrr_machine_low_no_touch",
   "machine_id": "nrr-machine",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "tray_runtime": {
     "project": "nrr-machine",
-    "trigger_mode": "callable",
-    "callable_trigger": {
-      "name": "nrr_event_ingest",
-      "operation": "trigger_and_respond"
-    },
-    "scheduled_trigger": {
-      "enabled": true,
-      "cron": "0 */6 * * *",
-      "timezone": "America/Los_Angeles"
-    }
+    "triggers": [
+      {
+        "type": "callable",
+        "name": "nrr_event_ingest",
+        "operation": "trigger_and_respond"
+      },
+      {
+        "type": "scheduled",
+        "name": "nrr_periodic_sweep",
+        "operation": "cron",
+        "cron": "0 */6 * * *",
+        "timezone": "America/Los_Angeles",
+        "enabled": true
+      }
+    ]
   },
   "contract": {
     "input_schema": "gtm_event_v1",
     "idempotency_key": "event_id",
-    "approval_required_before_side_effects": true
+    "approval_required_before_side_effects": true,
+    "account_segments": [
+      "low_touch",
+      "no_touch"
+    ]
   },
   "steps": [
     {
       "key": "normalize_validate",
       "operation": "script",
       "language": "javascript",
-      "notes": "Validate required gtm_event_v1 keys and normalize trace/timestamps."
+      "notes": "Normalize event payload and derive trace/event identifiers."
     },
     {
-      "key": "idempotency_check",
-      "operation": "data_storage_get",
+      "key": "idempotency_get",
+      "operation": "data_storage.get_value",
       "input": {
-        "key": "nrr-machine:${steps.normalize_validate.output.event_id}"
+        "scope": "project",
+        "key": "nrr-machine:${steps.normalize_validate.output.event_id}",
+        "default": null
       }
     },
     {
-      "key": "skip_if_duplicate",
-      "operation": "boolean_condition",
-      "condition": "steps.idempotency_check.found == false"
-    },
-    {
-      "key": "fetch_context",
-      "operation": "http_client",
-      "request": {
-        "method": "POST",
-        "url": "https://context.internal/enrich",
-        "timeout_seconds": 20,
-        "body": {
-          "providers": [
-            "salesforce_headless_360",
-            "telemetry",
-            "billing",
-            "endgame_mcp"
-          ],
-          "event": "${steps.normalize_validate.output}"
-        }
-      }
-    },
-    {
-      "key": "segment_gate",
-      "operation": "boolean_condition",
-      "condition": "steps.fetch_context.output.segment in ['low_touch','no_touch']"
-    },
-    {
-      "key": "score_and_play",
-      "operation": "script",
-      "language": "javascript",
-      "logic": "score=Math.round((0.45*health_risk)+(0.35*renewal_risk)+(0.2*expansion_signal)); play=(score>=78)?'critical_retention':((score>=72 && health_risk<60)?'expansion_push':'monitor_and_nudge');"
-    },
-    {
-      "key": "compose_draft",
-      "operation": "http_client",
-      "request": {
-        "method": "POST",
-        "url": "https://messaging.internal/compose",
-        "timeout_seconds": 15
-      }
-    },
-    {
-      "key": "approval_loop",
-      "operation": "http_client",
-      "request": {
-        "method": "POST",
-        "url": "https://approval.internal/request",
-        "body": {
-          "event_id": "${steps.normalize_validate.output.event_id}",
-          "account_id": "${steps.normalize_validate.output.subject.id}",
-          "score": "${steps.score_and_play.score}",
-          "play": "${steps.score_and_play.play}",
-          "actions": [
-            "outbound_email_send",
-            "renewal_plan_update"
-          ],
-          "timeout_seconds": 1800
-        }
-      }
-    },
-    {
-      "key": "approved_branch",
+      "key": "branch_if_new",
       "operation": "branch",
       "branches": [
         {
-          "name": "approved",
-          "condition": "steps.approval_loop.output.approval_status == 'approved'",
-          "steps": [
-            {
-              "key": "send_outbound",
-              "operation": "send_email",
-              "error_handling": "manual"
-            },
-            {
-              "key": "update_sfdc",
-              "operation": "salesforce_update",
-              "input": {
-                "idempotency_key": "${steps.normalize_validate.output.event_id}"
-              },
-              "error_handling": "manual"
-            },
-            {
-              "key": "emit_executed",
-              "operation": "http_client",
-              "request": {
-                "method": "POST",
-                "url": "https://events.internal/emit",
-                "body": {
-                  "event_type": "nrr.play.executed"
-                }
-              }
-            }
-          ]
+          "name": "new",
+          "condition": "steps.idempotency_get.output == null"
         },
         {
-          "name": "blocked",
-          "condition": "steps.approval_loop.output.approval_status != 'approved'",
-          "steps": [
-            {
-              "key": "emit_blocked",
-              "operation": "http_client",
-              "request": {
-                "method": "POST",
-                "url": "https://events.internal/emit",
-                "body": {
-                  "event_type": "nrr.play.blocked",
-                  "reason": "approval_rejected_or_timeout"
-                }
-              }
-            }
-          ]
+          "name": "duplicate",
+          "condition": "steps.idempotency_get.output != null"
         }
       ]
     },
     {
-      "key": "idempotency_store",
-      "operation": "data_storage_put",
+      "key": "context_enrichment_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_context_enrichment",
       "input": {
+        "event": "${steps.normalize_validate.output}",
+        "providers": [
+          "endgame_mcp",
+          "salesforce_headless_360",
+          "gong",
+          "zoom",
+          "telemetry",
+          "billing"
+        ]
+      }
+    },
+    {
+      "key": "nrr_scoring_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_nrr_scoring",
+      "input": {
+        "event": "${steps.normalize_validate.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "key": "segment_gate",
+      "branch": "new",
+      "operation": "boolean_condition",
+      "condition": "steps.nrr_scoring_cog.output.segment in ['low_touch','no_touch']"
+    },
+    {
+      "key": "play_selection_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_play_selection",
+      "input": {
+        "score": "${steps.nrr_scoring_cog.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "key": "draft_outbound_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_outbound_drafting",
+      "input": {
+        "play": "${steps.play_selection_cog.output}",
+        "context": "${steps.context_enrichment_cog.output}"
+      }
+    },
+    {
+      "key": "approval_loop_cog",
+      "branch": "new",
+      "operation": "call_workflow",
+      "mode": "fire_and_wait_for_response",
+      "workflow": "shared_approval_loop",
+      "input": {
+        "machine_id": "nrr-machine",
+        "event_id": "${steps.normalize_validate.output.event_id}",
+        "actions": [
+          "send_outbound_email",
+          "salesforce.update_record"
+        ],
+        "proposal": "${steps.draft_outbound_cog.output}",
+        "timeout_seconds": 1800
+      }
+    },
+    {
+      "key": "approval_branch",
+      "branch": "new",
+      "operation": "branch",
+      "branches": [
+        {
+          "name": "approved",
+          "condition": "steps.approval_loop_cog.output.approval_status == 'approved'"
+        },
+        {
+          "name": "blocked",
+          "condition": "steps.approval_loop_cog.output.approval_status != 'approved'"
+        }
+      ]
+    },
+    {
+      "key": "send_outbound",
+      "branch": "approved",
+      "operation": "send_email",
+      "error_handling": "manual",
+      "input": {
+        "to": "${steps.draft_outbound_cog.output.to}",
+        "subject": "${steps.draft_outbound_cog.output.subject}",
+        "body": "${steps.draft_outbound_cog.output.body}"
+      }
+    },
+    {
+      "key": "update_sfdc",
+      "branch": "approved",
+      "operation": "salesforce.update_record",
+      "error_handling": "manual",
+      "input": {
+        "object": "Opportunity",
+        "record_id": "${steps.normalize_validate.output.attributes.opportunity_id}",
+        "fields": "${steps.play_selection_cog.output.crm_updates}",
+        "external_idempotency": "${steps.normalize_validate.output.event_id}"
+      }
+    },
+    {
+      "key": "emit_terminal",
+      "branch": "new",
+      "operation": "http.client",
+      "input": {
+        "method": "POST",
+        "url": "https://events.internal/emit",
+        "body": {
+          "event_type": "${steps.approval_loop_cog.output.approval_status == 'approved' ? 'nrr.play.executed' : 'nrr.play.blocked'}",
+          "trace": "${steps.normalize_validate.output.trace}",
+          "subject": "${steps.normalize_validate.output.subject}",
+          "attributes": {
+            "segment": "${steps.nrr_scoring_cog.output.segment}",
+            "score": "${steps.nrr_scoring_cog.output.score}",
+            "approval_status": "${steps.approval_loop_cog.output.approval_status}"
+          }
+        }
+      }
+    },
+    {
+      "key": "idempotency_set",
+      "branch": "new",
+      "operation": "data_storage.set_value",
+      "input": {
+        "scope": "project",
         "key": "nrr-machine:${steps.normalize_validate.output.event_id}",
         "value": {
           "status": "completed",
+          "approval_status": "${steps.approval_loop_cog.output.approval_status}",
           "updated_at": "${meta.now}"
+        }
+      }
+    },
+    {
+      "key": "response_duplicate",
+      "branch": "duplicate",
+      "operation": "callable_workflow_response",
+      "body": {
+        "event_type": "nrr.play.duplicate_ignored",
+        "status": "ignored"
+      }
+    },
+    {
+      "key": "response_new",
+      "branch": "new",
+      "operation": "callable_workflow_response",
+      "body": {
+        "event_type": "${steps.approval_loop_cog.output.approval_status == 'approved' ? 'nrr.play.executed' : 'nrr.play.blocked'}",
+        "trace": "${steps.normalize_validate.output.trace}",
+        "attributes": {
+          "approval_status": "${steps.approval_loop_cog.output.approval_status}",
+          "segment": "${steps.nrr_scoring_cog.output.segment}"
         }
       }
     }
@@ -168,31 +233,13 @@
       "send_outbound",
       "update_sfdc"
     ],
-    "dead_letter_target": "nrr-machine-dlq",
+    "dead_letter_target": "shared_dead_letter_handler",
     "alerting_payload_fields": [
       "workflow_uuid",
       "step_name",
       "step_log_url",
-      "message",
-      "created"
-    ]
-  },
-  "sdlc": {
-    "project_versioning": true,
-    "promotion_flow": [
-      "save_version_in_dev",
-      "export_project_json",
-      "import_to_stage_or_prod",
-      "resolve_auth_service_connector_mappings",
-      "run_import_preview_checks",
-      "create_destination_version"
-    ],
-    "api_pipeline_endpoints": [
-      "GET /core/v1/projects/{projectId}/versions",
-      "GET /core/v1/projects/{projectId}/versions/{versionNumber}/export",
-      "POST /core/v1/projects/{projectId}/imports/requirements",
-      "POST /core/v1/projects/{projectId}/imports/previews",
-      "POST /core/v1/projects/{projectId}/imports"
+      "trace_id",
+      "message"
     ]
   }
 }

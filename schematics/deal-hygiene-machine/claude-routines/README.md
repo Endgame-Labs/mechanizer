@@ -1,23 +1,33 @@
-# Claude Routines Adapter (deal-hygiene-machine)
+# Claude Routines Runtime (deal-hygiene-machine)
 
 ## Purpose
-Routine-oriented implementation where each phase maps to a specific smart cog and deterministic contract check, updated to current Claude routines constraints.
+Concrete runtime implementation guide for deal hygiene detection/remediation in Claude routines with strict approval-gated writes.
 
-## Runtime Model (Current Claude Behavior)
-- Runs as a Claude Code cloud routine session.
-- Trigger options: schedule, API, GitHub event.
-- Routine runs are autonomous and do not surface permission prompts during execution.
-- Routines are in research preview with mutable limits and API surface.
+## Runtime Shape
+- Cloud routine execution; autonomous session behavior.
+- Trigger mix:
+  - API for event-driven hygiene checks.
+  - Schedule for backfill and drift sweeps.
+  - Optional GitHub trigger when hygiene policies are repo-managed.
 
-## Routine Asset
-- `routine.md`: executable routine spec with phase order, tool calls, and output schema references.
+## Tool and MCP Wiring
+- Context:
+  - `endgame_mcp`, `salesforce_headless_360`, optional conversation tools.
+- Decisioning:
+  - scoring reasoner + directive policy checker.
+- Side effects:
+  - `sfdc_writeback`, `task_create`, `event_emitter`.
 
-## Guardrails
-- Routine must validate input against `gtm_event_v1` before reasoning.
-- Prompted reasoning may propose actions, but only the `approval_loop` phase can authorize mutation.
-- Output emission must always conform to `gtm_event_v1` required keys.
-- Treat Claude runtime autonomy as transport, not policy authorization.
+## Approval Checkpoints
+- `approval_loop` is mandatory before **any** SFDC writeback.
+- If approval is not `approved`, emit deferred event and skip mutation tools.
 
-## Failure Policy
-- Validation failures are terminal (`deal.hygiene.failed_validation`).
-- Provider/tool failures retry up to machine policy limits, then emit failure event and dead-letter metadata.
+## External API/MCP Notes
+- API `/fire` payload arrives as freeform `text`; parse/validate before stageing.
+- Keep write-capable MCP servers available only to execution path.
+
+## References
+- https://code.claude.com/docs/en/routines
+- https://code.claude.com/docs/en/mcp
+- https://code.claude.com/docs/en/permissions
+- https://code.claude.com/docs/en/sub-agents

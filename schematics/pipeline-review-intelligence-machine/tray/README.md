@@ -3,7 +3,7 @@
 Tray implementation blueprint for weekly pipeline review prep and manager summary generation.
 
 ## Reference Artifact
-- `workflow.json`: callable-trigger workflow placeholder with shared-cog sequencing.
+- `workflow.json`: callable-trigger workflow blueprint with shared-cog sequencing.
 
 ## Contract Notes
 - Inbound payload must normalize to `gtm_event_v1`.

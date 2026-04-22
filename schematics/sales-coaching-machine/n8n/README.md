@@ -52,3 +52,16 @@ n8n implementation for sales coaching signals from call events, with directive c
   - Push and pull in n8n UI.
   - Pull can overwrite local instance changes not yet pushed.
   - Do branch protections and PR reviews in your Git provider.
+
+## References
+- n8n Webhook node: https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/
+- n8n Schedule Trigger node: https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.scheduletrigger/
+- n8n HTTP Request node: https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/
+- n8n Code node: https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.code/
+- n8n Error handling / Error Trigger: https://docs.n8n.io/flow-logic/error-handling/
+- n8n Queue mode scaling: https://docs.n8n.io/hosting/scaling/queue-mode/
+- n8n credentials: https://docs.n8n.io/credentials/
+- n8n import/export workflows: https://docs.n8n.io/workflows/export-import/
+- n8n source control environments: https://docs.n8n.io/source-control-environments/
+- n8n Salesforce node: https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.salesforce/
+- n8n Slack node: https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.slack/

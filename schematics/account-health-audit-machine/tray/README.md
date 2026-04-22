@@ -3,7 +3,7 @@
 Tray runtime for `account-health-audit-machine` with scheduled and callable execution modes, reusable audit smart cogs, and approval-gated write actions.
 
 ## Artifact
-- `workflow.placeholder.json`: Tray workflow artifact (kept at current filename for compatibility).
+- `workflow.json`: Tray workflow artifact (kept at current filename for compatibility).
 
 ## Runtime Flow
 1. Scheduled trigger runs weekday audit cycles; callable trigger handles on-demand audits.

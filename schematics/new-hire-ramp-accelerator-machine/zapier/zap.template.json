@@ -1,67 +1,114 @@
 {
   "zap_name": "New Hire Ramp Accelerator Machine",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "machine_id": "new-hire-ramp-accelerator-machine",
-  "description": "Generates territory/book onboarding packages for newly provisioned reps from canonical gtm_event_v1 triggers.",
+  "description": "Generates onboarding packages for new reps with explicit approval before write actions.",
   "trigger": {
-    "app": "webhooks_by_zapier",
-    "event": "catch_hook",
-    "path": "/new-hire-ramp/events"
-  },
-  "gtm_event_v1_mapping": {
-    "required": [
-      "schema_version",
-      "event_id",
-      "event_type",
-      "source",
-      "occurred_at",
-      "ingested_at",
-      "trace",
-      "subject",
-      "attributes"
+    "primary": {
+      "app": "webhooks_by_zapier",
+      "event": "catch_hook",
+      "path": "/new-hire-ramp/events"
+    },
+    "alternate": {
+      "app": "schedule_by_zapier",
+      "event": "every_4_hours"
+    },
+    "accepts_event_types": [
+      "rep.provisioned",
+      "rep.territory_assigned",
+      "rep.book_rebalanced"
     ]
   },
   "steps": [
     {
       "id": "validate_contract",
-      "type": "code",
-      "runtime": "javascript"
+      "app": "code_by_zapier",
+      "event": "run_javascript"
     },
     {
       "id": "filter_supported_events",
-      "type": "filter",
+      "app": "filter_by_zapier",
+      "event": "only_continue_if",
       "rule": "event_type in ['rep.provisioned','rep.territory_assigned','rep.book_rebalanced']"
     },
     {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "new-hire-ramp:${event_id}"
+    },
+    {
       "id": "build_onboarding_package",
-      "type": "webhook_post",
-      "url": "https://onboarding.internal/build",
-      "payload": {
-        "sections": [
-          "territory_snapshot",
-          "starter_accounts",
-          "messaging_kit",
-          "week_one_plan"
-        ],
-        "event": "{{trigger.raw_body}}"
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://onboarding.internal/build",
+        "json": {
+          "sections": [
+            "territory_snapshot",
+            "starter_accounts",
+            "messaging_kit",
+            "week_one_plan"
+          ]
+        }
       }
     },
     {
       "id": "approval_loop",
-      "type": "webhook_post",
-      "url": "https://approval.internal/request"
+      "app": "human_in_the_loop",
+      "event": "request_approval",
+      "fallback": {
+        "app": "webhooks_by_zapier",
+        "event": "post",
+        "url": "https://approval.internal/request"
+      }
     },
     {
       "id": "path_on_approval",
-      "type": "paths",
-      "branches": [
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
         {
           "name": "approved",
-          "condition": "approval_status == 'approved'"
+          "condition": "approval_status == 'approved'",
+          "actions": [
+            {
+              "id": "persist_package",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://onboarding.internal/persist"
+              }
+            },
+            {
+              "id": "emit_generated",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "rep.onboarding.package_generated"
+                }
+              }
+            }
+          ]
         },
         {
           "name": "blocked",
-          "condition": "approval_status != 'approved'"
+          "condition": "approval_status != 'approved'",
+          "actions": [
+            {
+              "id": "emit_blocked",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "rep.onboarding.package_blocked"
+                }
+              }
+            }
+          ]
         }
       ]
     }

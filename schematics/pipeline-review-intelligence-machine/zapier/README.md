@@ -1,20 +1,24 @@
 # Zapier Adapter (pipeline-review-intelligence-machine)
 
-## Reference Artifact
-- `zap.template.json`: template step contract for pipeline-review prep execution.
+Zapier implementation for pipeline review prep with smart-cog scoring, approval gating, and manager-ready summaries.
 
-## Trigger Mapping
-- `Webhooks by Zapier -> Catch Hook` or scheduled trigger.
-- Normalize inbound payload to `gtm_event_v1`.
+## Artifact
+- `zap.template.json`
 
-## Required Smart-Cog Sequence
-1. `enrich_account_health`
-2. `deal_score_reasoner`
-3. `directive_alignment`
-4. `compose_outreach_message`
-5. `route_exec_alert`
-6. `approval_loop`
+## Core Flow
+1. Trigger from webhook or schedule.
+2. Normalize payload, filter supported events, dedupe.
+3. Execute smart cogs: account enrichment, deal scoring, directive alignment.
+4. Compose manager review packet.
+5. Require approval before outbound manager digests or CRM updates.
+6. Emit executed/blocked terminal events.
 
-## Approval Contract
-- Approval must run immediately before manager summary sends and high-impact mutations.
-- Non-approved outcomes emit `pipeline.review.prep.deferred` and stop side effects.
+## Zapier Notes
+- Keep approval immediately before side effects.
+- If shared post-branch actions are needed, use Sub-Zap calls in each branch.
+- Use `Storage by Zapier` for dedupe and terminal state.
+
+## References
+- https://help.zapier.com/hc/en-us/articles/8496288555917-Add-branching-logic-to-Zaps-with-Paths
+- https://help.zapier.com/hc/en-us/articles/38731226552845-Human-in-the-Loop
+- https://help.zapier.com/hc/en-us/articles/8496196837261-How-is-task-usage-measured-in-Zapier

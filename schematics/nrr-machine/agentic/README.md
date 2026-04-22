@@ -1,47 +1,68 @@
 # Agentic Adapter (nrr-machine)
 
-Provider-agnostic manager-worker execution of `nrr-machine`, preserving contract behavior while allowing tool-based enrichment and action orchestration.
+Runtime-agnostic orchestration contract for `nrr-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose
-- Keep deterministic contract checks and policy guardrails.
-- Use agentic reasoning only for explanation/message composition, not contract mutation.
+Detect retention risk and expansion opportunities and execute approved action plans across CRM and outbound channels.
 
 ## Runtime Pattern
-- Manager-worker graph with resumable checkpoints (supports approval pauses and retries).
-- MCP-first context integration for tools/resources/prompts where available.
-- Supports synchronous execution and background continuation for long-running approval windows.
+- **Planner**: validates `gtm_event_v1`, decomposes into tool steps, and sets risk tier.
+- **Executor**: runs tools with checkpointed state and idempotency keys.
+- **Evaluator**: verifies policy, evidence, and output schema before side effects + emit.
+- **Manager ownership**: only manager node can approve terminal actions and emit final events.
 
-## Required Tools
-- `contract_validator` for `gtm_event_v1`
-- `endgame_mcp` and `endgame-cli` for account context and directives
-- `salesforce_headless_360` (read/write)
-- `telemetry_reader` and `billing_reader`
-- `approval_loop` endpoint/tool
-- `event_emitter` for output contract events
+## Event and Tool Contracts
+- Input/output envelope: `gtm_event_v1`.
+- Required event fields at ingest: `schema_version`, `event_id`, `event_type`, `source`, `occurred_at`, `ingested_at`, `trace.trace_id`, `subject.entity_type`, `subject.entity_id`.
+- Tool definitions use explicit JSON Schema contracts and deterministic response shapes.
+- Prefer strict tool schemas (no undeclared fields) for mutation-capable tools.
 
-## Execution Shape
-1. Manager validates input and allocates workers.
-2. Worker A: context enrichment + feature extraction.
-3. Worker B: scoring and play recommendation.
-4. Worker C: message/action draft.
-5. Manager runs policy checks and approval loop.
-6. Approved actions execute, then output event emits.
+### Tool Class Policy
+- `read_context`: MCP reads, warehouse/CRM snapshot reads.
+- `reasoning_transform`: scoring/summarization/cog transforms.
+- `write_action`: CRM updates, task creation, email/sequence sends.
+- `control`: approval gate, dedupe store, event emitter.
 
-## Deterministic Guardrails
-- Never alter required contract keys.
-- Enforce `segment in [low_touch, no_touch]` before scoring.
-- Apply tool-risk policy tiers and block high-risk side effects pending HITL.
-- Enforce approval before outbound/SFDC write actions.
-- Enforce idempotency by `event_id` and side-effect hash.
+## Provider Support Posture
 
-## Observability
-- Track per-worker latency and token/tool budgets.
-- Persist `trace_id`, `run_id`, selected play, score inputs, policy outcomes.
-- Emit explicit blocked/failure events with reason codes.
+### OpenAI-Style Agents
+- Supported pattern: Responses API / Agents SDK with function tools + MCP + optional shell tool.
+- `tool_choice` may be used to constrain tool invocation behavior.
+- Use background mode for long-running or delayed-approval runs.
+- For MCP connectors, keep sensitive tool calls approval-gated.
 
-## Tracing and Evals
-- Trace spans should include guardrails, tool invocations, handoffs, and approval waits.
-- Keep a replayable eval set from production traces (sanitized) for score stability and policy-regression checks.
-- Include trace grading/QA of play selection and policy adherence prior to runtime changes.
+### Claude-Compatible Agents
+- Supported pattern: Messages API tool loop (`stop_reason: "tool_use"` -> execute -> `tool_result`).
+- Tool contracts use `name` + `input_schema`; set strict tool behavior when needed.
+- MCP connector supports remote MCP tool calling directly; local stdio/prompt/resource flows require client-managed MCP integration.
 
-See `runbook.md` for full stage and policy details.
+### Non-Provider Runtime Engines
+- LangGraph/Temporal-style durable execution is valid if checkpoints are deterministic and idempotent.
+- Persist run state between planner/executor/evaluator phases to support retries and HITL resumes.
+
+## MCP + CLI Integration Pattern
+- Discover and cache tools via `tools/list`; invoke via `tools/call`.
+- Fetch contextual docs/data via `resources/list` + `resources/read`.
+- Load reusable instruction templates via `prompts/list` + `prompts/get` (client-managed where required).
+- For CLI wrappers, enforce allowlist commands, timeout budgets, and stdout/stderr capture for audit.
+
+## Approval/HITL Policy
+Outbound messaging and CRM updates are always HITL-gated for side-effecting paths.
+
+## Scheduled and Background Loop Pattern (Optional)
+- Trigger modes: event-driven, cron-driven, or hybrid.
+- For schedules, run planner in bounded windows and emit explicit no-op heartbeat events when no action is required.
+- Long-running work may continue in background, but terminal contract emission must remain idempotent and replay-safe.
+
+## References
+- OpenAI Agents SDK: https://developers.openai.com/api/docs/guides/agents
+- OpenAI Using tools: https://developers.openai.com/api/docs/guides/tools
+- OpenAI Function calling (strict mode): https://developers.openai.com/api/docs/guides/function-calling
+- OpenAI MCP and Connectors: https://developers.openai.com/api/docs/guides/tools-connectors-mcp
+- OpenAI Background mode: https://developers.openai.com/api/docs/guides/background
+- OpenAI Shell tool: https://developers.openai.com/api/docs/guides/tools-shell
+- Anthropic tool use overview: https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview
+- Anthropic define tools/tool_choice: https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools
+- Anthropic MCP connector: https://platform.claude.com/docs/en/agents-and-tools/mcp-connector
+- MCP spec (tools/resources/prompts): https://modelcontextprotocol.io/specification
+- LangGraph durable execution: https://docs.langchain.com/oss/python/langgraph/durable-execution

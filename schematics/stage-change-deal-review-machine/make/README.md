@@ -1,17 +1,30 @@
 # Make Adapter (stage-change-deal-review-machine)
 
+Last validated against official Make docs: 2026-04-22.
+
 ## Artifact
-- `scenario.json`: importable blueprint-style starter artifact.
+- `scenario.json`: blueprint-style scenario reference.
 
-## Runtime Pattern
-1. Trigger via custom webhook for stage-change events.
-2. Normalize inbound payload to `gtm_event_v1`.
-3. Run shared smart cogs for qualification/risk/missing-field review.
-4. Execute mandatory `approval_loop`.
-5. Approved path applies CRM writeback.
-6. Non-approved path posts Slack findings.
-7. Emit terminal event and store idempotency status.
+## Scenario Shape
+1. Receive stage-change events via webhook and optional periodic sweep.
+2. Normalize to canonical event schema and dedupe.
+3. Enrich deal context and score stage-change risk.
+4. Route findings by severity and build suggested updates.
+5. Run approval loop before CRM writeback or outbound findings.
+6. Approved path updates Salesforce.
+7. Non-approved path posts Slack findings and emits deferred event.
 
-## Contract and Approval Semantics
-- Preserve canonical contract keys across all modules.
-- No mutation side effects without explicit `approved` status.
+## Operator Notes
+- Sequential processing is recommended for rapid stage transitions.
+- Keep route filters explicit for stage movement and forecast category.
+- Use dead-letter route for contract violations or malformed payloads.
+
+## Approval Placement
+- Approval loop must remain before Salesforce updates and outbound findings.
+
+## References
+- https://help.make.com/schedule-a-scenario
+- https://help.make.com/router
+- https://help.make.com/automatic-retry-of-incomplete-executions
+- https://help.make.com/overview-of-error-handling
+- https://help.make.com/scenario-run-replay

@@ -27,7 +27,9 @@ n8n adapter for recurring and bulk account-plan generation with approval-gated m
 6. `compose_outreach_message`.
 7. `route_exec_alert`.
 8. `approval_loop`.
-9. Approved path persists plan + emits `account.plan.generated`.
+9. `Approved?` gate controls all mutation paths.
+10. Approved path updates Salesforce, sends owner brief, and emits `account.plan.generated`.
+11. Non-approved path emits `account.plan.blocked`.
 
 ## Reliability Notes
 - Use idempotency key `event_id`.
@@ -44,3 +46,5 @@ n8n adapter for recurring and bulk account-plan generation with approval-gated m
 - n8n credentials: https://docs.n8n.io/credentials/
 - n8n import/export workflows: https://docs.n8n.io/workflows/export-import/
 - n8n source control environments: https://docs.n8n.io/source-control-environments/
+- n8n Salesforce node: https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.salesforce/
+- n8n Slack node: https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.slack/

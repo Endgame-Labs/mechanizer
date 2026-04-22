@@ -1,57 +1,44 @@
 # Tray Adapter (nrr-machine)
 
-This adapter implements `nrr-machine` as a Tray project with a callable entrypoint and a mandatory approval gate before side effects.
+Tray runtime for `nrr-machine` focused on low-touch/no-touch account motion with approval-gated outbound and CRM updates.
 
 ## Artifact
-- `workflow.json`: importable blueprint-style artifact for the runtime path.
-- Set environment-specific auth/config values at import time.
+- `workflow.json`: importable Tray project workflow artifact.
 
-## Trigger Design
-1. Callable Trigger (`nrr_event_ingest`) for upstream `gtm_event_v1` payloads.
-2. Optional Scheduled Trigger (`0 */6 * * *`, `America/Los_Angeles`) for periodic cohort sweep.
+## Runtime Shape
+1. Callable Trigger (`Trigger and respond`) accepts `gtm_event_v1`.
+2. Optional Scheduled Trigger runs periodic segment sweeps (every 6h).
+3. Normalize + dedupe (`Data Storage`, `Project` scope).
+4. `Call workflow` smart cogs:
+- context enrichment (Endgame + CRM + telemetry)
+- risk/NRR scoring
+- play selection
+- outbound draft generation
+5. `shared_approval_loop` callable gate before any outbound or CRM write.
+6. Approved branch executes low/no-touch plays.
+7. Blocked branch emits no-touch block event and exits safely.
 
-Use a callable trigger because this machine is consumed as a reusable module from parent orchestrations.
+## HITL and Compliance
+- Approval is mandatory for:
+- outbound email/send steps
+- Salesforce renewal/opportunity updates
+- Timeouts/rejections produce `nrr.play.blocked` only.
 
-## Contract and Approval Semantics
-1. Validate required `gtm_event_v1` fields and normalize timestamps/trace.
-2. Enrich from SFDC 360 + telemetry + billing + Endgame context.
-3. Gate to `low_touch` / `no_touch` segments.
-4. Score and assign play.
-5. Draft outbound and mutation plan.
-6. Run approval request (hard gate, required).
-7. Only approved branch executes outbound + SFDC writes.
-8. Rejected/timeout branch emits `nrr.play.blocked` and performs no writes.
+## Reliability
+- Idempotency key: `event_id`.
+- Manual error handling for side-effect connectors.
+- Dead-letter payload includes `workflow_uuid`, `step_name`, `step_log_url`, `trace_id`.
+- Prefer callable child workflows for heavy fan-out/fan-in to keep parent run stable.
 
-Approval semantics are unchanged: no outbound or Salesforce mutation occurs before explicit approval.
+## SDLC
+- Promote with Tray Project versions + export/import.
+- Use Import Requirements and Import Preview before target import.
+- Keep auth/config mappings explicit per environment.
 
-## Error and Retry Pattern
-- Default mode: Tray automatic retry/backoff for transient step failures.
-- For critical write steps, enable connector-level manual error handling with explicit failure paths.
-- For blocking failures, route to dead-letter event + alerting workflow payload including `workflow_uuid`, `step_name`, and `step_log_url`.
-- Keep idempotency key pinned to `event_id` on side-effect steps.
-
-## SDLC and Promotion Pattern (Tray Projects)
-1. Build/test in dev workspace project with sandbox credentials.
-2. Save a project version at release-candidate milestone.
-3. Export project JSON and import to stage/prod project.
-4. Resolve auth mapping, service/connector mapping, and config values during import.
-5. Run pre-import preview checks before final import.
-6. First prod import is manual to map production auth correctly; later promotions can be automated via Projects/Solutions APIs when mappings are stable.
-
-Suggested release metadata per version:
-- machine version + project version number
-- breaking/non-breaking notes
-- auth scope changes
-- rollout date + owner
-
-## Callable Safety
-- Do not disable callable workflows directly.
-- If temporary shutdown is required, place `Terminate` before connector side effects.
-
-## Observability
-Track per run:
-- `run_id`, `event_id`, `trace.trace_id`, `subject.id`
-- `segment`, `score`, `play_type`, `reason_codes`
-- `approval_status`, `approval_wait_ms`
-- `write_attempts`, `write_success_count`, `write_failure_count`
-- `step_log_url` for alert triage
+## References
+- Composable workflows: https://tray.ai/documentation/platform/automation-integration/building-workflows/composable-workflows/calling-other-workflows
+- Callable trigger: https://tray.ai/documentation/connectors/trigger/callable-trigger
+- Scheduled trigger: https://tray.ai/documentation/connectors/triggers/scheduled-trigger/
+- Data Storage: https://tray.ai/documentation/connectors/core/data-storage
+- Manual error handling: https://tray.ai/documentation/platform/automation-integration/building-workflows/error-handling/manual-error-handling
+- Projects API: https://tray.ai/documentation/developer/platform-apis/projects

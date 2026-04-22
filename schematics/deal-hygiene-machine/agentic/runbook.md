@@ -1,87 +1,68 @@
 # Agentic Runbook (deal-hygiene-machine)
 
-## Contracts
+## Runtime Contract
+- Orchestration shape: **planner -> executor -> evaluator** with checkpoint persistence.
 - Input schema: `gtm_event_v1`
 - Output schema: `gtm_event_v1`
-- Cog order (from `machine.yaml`):
-  1. `enrich_account_health@v1.0.0`
-  2. `deal_score_reasoner@v1.0.0`
-  3. `directive_alignment@v1.0.0`
-  4. `route_exec_alert@v1.0.0`
-  5. `approval_loop@v1.0.0`
+- Idempotency key: `event_id` (side effects use `event_id + action_type + target_id`).
 
-## Runtime Assumptions
-- Orchestrator is provider-neutral (OpenAI Agents SDK, LangGraph, or CrewAI style runtime are all valid).
-- State is checkpointed between phases to support pause/resume and HITL waits.
-- MCP pattern is preferred for context servers:
-  - `tools/call` for fetch and action endpoints
-  - `resources/read` for static context (playbooks, directives)
-  - optional `prompts/get` for reusable prompt templates
+## Canonical Ingest Contract (`gtm_event_v1`)
+Required keys at stage entry:
+- `schema_version`, `event_id`, `event_type`, `source`, `occurred_at`, `ingested_at`
+- `trace.trace_id`
+- `subject.entity_type`, `subject.entity_id`
 
-## Phase 1: Intake, Validation, and Dedupe
-- Tool: `validate_gtm_event`
-- Required keys: `schema_version`, `event_id`, `event_type`, `source`, `occurred_at`, `ingested_at`, `trace.trace_id`, `subject.entity_type`, `subject.entity_id`.
-- On failure: emit `deal.hygiene.failed_validation` with `attributes.validation_errors[]`; stop execution.
-- Dedupe on immutable `event_id`; if terminal output already exists, emit idempotent skip metadata and stop.
+## Stage 1: Planner (Validate, Dedupe, Plan)
+1. Validate contract and semantic preconditions for allowed `event_type` values.
+2. Dedupe by `event_id`; if already terminal, return prior outcome metadata.
+3. Build execution plan:
+   - context fetch tools
+   - scoring/enrichment tools
+   - proposed side effects
+4. Assign `risk_tier` (`low|medium|high`) and approval requirements.
 
-## Phase 2: Context Assembly
-- Tools: `endgame_mcp_context_fetch`, `crm_snapshot_fetch`
-- Output additions:
-  - `attributes.enrichment.context_sources[]`
-  - `attributes.enrichment.account_health_inputs`
-- Timeout budget: 30s total.
+## Stage 2: Executor (Tools + Cogs)
+1. Read context through MCP/CLI adapters (CRM, telemetry, conversation history, directives).
+2. Execute reusable cogs in declared order.
+3. Generate normalized candidate output (`draft_event`) and `proposed_actions[]`.
+4. Persist per-tool latency, retries, and evidence references.
 
-## Phase 3: Cog Execution
-1. `enrich_account_health`
-  - Adds normalized health metrics under `metrics.*` and `attributes.enrichment`.
-2. `deal_score_reasoner`
-   - Writes `attributes.hygiene_score`, `attributes.score_band`, `attributes.recommended_play`.
-3. `directive_alignment`
-   - Writes `attributes.directive_alignment` including `allowed`, `required_approver_role`, `violations[]`.
-4. `route_exec_alert`
-  - Writes `attributes.routing` and emits non-mutating alerts/tasks as needed.
+### MCP/CLI Tool Contract Rules
+- Discover: `tools/list`, `resources/list`, `prompts/list`
+- Invoke/read: `tools/call`, `resources/read`, `prompts/get`
+- Reject unsafe arguments before execution (domain, scope, tenant, object ownership checks).
+- For CLI-executed actions: non-interactive only, bounded timeout, capture stdout/stderr, audit every invocation.
 
-## Phase 4: Guardrails and Policy Gates
-- Guardrail classes:
-  - Input guardrail: contract + schema + subject scope.
-  - Tool guardrail: reject unsafe tool arguments and out-of-policy targets.
-  - Output guardrail: ensure required terminal attributes can be populated before emit.
-- Policy result is captured in `attributes.policy_checks[]` with deterministic reason codes.
+## Stage 3: Evaluator (Guardrails + HITL + Emit)
+1. **Input guardrail**: schema + scope + replay constraints.
+2. **Tool guardrail**: allowed tool/action set for this machine.
+3. **Output guardrail**: required terminal attributes + evidence completeness.
+4. **Policy guardrail**: directive alignment and prohibited-language checks.
+5. **Approval gate** (when required) before any write/email/send action.
+6. Execute approved side effects and emit final `gtm_event_v1` terminal event.
 
-## Phase 5: Approval Gate (Mandatory for Mutations)
-- Tool: `approval_loop`
-- Input: proposed mutation set (`attributes.proposed_mutations[]`) and directive alignment result.
-- Outcomes:
-  - `approved`: continue to writeback phase.
-  - `rejected|needs_info|expired`: emit `deal.hygiene.deferred`; skip writeback.
-- HITL response contract supports `approve`, `reject`, and optional constrained `edit` on mutation payloads.
+## OpenAI and Claude Execution Notes
+- OpenAI-style: use Responses/Agents SDK loop; `tool_choice` and MCP approval configs can enforce stronger control.
+- Claude-style: run tool loop until stop reason is terminal; on `tool_use`, return matched `tool_result` blocks in the next user turn.
+- For Claude MCP connector mode, remote MCP tool calls are supported directly; prompts/resources require client-side MCP handling.
 
-## Phase 6: Writeback and Emit
-- Tool: `sfdc_writeback` (approved only)
-- Post-action tool: `emit_gtm_event`
-- Success event type: `deal.hygiene.remediated`
-- Required terminal attributes:
-  - `approval_status`
-  - `hygiene_score`
-  - `recommended_play`
-  - `writeback_actions[]`
+## HITL Gate for Email/CRM Writes
+- Required for sfdc_writeback actions.
+- Decision envelope: approve/reject/edit (edit limited to whitelisted mutation fields).
+- Timeout or deny emits deal.hygiene.deferred; no writes executed.
 
-## Idempotency and Retry
-- Idempotency key: `event_id`.
-- Duplicate handling: if terminal event already exists for same `event_id`, stop and record idempotent skip.
-- Retry policy: max 3 retries, exponential backoff for transient provider/action errors.
-- For async/background execution modes, resume retries from latest checkpoint, never from raw input replay.
+## Scheduled/Background Semantics
+- Event-driven default; scheduled mode supported for periodic sweeps.
+- Background execution permitted for long context pulls or approval waits.
+- Resume from checkpoint; never replay already-committed side effects.
 
-## Observability
-- Preserve `trace.trace_id` from input.
-- Set `trace.run_id` per execution attempt.
-- Log per-phase duration, retry count, guardrail outcomes, approval latency, and terminal state.
-- Recommended span taxonomy: `validation`, `context_fetch`, `cog_execution`, `policy_gate`, `approval_wait`, `writeback`, `emit`.
+## Terminal Events
+- deal.hygiene.remediated
+- deal.hygiene.deferred
+- deal.hygiene.failed_validation
+- deal.hygiene.failed
 
-## Evals
-- Maintain regression dataset from sampled traces across terminal states.
-- Grade:
-  - Directive alignment accuracy.
-  - Correctness of `hygiene_score`/`recommended_play`.
-  - Mutation safety (no write without approval).
-- Block production promotion when eval score drops below agreed threshold or when safety regressions are detected.
+## Operational SLOs and Failure Policy
+- Retry transient tool failures with exponential backoff (max 3 attempts unless stricter machine policy applies).
+- On policy/HITL denial, emit blocked/deferred terminal event with reason codes.
+- On exhausted retries, emit failed terminal event and alert owner channel.

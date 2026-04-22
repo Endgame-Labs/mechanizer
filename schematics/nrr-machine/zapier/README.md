@@ -1,78 +1,36 @@
 # Zapier Adapter (nrr-machine)
 
-This adapter provides a low-code implementation of `nrr-machine` using Zapier trigger/filter/path steps with an explicit approval gate before outbound and Salesforce actions.
+Zapier implementation for low-touch/no-touch NRR orchestration with scoring, approval gating, and idempotent execution.
 
 ## Artifact
-- Sample template: `zap.template.json`
-- Load as a base template, then bind app credentials and webhook URLs.
+- `zap.template.json`
 
-## Trigger Paths
-1. Realtime inbound webhook:
-- Trigger app: `Webhooks by Zapier - Catch Hook`
-- Accepts canonical `gtm_event_v1` events.
+## Recommended Zap Shape
+1. Trigger from NRR signal webhook or scheduled cohort sweep.
+2. Validate and normalize to `gtm_event_v1`.
+3. Filter to low-touch/no-touch cohorts.
+4. Pull context and compute score/play.
+5. Build action plan (outbound + CRM updates).
+6. Require approval before outbound send or Salesforce mutation.
+7. Branch with `Paths`:
+- Approved: execute actions + emit `nrr.play.executed`.
+- Blocked/timeout: emit `nrr.play.blocked`.
 
-2. Scheduled sweep:
-- Trigger app: `Schedule by Zapier`
-- Runs every 6 hours to score low-touch/no-touch cohorts.
+## Practical Zapier Notes
+- Use `Storage by Zapier` for dedupe and terminal status.
+- Add observability write step (Tables or webhook log sink) in each branch.
+- Keep path rules mutually exclusive to avoid accidental multi-branch execution.
 
-## Scoring and Routing
-- Filter to supported trigger events:
-- `account.health_changed`
-- `usage.declined`
-- `renewal.window_opened`
-- Segment policy: continue only when `segment in [low_touch, no_touch]`.
-- Score formula (sample):
-- `score = 0.45*health_risk + 0.35*renewal_risk + 0.20*expansion_signal`
-- Path routing:
-- `critical` if score >= 78
-- `expansion` if score >= 72 and renewal risk < 60
-- `monitor` otherwise
+## Approval/HITL
+- Preferred: `Human in the Loop` for human reviewer decision.
+- Fallback: external approval service via webhook.
+- Approval payload should include `score`, `play`, and explicit proposed actions.
 
-## Approval Loop (Mandatory)
-- Before `Gmail/Outreach` send or `Salesforce` update, call approval endpoint.
-- Required approval metadata:
-- `event_id`, `account_id`, `score`, `play_type`, planned actions, reason codes
-- Rejected or timed-out requests branch to "Blocked" path and emit blocked event.
-
-## Zapier Runtime Capabilities and Limits (verified 2026-04-22)
-- Paths:
-  - Up to 10 path branches per path group and up to 3 nested Paths steps per Zap.
-  - Paths execute sequentially left-to-right; slow earlier branches delay later branches.
-  - Paths must be final in Zap flow and do not support shared steps after branching.
-- Filters:
-  - Failed filter stops the run before subsequent actions.
-  - Filters and Paths do not count toward task usage.
-  - Line-item filtering behavior changes when negative conditions are used.
-- Code by Zapier:
-  - JavaScript and Python supported for small transforms.
-  - JavaScript runtime is Node.js 22.
-  - I/O limit is 6 MB; runtime and throughput limits vary by plan.
-- Webhooks:
-  - Catch Raw Hook max payload 2 MB.
-  - Webhook trigger/action payload practical caps: 10 MB trigger, 5 MB action.
-  - Webhooks by Zapier rate limits: 20,000 requests/5 min per user; legacy route cap 1,000/5 min per Zap.
-- Retries/replay:
-  - Zapier autoreplay can replay failed errored steps up to 5 attempts.
-  - Filter and Paths are not replayed.
-  - Replays require Zap enabled and available tasks.
-- Template mechanics:
-  - Shared Zap templates copy step structure only, not field values.
-  - Guided templates can include preconfigured values with locked/editable controls and setup instructions.
-- Import/export:
-  - Team/Enterprise only; JSON-only export/import format.
-  - Non-owner exports are limited to owned Zaps.
-
-## Observability Guidance
-- Add storage/log step containing:
-- `run_id`, `event_id`, `trace_id`, `trigger_path`, `segment`, `score_band`
-- `approval_status`, `approval_latency_ms`, `action_execution_ms`
-- `error_code`, `retry_count`
-- Maintain a daily report of:
-- conversion to approved actions
-- blocked reasons
-- failed side effects by app
-
-## Reliability Notes
-- Use dedupe key `event_id` in storage before side effects.
-- Configure auto-replay for transient failures.
-- Keep retries idempotent for Salesforce writes.
+## References
+- https://help.zapier.com/hc/en-us/articles/38731226552845-Human-in-the-Loop
+- https://help.zapier.com/hc/en-us/articles/8496288555917-Add-branching-logic-to-Zaps-with-Paths
+- https://help.zapier.com/hc/en-us/articles/8496180919949-Filter-and-path-rules-in-Zaps
+- https://help.zapier.com/hc/en-us/articles/8496196837261-How-is-task-usage-measured-in-Zapier
+- https://help.zapier.com/hc/en-us/articles/29971850476173-Code-by-Zapier-rate-limits
+- https://help.zapier.com/hc/en-us/articles/29972220283789-Webhooks-by-Zapier-rate-limits
+- https://help.zapier.com/hc/en-us/articles/8496241726989-Replay-Zap-runs

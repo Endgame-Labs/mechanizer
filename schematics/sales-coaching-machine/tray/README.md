@@ -1,43 +1,36 @@
 # Tray Adapter (sales-coaching-machine)
 
-Tray runtime for `sales-coaching-machine` using callable ingestion, directive alignment branching, and deterministic output emission.
+Tray runtime for `sales-coaching-machine` that evaluates post-call coaching recommendations against directives, then routes approved actions to CRM and manager channels.
 
 ## Artifact
-- `workflow.json`: callable workflow blueprint with alignment branch and dead-letter path.
+- `workflow.json`: callable Tray workflow artifact.
 
 ## Runtime Flow
-1. Callable trigger accepts call event payload.
-2. Guard on `type == call.completed`.
-3. Normalize to canonical `gtm_event_v1` structure.
-4. Fetch context from Endgame.
-5. Run directive alignment check.
-6. Branch:
-- `pass`: create Salesforce task + manager notification.
-- `fail`: escalation route (ticket/Slack).
-7. Emit normalized output event.
+1. Callable Trigger ingests `call.completed` in `gtm_event_v1` envelope.
+2. Normalize call/account/deal identifiers and trace metadata.
+3. `Call workflow` smart cogs:
+- context enrichment (Endgame + call transcript metadata)
+- coaching recommendation generation
+- directive alignment scoring
+4. Branch on alignment confidence.
+5. For actions with external side effects (manager notifications, CRM tasks), run `shared_approval_loop` first.
+6. Emit `coaching.recommendation.created` terminal event + callable response.
 
-## Contract Mapping
-- `call.id` -> `subject.id`
-- `call.account_id` -> `attributes.account_id`
-- `call.opportunity_id` -> `attributes.opportunity_id`
-- Tray run id -> `trace.run_id`
-- alignment output -> `attributes.alignment_status`
+## Approval/HITL
+- Approval required when the machine will:
+- send outbound manager-facing summaries
+- write coaching tasks into Salesforce
+- Low-risk internal-only scoring can run without approval.
 
-## Error Handling and Retries
-- Keep HTTP connector timeouts explicit (20s baseline).
-- Use Tray automatic retry/backoff for transient provider errors.
-- For branch side effects, use connector-level manual error path to dead-letter/alerting workflow.
-- Include `step_log_url` in alerts for quick replay/debug.
+## Reliability
+- Idempotency key: `event_id`.
+- Manual error handling for side-effect branches.
+- Dead-letter branch emits `step_log_url` for replay/triage.
+- Keep child cogs modular via callable workflows to simplify updates.
 
-## Callable Workflow Guidance
-- Use `Call workflow` with `Fire and wait for response` when parent workflow needs structured response data.
-- Define trigger input schema and callable response output schema to enforce strict data structure.
-- If callable workflow must be paused, use a leading `Terminate` step instead of disabling.
-
-## SDLC and Promotion
-1. Build/test in dev project.
-2. Save project versions at tested milestones.
-3. Export/import project JSON for stage/prod promotion.
-4. Resolve auth mappings and config values during import.
-5. Run pre-import preview checks prior to commit.
-6. For repeatable releases, automate import/version/publish steps through Tray Projects/Solutions APIs.
+## References
+- Callable workflows: https://tray.ai/documentation/platform/automation-integration/building-workflows/composable-workflows/calling-other-workflows
+- Callable response: https://tray.ai/documentation/connectors/core/callable-workflow-response
+- Manual error handling: https://tray.ai/documentation/platform/automation-integration/building-workflows/error-handling/manual-error-handling
+- Conditional logic (Boolean/Branch): https://tray.ai/documentation/platform/advanced-tray-usage/conditional-logic/
+- Projects API: https://tray.ai/documentation/developer/platform-apis/projects

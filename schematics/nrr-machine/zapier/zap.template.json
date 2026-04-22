@@ -1,12 +1,23 @@
 {
   "zap_name": "NRR Machine - Low/No Touch",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "machine_id": "nrr-machine",
-  "description": "Processes canonical gtm_event_v1 health/renewal events, scores account risk/opportunity, requests approval, then executes outbound and Salesforce updates when approved.",
+  "description": "Scores low-touch/no-touch accounts and executes approval-gated retention or expansion plays.",
   "trigger": {
-    "app": "webhooks_by_zapier",
-    "event": "catch_hook",
-    "path": "/nrr/events"
+    "primary": {
+      "app": "webhooks_by_zapier",
+      "event": "catch_hook",
+      "path": "/nrr/events"
+    },
+    "alternate": {
+      "app": "schedule_by_zapier",
+      "event": "every_6_hours"
+    },
+    "accepts_event_types": [
+      "account.health_changed",
+      "usage.declined",
+      "renewal.window_opened"
+    ]
   },
   "gtm_event_v1_mapping": {
     "required": [
@@ -24,84 +35,84 @@
   "steps": [
     {
       "id": "validate_contract",
-      "type": "code",
-      "runtime": "javascript",
-      "input_fields": [
-        "schema_version",
-        "event_id",
-        "event_type",
-        "source",
-        "occurred_at",
-        "ingested_at",
-        "trace",
-        "subject",
-        "attributes"
-      ],
-      "output_fields": [
-        "event_valid",
-        "validation_error"
-      ]
+      "app": "code_by_zapier",
+      "event": "run_javascript"
     },
     {
       "id": "filter_supported_events",
-      "type": "filter",
+      "app": "filter_by_zapier",
+      "event": "only_continue_if",
       "rule": "event_type in ['account.health_changed','usage.declined','renewal.window_opened']"
     },
     {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "nrr:${event_id}"
+    },
+    {
       "id": "fetch_context",
-      "type": "webhook_post",
-      "url": "https://context.internal/enrich",
-      "payload": {
-        "providers": [
-          "salesforce_headless_360",
-          "telemetry",
-          "billing",
-          "endgame_mcp"
-        ],
-        "event": "{{trigger.raw_body}}"
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://context.internal/nrr/enrich",
+        "json": {
+          "providers": [
+            "endgame_mcp_or_cli",
+            "salesforce_headless_360",
+            "billing",
+            "telemetry"
+          ],
+          "event": "{{trigger.raw_body}}"
+        }
       }
     },
     {
       "id": "segment_filter",
-      "type": "filter",
+      "app": "filter_by_zapier",
+      "event": "only_continue_if",
       "rule": "segment in ['low_touch','no_touch']"
     },
     {
       "id": "score_account",
-      "type": "code",
-      "runtime": "javascript",
-      "logic": "score=Math.round((0.45*health_risk)+(0.35*renewal_risk)+(0.20*expansion_signal)); if(score>=78){play='critical_retention';} else if(score>=72 && health_risk<60){play='expansion_push';} else {play='monitor_and_nudge';}"
+      "app": "code_by_zapier",
+      "event": "run_javascript",
+      "logic": "score=Math.round((0.45*health_risk)+(0.35*renewal_risk)+(0.20*expansion_signal));if(score>=78){play='critical_retention';}else if(score>=72&&health_risk<60){play='expansion_push';}else{play='monitor_and_nudge';}"
     },
     {
       "id": "compose_action_plan",
-      "type": "webhook_post",
-      "url": "https://planner.internal/compose",
-      "payload": {
-        "account_id": "{{subject.id}}",
-        "score": "{{steps.score_account.score}}",
-        "play": "{{steps.score_account.play}}"
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://planner.internal/compose"
       }
     },
     {
       "id": "approval_loop",
-      "type": "webhook_post",
-      "url": "https://approval.internal/request",
-      "payload": {
+      "app": "human_in_the_loop",
+      "event": "request_approval",
+      "fallback": {
+        "app": "webhooks_by_zapier",
+        "event": "post",
+        "url": "https://approval.internal/request"
+      },
+      "request_payload": {
         "event_id": "{{event_id}}",
         "account_id": "{{subject.id}}",
-        "score": "{{steps.score_account.score}}",
-        "play": "{{steps.score_account.play}}",
+        "score": "{{steps.score_account.output.score}}",
+        "play": "{{steps.score_account.output.play}}",
         "actions": [
           "outbound_email_send",
-          "renewal_plan_update"
+          "salesforce_account_update"
         ],
         "timeout_seconds": 1800
       }
     },
     {
       "id": "path_on_approval",
-      "type": "paths",
-      "branches": [
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
         {
           "name": "approved",
           "condition": "approval_status == 'approved'",
@@ -119,29 +130,20 @@
               "idempotency_key": "{{event_id}}"
             },
             {
-              "id": "emit_executed_event",
-              "type": "webhook_post",
-              "url": "https://events.internal/emit",
-              "payload": {
-                "event_type": "nrr.play.executed",
-                "event_id": "{{event_id}}",
-                "score": "{{steps.score_account.score}}",
-                "play": "{{steps.score_account.play}}"
-              }
+              "id": "log_execution",
+              "app": "zapier_tables",
+              "event": "create_record"
             },
             {
-              "id": "log_observability",
-              "type": "storage_write",
-              "fields": [
-                "run_id",
-                "event_id",
-                "trace_id",
-                "segment",
-                "score",
-                "play",
-                "approval_status",
-                "retry_count"
-              ]
+              "id": "emit_executed_event",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "nrr.play.executed"
+                }
+              }
             }
           ]
         },
@@ -150,102 +152,94 @@
           "condition": "approval_status != 'approved'",
           "actions": [
             {
-              "id": "emit_blocked_event",
-              "type": "webhook_post",
-              "url": "https://events.internal/emit",
-              "payload": {
-                "event_type": "nrr.play.blocked",
-                "event_id": "{{event_id}}",
-                "reason": "approval_rejected_or_timeout"
-              }
+              "id": "log_blocked",
+              "app": "zapier_tables",
+              "event": "create_record"
             },
             {
-              "id": "log_observability",
-              "type": "storage_write",
-              "fields": [
-                "run_id",
-                "event_id",
-                "trace_id",
-                "segment",
-                "score",
-                "play",
-                "approval_status",
-                "retry_count"
-              ]
+              "id": "emit_blocked_event",
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "nrr.play.blocked",
+                  "reason": "approval_rejected_or_timeout"
+                }
+              }
             }
           ]
         }
       ]
+    },
+    {
+      "id": "idempotency_store",
+      "app": "storage_by_zapier",
+      "event": "set_value",
+      "key_template": "nrr:${event_id}",
+      "value_fields": [
+        "event_id",
+        "approval_status",
+        "trace.trace_id",
+        "trace.run_id"
+      ]
     }
   ],
-  "zapier_runtime_constraints": {
+  "zapier_runtime_profile": {
     "paths": {
-      "max_path_branches_per_group": 10,
-      "max_nested_path_steps_per_zap": 3,
-      "execution": "sequential_left_to_right",
+      "max_branches_per_group": 10,
+      "max_nested_paths_steps": 3,
+      "max_total_steps": 100,
       "must_be_final_step": true
     },
     "filters": {
       "consume_tasks": false,
-      "replay_supported": false
+      "line_item_negative_conditions_require_all_items_to_pass": true
     },
     "code": {
       "javascript_runtime": "nodejs_22",
       "io_limit_mb": 6,
-      "plan_specific_limits": {
+      "plan_limits": {
         "free": {
           "runtime_seconds": 1,
-          "requests": "10_per_60_seconds"
+          "requests": "10_per_60s"
         },
         "trial": {
           "runtime_seconds": 10,
-          "requests": "75_per_10_seconds"
+          "requests": "75_per_10s"
         },
         "professional_team": {
           "runtime_seconds": 30,
-          "requests": "225_per_10_seconds"
+          "requests": "225_per_10s"
         },
         "enterprise": {
           "runtime_seconds": 120,
-          "requests": "225_per_10_seconds"
+          "requests": "225_per_10s"
         }
       }
     },
     "webhooks": {
-      "catch_raw_hook_max_mb": 2,
-      "max_trigger_payload_mb": 10,
-      "max_action_payload_mb": 5,
-      "rate_limit": {
-        "requests_per_5_minutes_per_user": 20000,
-        "legacy_requests_per_5_minutes_per_zap": 1000
+      "raw_hook_max_mb": 2,
+      "payload_limit_mb": {
+        "triggers": 10,
+        "actions": 5
+      },
+      "rate_limits": {
+        "requests_per_5m_per_user": 20000,
+        "legacy_requests_per_5m_per_zap": 1000
       }
     },
-    "replay": {
-      "max_autoreplay_attempts": 5,
-      "attempt_cadence": [
-        "plus_5m",
-        "plus_30m",
-        "plus_1h",
-        "plus_3h",
-        "plus_6h"
-      ],
-      "replay_window_days": 60
-    },
     "templates": {
-      "classic_template_includes_values": false,
-      "classic_template_supports_code_steps": false,
-      "guided_templates_include_values": true
+      "shared_template_includes_field_values": false,
+      "classic_copy_supports_code_steps": false,
+      "guided_templates_support_locked_editable_fields": true
     },
     "import_export": {
-      "team_or_enterprise_required": true,
-      "json_only": true,
-      "non_admin_export_scope": "owned_zaps_only",
-      "admin_export_scope": "all_account_zaps"
+      "available_plans": [
+        "team",
+        "enterprise"
+      ],
+      "json_only": true
     }
-  },
-  "retries": {
-    "context_fetch": 3,
-    "approval_transport": 2,
-    "sfdc_write": 1
   }
 }

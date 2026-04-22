@@ -1,5 +1,5 @@
 {
-  "name": "nrr-machine-low-no-touch-v2",
+  "name": "nrr-machine-low-no-touch-v3",
   "machine_id": "nrr-machine",
   "artifact_type": "make_scenario_blueprint_reference",
   "make_runtime": {
@@ -7,26 +7,20 @@
       "max_import_size_mb": 2
     },
     "scheduling": {
-      "mode": "immediate_webhook_plus_periodic_rescore",
-      "event_webhook_path": "nrr-events",
+      "mode": "instant_webhook_plus_periodic_rescore",
+      "webhook_path": "nrr-events",
       "periodic_rescore_interval_hours": 6,
       "max_runs_per_minute": 30,
-      "use_sequential_processing": true
-    },
-    "webhooks": {
-      "default_processing_mode": "parallel_for_instant_webhooks",
-      "queue_behavior": "per_webhook_queue",
-      "documented_rate_limit": "up_to_300_requests_per_10_seconds",
-      "scheduled_processing_behavior": "drain_queue_by_max_results_or_cycles_per_run"
+      "sequential_processing": true
     },
     "retry_model": {
       "store_incomplete_executions": true,
-      "auto_retry_enabled_for": [
+      "auto_retry_errors": [
         "RateLimitError",
         "ConnectionError",
         "ModuleTimeoutError"
       ],
-      "exponential_backoff_schedule": [
+      "retry_schedule": [
         "1m",
         "10m",
         "10m",
@@ -35,16 +29,10 @@
         "30m",
         "3h",
         "3h"
-      ],
-      "parallel_incomplete_execution_retries_per_scenario": 3
-    },
-    "history_and_versioning": {
-      "manual_version_history_window_days": 60,
-      "run_replay_available": true,
-      "run_replay_consumes_credits": true
+      ]
     }
   },
-  "flow": [
+  "modules": [
     {
       "id": 1,
       "module": "webhooks:customWebhook",
@@ -55,78 +43,78 @@
     },
     {
       "id": 2,
-      "module": "json:parseJSON",
-      "name": "Parse Payload"
+      "module": "json:createJSON",
+      "name": "Normalize gtm_event_v1"
     },
     {
       "id": 3,
-      "module": "tools:validator",
-      "name": "Validate gtm_event_v1",
+      "module": "datastore:getARecord",
+      "name": "Idempotency Lookup",
       "parameters": {
-        "required": [
-          "event_id",
-          "event_type",
-          "source",
-          "occurred_at",
-          "subject.id"
-        ]
+        "store": "nrr_runs",
+        "key": "nrr:{{2.event_id}}"
       }
     },
     {
       "id": 4,
       "module": "flow:filter",
-      "name": "Supported Event Types",
-      "filter": "{{event_type}} IN ('account.health_changed','usage.declined','renewal.window_opened')"
+      "name": "Skip Duplicates",
+      "filter": "{{empty(3.value)}}"
     },
     {
       "id": 5,
       "module": "http:makeRequest",
       "name": "Fetch Context",
       "parameters": {
-        "url": "https://context.internal/enrich",
-        "method": "POST"
+        "url": "https://context.internal/nrr/enrich",
+        "method": "POST",
+        "body": "{{toJSON(2)}}"
       }
     },
     {
       "id": 6,
-      "module": "flow:filter",
-      "name": "Segment Gate",
-      "filter": "{{segment}} IN ('low_touch','no_touch')"
-    },
-    {
-      "id": 7,
-      "module": "tools:math",
+      "module": "http:makeRequest",
       "name": "Score Account",
       "parameters": {
-        "expression": "round((0.45*health_risk)+(0.35*renewal_risk)+(0.20*expansion_signal))"
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "method": "POST",
+        "body": "{{5.body}}"
       }
     },
     {
-      "id": 8,
+      "id": 7,
       "module": "flow:router",
       "name": "Play Router",
       "routes": [
         {
-          "name": "Critical",
-          "condition": "{{score}} >= 78"
+          "name": "critical",
+          "condition": "{{6.body.score}} >= 78"
         },
         {
-          "name": "Expansion",
-          "condition": "{{score}} >= 72 AND {{health_risk}} < 60"
+          "name": "expansion",
+          "condition": "{{6.body.score}} >= 72 AND {{6.body.health_risk}} < 60"
         },
         {
-          "name": "Monitor",
-          "condition": "default"
+          "name": "monitor",
+          "condition": "fallback"
         }
       ]
     },
     {
-      "id": 9,
-      "module": "http:makeRequest",
-      "name": "Compose Action Plan",
+      "id": 8,
+      "module": "tools:iterator",
+      "name": "Iterate Proposed Actions",
       "parameters": {
-        "url": "https://planner.internal/compose",
-        "method": "POST"
+        "array": "{{6.body.recommended_actions}}"
+      }
+    },
+    {
+      "id": 9,
+      "module": "tools:arrayAggregator",
+      "name": "Aggregate Action Package",
+      "parameters": {
+        "source": "8",
+        "target_structure": "actions[]"
       }
     },
     {
@@ -136,16 +124,7 @@
       "parameters": {
         "url": "https://approval.internal/request",
         "method": "POST",
-        "body": {
-          "event_id": "{{event_id}}",
-          "account_id": "{{subject.id}}",
-          "score": "{{score}}",
-          "actions": [
-            "outbound_email_send",
-            "renewal_plan_update"
-          ],
-          "timeout_seconds": 1800
-        }
+        "body": "{\"event_id\":\"{{2.event_id}}\",\"account_id\":\"{{2.subject.id}}\",\"actions\":{{9.array}},\"timeout_seconds\":1800}"
       }
     },
     {
@@ -154,12 +133,12 @@
       "name": "Approval Router",
       "routes": [
         {
-          "name": "Approved",
-          "condition": "{{approval_status}} = 'approved'"
+          "name": "approved",
+          "condition": "{{10.body.approval_status}} = approved"
         },
         {
-          "name": "Blocked",
-          "condition": "default"
+          "name": "blocked",
+          "condition": "fallback"
         }
       ]
     },
@@ -167,68 +146,47 @@
       "id": 12,
       "module": "gmail:sendAnEmail",
       "name": "Send Outbound",
-      "route": "Approved"
+      "route": "approved"
     },
     {
       "id": 13,
       "module": "salesforce:updateARecord",
-      "name": "Update Salesforce",
-      "route": "Approved",
+      "name": "Update Account",
+      "route": "approved",
       "parameters": {
         "object": "Account",
-        "idempotency_key": "{{event_id}}"
+        "record_id": "{{2.subject.id}}"
       }
     },
     {
       "id": 14,
       "module": "http:makeRequest",
-      "name": "Emit Executed Event",
-      "route": "Approved",
+      "name": "Emit Outcome Event",
       "parameters": {
         "url": "https://events.internal/emit",
         "method": "POST",
-        "body": {
-          "event_type": "nrr.play.executed",
-          "event_id": "{{event_id}}",
-          "score": "{{score}}"
-        }
+        "body": "{\"event_type\":\"{{if(11.route = \\\"approved\\\"; \\\"nrr.play.executed\\\"; \\\"nrr.play.blocked\\\")}}\",\"event_id\":\"{{2.event_id}}\",\"score\":\"{{6.body.score}}\"}"
       }
     },
     {
       "id": 15,
-      "module": "http:makeRequest",
-      "name": "Emit Blocked Event",
-      "route": "Blocked",
+      "module": "datastore:addOrReplaceARecord",
+      "name": "Write Run Summary",
       "parameters": {
-        "url": "https://events.internal/emit",
-        "method": "POST",
-        "body": {
-          "event_type": "nrr.play.blocked",
-          "event_id": "{{event_id}}",
-          "reason": "approval_rejected_or_timeout"
-        }
-      }
-    },
-    {
-      "id": 16,
-      "module": "datastore:addARecord",
-      "name": "Observability Log",
-      "parameters": {
-        "fields": [
-          "run_id",
-          "event_id",
-          "trace_id",
-          "segment",
-          "score",
-          "play",
-          "approval_status",
-          "retry_count"
-        ]
+        "store": "nrr_runs",
+        "key": "nrr:{{2.event_id}}"
       }
     }
   ],
-  "error_handling": {
-    "strategy": "break_with_incomplete_execution_retry_plus_dead_letter",
-    "dead_letter": "nrr_machine_dlq"
-  }
+  "error_handlers": [
+    {
+      "on": [
+        "http:makeRequest",
+        "gmail:sendAnEmail",
+        "salesforce:updateARecord"
+      ],
+      "strategy": "break_with_incomplete_execution_retry",
+      "dead_letter_url": "https://events.internal/dead-letter"
+    }
+  ]
 }

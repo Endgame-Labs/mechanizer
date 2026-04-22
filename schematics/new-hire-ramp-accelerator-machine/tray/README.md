@@ -3,7 +3,7 @@
 Tray starter for new-hire-ramp-accelerator-machine with callable ingestion and mandatory approval gate.
 
 ## Artifact
-- `workflow.placeholder.json`
+- `workflow.json`
 
 ## Flow Contract
 1. Validate `gtm_event_v1` input.

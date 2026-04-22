@@ -1,23 +1,59 @@
 # Claw-like Adapter (pipeline-review-intelligence-machine)
 
-`claw-like` is the scheduled runtime mode for weekly pipeline review prep in non-visual environments.
+## Purpose
+Build weekly pipeline-review intelligence packages with deterministic scoring and approval-gated delivery.
 
-## Required Files
-- `HEARTBEAT.md`: schedule and liveness contract.
+## Heartbeat Loop (Executable Pattern)
+1. Scheduler evaluates cron in timezone and computes expected_tick_at.
+2. Runner acquires non-blocking distributed lock (claw.pipeline_review_intelligence); if lock exists, mark skipped_overlap and exit.
+3. Load cursor window (lookback: 14d) and build deterministic candidate set.
+4. Run deterministic steps first: normalize to gtm_event_v1, schema validation, dedupe, policy prechecks.
+5. Run smart-cog gates from machine contract (for example: enrich_account_health, deal_score_reasoner, directive_alignment, route_exec_alert, approval_loop).
+6. Build proposed_actions and apply HITL requirements before risky side effects.
+7. Execute approved side effects with idempotency keys; route permanent failures to DLQ.
+8. Emit terminal machine event(s), then heartbeat success record.
 
-## Runtime Model
-1. Read cron schedule and timezone from `HEARTBEAT.md`.
-2. Start one run per due tick (no overlap).
-3. Execute canonical stages:
-- collect pipeline candidates
-- evaluate stale/missing-next-step/single-threading signals
-- compose manager summary
-- route critical flags
-- pass outbound actions through `approval_loop`
-4. Emit heartbeat after terminal event emission.
+## Cadence and Windowing
+- Schedule: 0 7 * * 1 (America/Los_Angeles)
+- Cadence note: Weekly Monday build aligned to pipeline review cycle.
+- Cursor lookback: 14d
+- Grace window: 900 seconds
+- Stale threshold: 1209600 seconds
 
-## Safe-Mode Behavior
-- On stale transitions or dependency degradation:
-- continue read-only scoring/summarization
-- suppress outbound sends and mutations
-- emit `pipeline_review_intelligence.machine.safe_mode`
+## Lock and Idempotency
+- Overlap policy: forbid overlap (single active run).
+- Lock strategy: transaction-scoped advisory lock (or equivalent lease lock) with TTL > max_run_seconds.
+- Run idempotency key: machine_id + expected_tick_at.
+- Side-effect idempotency key: event_id + action_type + target_id.
+- Replays are safe: already-committed side effects are skipped, not re-applied.
+
+## Retry and Dead-letter
+- Retry classes:
+  - bootstrap/scheduler transient: 2 attempts (10s, 30s)
+  - provider/tool transient: 3 attempts (15s, 45s, 120s)
+  - approval transport transient: 2 attempts (15s, 45s)
+- Non-retryable classes: schema failure, policy deny, HITL timeout deny.
+- Dead-letter sink: dlq.pipeline-review-intelligence
+- DLQ payload minimum fields: machine_id, run_id, event_id, stage, error_code, retry_count, first_seen_at.
+
+## HITL and Risk Controls
+- Risky actions requiring approval: executive_summary_send, crm_bulk_write
+- HITL timeout: 1800 seconds.
+- HITL outcomes:
+  - approved: continue side effects.
+  - rejected or timeout: emit blocked/deferred terminal outcome; do not execute risky actions.
+- During approval outage, machine enters safe mode (read/score only).
+
+## Safe Mode
+- Enter safe mode on stale transition, repeated dependency failures, or approval subsystem outage.
+- In safe mode, deterministic enrichment and scoring continue, but risky side effects stay disabled.
+- Emit diagnostics event: pipeline.review.machine.safe_mode
+- Exit safe mode after one full healthy run with successful heartbeat.
+
+## References
+- Kubernetes CronJob (approx scheduling, idempotency, concurrency policy, time zones): https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+- APScheduler (misfire_grace_time, coalescing, max running jobs): https://apscheduler.readthedocs.io/en/master/userguide.html
+- PostgreSQL advisory locks (try-lock and transaction/session semantics): https://www.postgresql.org/docs/current/explicit-locking.html
+- PostgreSQL advisory lock functions: https://www.postgresql.org/docs/9.5/functions-admin.html
+- Amazon SQS DLQ and maxReceiveCount: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html
+- LangGraph durable execution and HITL pause/resume: https://docs.langchain.com/oss/python/langgraph/durable-execution

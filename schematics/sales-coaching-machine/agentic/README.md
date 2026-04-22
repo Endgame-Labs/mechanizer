@@ -1,47 +1,68 @@
 # Agentic Adapter (sales-coaching-machine)
 
-Provider-agnostic manager-worker orchestration for coaching generation with deterministic contract and quality gates.
+Runtime-agnostic orchestration contract for `sales-coaching-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
+
+## Purpose
+Generate evidence-backed coaching actions from call and CRM context, with guarded CRM task creation and optional Slack escalation.
 
 ## Runtime Pattern
-- Manager-worker graph with resumable checkpoints and explicit stage boundaries.
-- MCP-compatible tool/resource integration preferred for context and directive systems.
-- Async/background continuation allowed for delayed approvals, with contract-safe final emission.
+- **Planner**: validates `gtm_event_v1`, decomposes into tool steps, and sets risk tier.
+- **Executor**: runs tools with checkpointed state and idempotency keys.
+- **Evaluator**: verifies policy, evidence, and output schema before side effects + emit.
+- **Manager ownership**: only manager node can approve terminal actions and emit final events.
 
-## Tool Inventory
-- `validate_gtm_event_v1(payload)`
-- `endgame_context.lookup(subject, attributes)`
-- `call_insights.extract(transcript_id, rubric)`
-- `directive_alignment.check(recommendation, directive_set_version, evidence)`
-- `deal_score_reasoner.score(opportunity_context)`
-- `salesforce.tasks.create(task_payload)`
-- `slack.post(channel, message)`
-- `event_bus.emit(event_payload)`
+## Event and Tool Contracts
+- Input/output envelope: `gtm_event_v1`.
+- Required event fields at ingest: `schema_version`, `event_id`, `event_type`, `source`, `occurred_at`, `ingested_at`, `trace.trace_id`, `subject.entity_type`, `subject.entity_id`.
+- Tool definitions use explicit JSON Schema contracts and deterministic response shapes.
+- Prefer strict tool schemas (no undeclared fields) for mutation-capable tools.
 
-## Permission Model
-- Worker agents can call read-only context/extraction tools.
-- Only manager agent can execute side effects (`salesforce.tasks.create`, `slack.post`, `event_bus.emit`).
-- Alignment failure forces `manager_approval=true` before any outbound action.
-- High-risk actions require HITL decision (`approve|reject|edit`) before execution.
+### Tool Class Policy
+- `read_context`: MCP reads, warehouse/CRM snapshot reads.
+- `reasoning_transform`: scoring/summarization/cog transforms.
+- `write_action`: CRM updates, task creation, email/sequence sends.
+- `control`: approval gate, dedupe store, event emitter.
 
-## Execution Contract
-- Input: `gtm_event_v1` (`event_type=call.completed`)
-- Output: `gtm_event_v1` (`event_type=coaching.recommendation.created`)
-- Max runtime: `180s`
-- Idempotency key: `event_id`
+## Provider Support Posture
 
-## Quality Gates
-1. Schema gate: strict `gtm_event_v1` validation.
-2. Evidence gate: recommendation must cite at least one transcript or CRM fact.
-3. Alignment gate: `status=pass` and `score>=0.85` for auto-write.
-4. Confidence gate: if below threshold, route to review queue.
+### OpenAI-Style Agents
+- Supported pattern: Responses API / Agents SDK with function tools + MCP + optional shell tool.
+- `tool_choice` may be used to constrain tool invocation behavior.
+- Use background mode for long-running or delayed-approval runs.
+- For MCP connectors, keep sensitive tool calls approval-gated.
 
-## Failure Classification
-- `input_invalid`: reject and emit dead-letter event.
-- `context_unavailable`: retry with backoff; escalate on final failure.
-- `alignment_failed`: no CRM write; notify review channel.
-- `side_effect_error`: retry once, then dead-letter.
+### Claude-Compatible Agents
+- Supported pattern: Messages API tool loop (`stop_reason: "tool_use"` -> execute -> `tool_result`).
+- Tool contracts use `name` + `input_schema`; set strict tool behavior when needed.
+- MCP connector supports remote MCP tool calling directly; local stdio/prompt/resource flows require client-managed MCP integration.
 
-## Tracing and Evals Hooks
-- Record spans for validation, extraction, recommendation, alignment, approval, side effects, and emit.
-- Trace metadata must include `event_id`, `trace_id`, `run_id`, `alignment_status`, and HITL decision.
-- Evals should score coaching quality, citation faithfulness, and false approve/false block rates.
+### Non-Provider Runtime Engines
+- LangGraph/Temporal-style durable execution is valid if checkpoints are deterministic and idempotent.
+- Persist run state between planner/executor/evaluator phases to support retries and HITL resumes.
+
+## MCP + CLI Integration Pattern
+- Discover and cache tools via `tools/list`; invoke via `tools/call`.
+- Fetch contextual docs/data via `resources/list` + `resources/read`.
+- Load reusable instruction templates via `prompts/list` + `prompts/get` (client-managed where required).
+- For CLI wrappers, enforce allowlist commands, timeout budgets, and stdout/stderr capture for audit.
+
+## Approval/HITL Policy
+CRM task creation and outbound notifications for high-risk recommendations require HITL when confidence or policy thresholds are not met.
+
+## Scheduled and Background Loop Pattern (Optional)
+- Trigger modes: event-driven, cron-driven, or hybrid.
+- For schedules, run planner in bounded windows and emit explicit no-op heartbeat events when no action is required.
+- Long-running work may continue in background, but terminal contract emission must remain idempotent and replay-safe.
+
+## References
+- OpenAI Agents SDK: https://developers.openai.com/api/docs/guides/agents
+- OpenAI Using tools: https://developers.openai.com/api/docs/guides/tools
+- OpenAI Function calling (strict mode): https://developers.openai.com/api/docs/guides/function-calling
+- OpenAI MCP and Connectors: https://developers.openai.com/api/docs/guides/tools-connectors-mcp
+- OpenAI Background mode: https://developers.openai.com/api/docs/guides/background
+- OpenAI Shell tool: https://developers.openai.com/api/docs/guides/tools-shell
+- Anthropic tool use overview: https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview
+- Anthropic define tools/tool_choice: https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools
+- Anthropic MCP connector: https://platform.claude.com/docs/en/agents-and-tools/mcp-connector
+- MCP spec (tools/resources/prompts): https://modelcontextprotocol.io/specification
+- LangGraph durable execution: https://docs.langchain.com/oss/python/langgraph/durable-execution

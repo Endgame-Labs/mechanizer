@@ -3,7 +3,7 @@
 Tray implementation of stage-change review with strict idempotency and approval-gated writebacks.
 
 ## Reference Artifact
-- `workflow.placeholder.json`: starter blueprint with branch contracts.
+- `workflow.json`: starter blueprint with branch contracts.
 
 ## Trigger Mapping
 - Callable trigger receives canonical `gtm_event_v1` stage-change events.
