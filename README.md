@@ -118,4 +118,5 @@ All forms must honor shared contracts.
 - See [`THIRD_PARTY_TERMS.md`](./THIRD_PARTY_TERMS.md) for platform usage boundaries.
 
 ## License
-MIT (repo content only). See [`LICENSE`](./LICENSE).
+MIT for repository contents authored by Endgame Labs, Inc. See [`LICENSE`](./LICENSE).
+Third-party platforms (including n8n) are governed by their own licenses and terms. See [`THIRD_PARTY_TERMS.md`](./THIRD_PARTY_TERMS.md).
