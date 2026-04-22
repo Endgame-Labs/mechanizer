@@ -1,0 +1,42 @@
+schema_version: cog_v1
+cog:
+  id: directive_alignment
+  version: v1.0.0
+  display_name: Directive Alignment
+  owner: enablement-ops
+  category: qa
+  description: Evaluates generated recommendations or outbound content against internal directives and approved enablement guidance.
+  tags: [qa, coaching, policy, enablement]
+input_contract:
+  required_fields:
+    - trace.trace_id
+    - attributes.directive_ids
+    - attributes.generated_content
+  optional_fields:
+    - attributes.account_segment
+    - attributes.deal_stage
+  accepted_schema_versions: [gtm_event_v1]
+output_contract:
+  emitted_fields:
+    - attributes.alignment_status
+    - attributes.alignment_score
+    - attributes.alignment_notes
+  guaranteed_fields:
+    - attributes.alignment_status
+  failure_mode: soft_fail
+execution:
+  idempotent: true
+  timeout_seconds: 30
+  max_retries: 2
+  retry_backoff: linear
+  depends_on: []
+examples:
+  input:
+    attributes:
+      directive_ids: [sko_2026_discovery, objection_handling_v3]
+      generated_content: Ask for business pain quantification before discussing price.
+  output:
+    attributes:
+      alignment_status: pass
+      alignment_score: 0.88
+      alignment_notes: [aligned_to_discovery_directive]

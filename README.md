@@ -4,9 +4,23 @@
 
 Deterministic workflows are still the backbone of reliable revenue automation, but the next generation of orchestration adds **agentic reasoning gates** only where judgment is required. In `mechanizer`, those reasoning nodes are modeled as **Smart Cogs**: contract-bound units that can use MCP, CLI, and API tools with strict guardrails.
 
-Smart Cogs are only useful when they have the right context. Every current machine example in this repo assumes:
-- Endgame context/tooling via Endgame MCP and [`endgame-labs/endgame-cli`](https://github.com/Endgame-Labs/endgame-cli)
-- CRM/system context exposed headlessly (for example [Salesforce Headless 360](https://www.salesforce.com/news/stories/salesforce-headless-360-announcement/agentforce-developer-experience-tdx-release/) as API/MCP/CLI surfaces for agent workflows)
+Smart Cogs are only useful when they have the right context and tool surface. Every current machine example in this repo assumes one or more of these context layers:
+- Endgame MCP + [`endgame-cli`](https://github.com/Endgame-Labs/endgame-cli)
+  - What it gives Smart Cogs: account graph, interaction history, Salesforce notes, Slack account-channel messages, vendor/customer document retrieval, and NL-to-SQL style data access.
+  - Useful for: deal hygiene triage, coaching evidence collection, and NRR risk/expansion scoring.
+  - Example: a Smart Cog can pull `search_salesforce_notes`, `search_slack_messages`, `get_interaction_history`, and `query_data` before routing into `approval_loop`.
+- [Salesforce Headless 360](https://www.salesforce.com/news/stories/salesforce-headless-360-announcement/agentforce-developer-experience-tdx-release/)
+  - What it gives Smart Cogs: API/MCP/CLI-first access to CRM objects, metadata-aware workflows, and writeback actions.
+  - Useful for: stage-change triggers, deterministic opportunity/account updates, and account-centric action routing.
+  - Example: Deal Hygiene can gate opportunity/account updates through `approval_loop`; approved actions execute as headless writebacks.
+- Exa web research APIs
+  - What it gives Smart Cogs: external web/company/people research with structured outputs and citations.
+  - Useful for: competitor context, account enrichment, and market-signal augmentation for low-touch/no-touch NRR segments.
+  - Example: NRR can enrich expansion propensity with public launch/funding/hiring signals before play selection.
+- Conversation and enablement systems (Gong/Zoom/Seismic/Highspot)
+  - What they give Smart Cogs: post-call event triggers, transcript-derived context, and approved messaging constraints.
+  - Useful for: Sales Coaching quality checks and outbound-message policy enforcement.
+  - Example: Sales Coaching compares call outcomes and draft guidance against SKO or enablement directives before sending recommendations.
 
 It gives you one canonical machine spec and multiple runtime adapters so the same business flow can run on:
 - `n8n`
@@ -68,6 +82,7 @@ All forms must honor shared contracts.
 ## Context First
 - Endgame MCP and `endgame-cli` are required context providers in all current example machines.
 - Headless CRM/system interfaces (for example Salesforce Headless 360) are treated as first-class context + action layers for Smart Cogs.
+- Exa and similar research providers are optional enrichment layers for public-company and market context.
 
 ## Starter Machines
 - `deal-hygiene-machine`: stage-change/cron hygiene checks with directives and approval loops.

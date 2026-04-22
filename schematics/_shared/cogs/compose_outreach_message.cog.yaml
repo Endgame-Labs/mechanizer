@@ -1,0 +1,46 @@
+schema_version: cog_v1
+cog:
+  id: compose_outreach_message
+  version: v1.0.0
+  display_name: Compose Outreach Message
+  owner: revops-platform
+  category: notification
+  description: Builds personalized outbound email/message drafts from approved plays and account context.
+  tags: [messaging, personalization, nrr, outbound]
+input_contract:
+  required_fields:
+    - subject.account_id
+    - attributes.recommended_play
+    - attributes.target_persona
+  optional_fields:
+    - attributes.directive_ids
+    - attributes.product_value_points
+    - attributes.previous_touch_summary
+  accepted_schema_versions: [gtm_event_v1]
+output_contract:
+  emitted_fields:
+    - attributes.message_subject
+    - attributes.message_body
+    - attributes.message_channel
+  guaranteed_fields:
+    - attributes.message_subject
+    - attributes.message_body
+  failure_mode: soft_fail
+execution:
+  idempotent: true
+  timeout_seconds: 35
+  max_retries: 2
+  retry_backoff: linear
+  depends_on: [directive_alignment]
+examples:
+  input:
+    subject:
+      account_id: acct_789
+    attributes:
+      recommended_play: expansion_roi_recap
+      target_persona: vp_sales
+  output:
+    attributes:
+      message_subject: ROI recap and expansion plan for Q3
+      message_body: Thanks for the call. Based on your usage growth, we recommend...
+      message_channel: email
