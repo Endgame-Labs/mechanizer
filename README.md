@@ -14,13 +14,34 @@ Smart Cogs are only useful when they have the right context and tool surface. Ev
   - Useful for: stage-change triggers, deterministic opportunity/account updates, and account-centric action routing.
   - Example: Deal Hygiene can gate opportunity/account updates through `approval_loop`; approved actions execute as headless writebacks.
 - Exa web research APIs
+  - Tooling links: [Exa docs](https://docs.exa.ai/), [Exa MCP example](https://docs.exa.ai/examples/exa-mcp).
   - What it gives Smart Cogs: external web/company/people research with structured outputs and citations.
   - Useful for: competitor context, account enrichment, and market-signal augmentation for low-touch/no-touch NRR segments.
   - Example: NRR can enrich expansion propensity with public launch/funding/hiring signals before play selection.
+- Perplexity APIs + MCP tooling
+  - Tooling links: [Perplexity docs](https://docs.perplexity.ai/getting-started/quickstart), [official MCP server](https://github.com/perplexityai/modelcontextprotocol).
+  - What it gives Smart Cogs: fast web-grounded answers/search and API-native retrieval for research-heavy steps.
+  - Useful for: synthesis of fast-moving market context and rapid source discovery in pre-call and NRR workflows.
+  - Example: a Smart Cog can call Perplexity search/reasoning before generating an account brief.
+- Parallel MCP/tooling (Parallel.ai)
+  - Tooling links: [Parallel MCP quickstart](https://docs.parallel.ai/integrations/mcp/quickstart).
+  - What it gives Smart Cogs: MCP-exposed web task/research workflows optimized for high-throughput agent execution.
+  - Useful for: scalable deep-research or multi-query enrichment stages before scoring/routing.
+  - Example: run batched account-signal enrichment tasks, then pass normalized outputs to `deal_score_reasoner`.
 - Conversation and enablement systems (Gong/Zoom/Seismic/Highspot)
   - What they give Smart Cogs: post-call event triggers, transcript-derived context, and approved messaging constraints.
   - Useful for: Sales Coaching quality checks and outbound-message policy enforcement.
   - Example: Sales Coaching compares call outcomes and draft guidance against SKO or enablement directives before sending recommendations.
+- Conversation-intelligence MCP/connectors (where available)
+  - Gong MCP:
+    - Links: [Gong MCP announcement](https://www.gong.io/press/gong-introduces-model-context-protocol-mcp-support-to-unify-enterprise-ai-agents-from-hubspot-microsoft-salesforce-and-others), [Gong MCP server status](https://help.gong.io/docs/gong-mcp-server-coming-soon).
+    - Useful for: direct MCP access to deal/call intelligence in agent workflows.
+  - Zoom connector/MCP surfaces:
+    - Link: [Zoom for Claude app](https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0085220).
+    - Useful for: searching meetings, summaries, recordings, and transcript-backed follow-ups inside agent-assisted workflows.
+  - Chorus by ZoomInfo:
+    - Link: [Chorus by ZoomInfo via Zapier MCP](https://zapier.com/mcp/chorus-by-zoominfo).
+    - Useful for: MCP-mediated Chorus actions via integration platforms when direct vendor MCP is not available in your stack.
 
 It gives you one canonical machine spec and multiple runtime adapters so the same business flow can run on:
 - `n8n`
