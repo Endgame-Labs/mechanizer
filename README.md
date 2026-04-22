@@ -6,9 +6,10 @@ Deterministic workflows are still the backbone of reliable revenue automation, b
 
 Smart Cogs are only useful when they have the right context and tool surface. Every current machine example in this repo assumes one or more of these context layers:
 - Endgame MCP + [`endgame-cli`](https://github.com/Endgame-Labs/endgame-cli)
-  - What it gives Smart Cogs: account graph, interaction history, Salesforce notes, Slack account-channel messages, vendor/customer document retrieval, and NL-to-SQL style data access.
-  - Useful for: deal hygiene triage, coaching evidence collection, and NRR risk/expansion scoring.
-  - Example: a Smart Cog can pull `search_salesforce_notes`, `search_slack_messages`, `get_interaction_history`, and `query_data` before routing into `approval_loop`.
+  - What it gives Smart Cogs: a unified GTM context graph with extracted facts, plus hybrid semantic + keyword retrieval across those facts, interactions, notes, docs, and account entities.
+  - Also includes enablement context: directive/playbook-style knowledge retrieval and alignment inputs for coaching, messaging, and policy-aware actions.
+  - Useful for: deal hygiene triage, coaching evidence collection, NRR risk/expansion scoring, and directive-grounded outbound execution.
+  - Example: a Smart Cog can combine `search_document_insights`, `search_knowledge_articles`, `search_vendor_documents`, `search_salesforce_notes`, `search_slack_messages`, `get_interaction_history`, and `query_data` before routing into `approval_loop`.
 - [Salesforce Headless 360](https://www.salesforce.com/news/stories/salesforce-headless-360-announcement/agentforce-developer-experience-tdx-release/)
   - What it gives Smart Cogs: API/MCP/CLI-first access to CRM objects, metadata-aware workflows, and writeback actions.
   - Useful for: stage-change triggers, deterministic opportunity/account updates, and account-centric action routing.
