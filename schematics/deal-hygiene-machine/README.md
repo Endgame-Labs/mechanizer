@@ -1,26 +1,125 @@
 # Deal Hygiene Machine
 
 ## Purpose
-Detect and repair deal-data quality issues before forecast and inspection events.
+Detect, score, and remediate CRM data-quality drift before it affects forecast accuracy, pipeline inspection, and downstream automation.
+
+## Where It Fits
+Use this machine when your team needs deterministic hygiene checks with selective agentic reasoning for ambiguous records.
 
 ## Primary KPIs
-- Reduction in stale or invalid open opportunities
-- Forecast review prep time reduction
+- Reduction in stale or invalid open opportunities.
+- Forecast review prep time reduction.
+- Median time-to-remediation for high-severity hygiene issues.
 
-## Inputs
-- `gtm_event_v1` events from CRM/call intelligence/product telemetry.
-- Required context providers: Endgame MCP, `endgame-cli`, and Salesforce Headless 360 surfaces.
+## Trigger Models
+- Realtime trigger:
+  - Opportunity/account changes from Salesforce Headless 360 event streams.
+- Batch trigger:
+  - Scheduled sweep (`claw-like` heartbeat or scheduler) for drift detection and backfill reconciliation.
 
-## Outputs
-- Structured actions/alerts/tasks using adapter-native constructs.
-- Normalized event emissions for downstream machines.
-- High-impact writes (for example SFDC updates) must route through the `approval_loop` smart cog.
+## Required Context Layers
+- Endgame MCP + `endgame-cli`:
+  - Pull notes, Slack account chatter, interaction summaries, directives, and dataset query results.
+- Salesforce Headless 360:
+  - Source of truth for object state and writeback actions.
+- Optional enrichment:
+  - Exa/public web context for company-level changes that may explain data drift.
 
-## Platform Notes
-- `n8n/`: workflow export placeholder and implementation notes.
-- `zapier/`: zap template placeholder and app mapping.
-- `tray/`: tray workflow placeholder and callable config.
-- `make/`: scenario blueprint placeholder and module mapping.
-- `agentic/`: agent-runbook for prompt and tool orchestration.
-- `claude-routines/`: routine specs for deterministic orchestration.
-- `claw-like/`: long-running orchestration and heartbeat contract.
+## End-to-End Flow (Canonical)
+1. Ingest event as `gtm_event_v1`.
+2. Normalize and enrich account/deal context (`enrich_account_health`).
+3. Calculate hygiene risk and priority (`deal_score_reasoner`).
+4. Validate proposed fixes against directives (`directive_alignment`).
+5. Route severity and owners (`route_exec_alert`).
+6. Gate all SFDC writes through `approval_loop`.
+7. Execute approved writebacks and emit normalized completion event.
+
+## Smart Cogs Used
+- `enrich_account_health`:
+  - Adds health/risk features from telemetry + CRM context.
+  - Example: marks low activity + stale close date as elevated hygiene risk.
+- `deal_score_reasoner`:
+  - Produces score band and recommended remediation play.
+  - Example: `critical` score routes to same-day owner task + manager alert.
+- `directive_alignment`:
+  - Confirms proposed update or recommendation aligns to current operating directives.
+  - Example: blocks automatic stage rollback if directive requires manager sign-off.
+- `route_exec_alert`:
+  - Maps severity to owner/manager/exec destinations.
+  - Example: high-risk enterprise opp sends alert to AE + regional VP channel.
+- `approval_loop`:
+  - Mandatory gate before SFDC write/update actions.
+  - Example: proposed field corrections enter review queue; only approved actions execute.
+
+## Pluggable Interfaces
+- Context providers (swap-in):
+  - `endgame_mcp`, `endgame_cli`, `salesforce_headless_360`, `salesforce`, `hubspot`, `gong`.
+- Action providers (swap-in):
+  - SFDC REST/Bulk APIs, workflow-native tasks (n8n/Zapier/Tray/Make), Slack/email alerts.
+- Approval providers (swap-in):
+  - Internal approval UI, Slack interactive approvals, ticket-based approvals.
+
+## Configuration Example
+```yaml
+machine:
+  id: deal-hygiene-machine
+  trigger_mode:
+    realtime: true
+    batch_cron: "*/30 * * * *"
+  providers:
+    context:
+      - endgame_mcp
+      - endgame_cli
+      - salesforce_headless_360
+    actions:
+      - sfdc_writeback
+      - slack_alert
+      - task_create
+    approvals:
+      - approval_loop
+  scoring:
+    critical_threshold: 80
+    high_threshold: 65
+  policy:
+    require_approval_for:
+      - sfdc_update
+      - close_date_change
+      - stage_change
+```
+
+## Example Input/Output
+Input event (simplified):
+```json
+{
+  "event_type": "deal.updated",
+  "source": "salesforce_headless_360",
+  "subject": { "id": "006xx00000ABC123" },
+  "attributes": { "deal_stage": "Proposal", "close_date_stale_days": 21 }
+}
+```
+
+Output event (simplified):
+```json
+{
+  "event_type": "deal.hygiene.remediated",
+  "attributes": {
+    "deal_score": 83,
+    "recommended_play": "close_date_revalidation",
+    "approval_status": "approved"
+  }
+}
+```
+
+## Adapter Notes
+- `n8n/`, `zapier/`, `tray/`, `make/`:
+  - Keep deterministic field mapping identical to contract names.
+  - Ensure approval node precedes all write actions.
+- `agentic/` and `claude-routines/`:
+  - Use Smart Cogs as explicit staged tools with stable contracts.
+- `claw-like/`:
+  - Use `HEARTBEAT.md` for schedule + liveness guarantees.
+
+## Safety and Audit
+- Never execute SFDC writes without `approval_loop` pass for high-impact changes.
+- Emit trace IDs for every remediation decision.
+- Persist proposed vs approved deltas for auditability.

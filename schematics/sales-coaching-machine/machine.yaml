@@ -24,7 +24,7 @@ slo:
   p95_end_to_end_seconds: 180
   availability: "99.5%"
 dependencies:
-  cogs: [route_exec_alert@v1.0.0]
+  cogs: [directive_alignment@v1.0.0, route_exec_alert@v1.0.0, deal_score_reasoner@v1.0.0]
 feature_flags: []
 security:
   pii_policy: "minimize"
