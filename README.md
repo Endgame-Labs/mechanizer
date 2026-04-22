@@ -95,6 +95,23 @@ All forms must honor shared contracts.
 - `docs/assets/nrr-machine.svg`
 - `docs/assets/approval-loop-cog.svg`
 
+## Diagram Gallery
+
+### Flow Overview
+![Flow Overview](docs/assets/flow-overview.svg)
+
+### Deal Hygiene Machine
+![Deal Hygiene Machine](docs/assets/deal-hygiene-machine.svg)
+
+### Sales Coaching Machine
+![Sales Coaching Machine](docs/assets/sales-coaching-machine.svg)
+
+### NRR Machine
+![NRR Machine](docs/assets/nrr-machine.svg)
+
+### Approval Loop Cog
+![Approval Loop Cog](docs/assets/approval-loop-cog.svg)
+
 ## Security and Publishing
 - Never commit credentials, tenant IDs, webhook secrets, or customer data.
 - Keep examples scrubbed/synthetic.
