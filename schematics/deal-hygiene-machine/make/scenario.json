@@ -1,0 +1,225 @@
+{
+  "name": "deal-hygiene-machine-v1",
+  "machine_id": "deal-hygiene-machine",
+  "artifact_type": "make_scenario_blueprint_reference",
+  "make_runtime": {
+    "blueprint": {
+      "max_import_size_mb": 2
+    },
+    "scheduling": {
+      "mode": "immediate",
+      "max_runs_per_minute": 60,
+      "use_sequential_processing": true
+    },
+    "webhooks": {
+      "custom_webhook_path": "deal-hygiene-machine",
+      "default_processing_mode": "parallel_for_instant_webhooks",
+      "queue_behavior": "per_webhook_queue",
+      "documented_rate_limit": "up_to_300_requests_per_10_seconds",
+      "default_response_without_webhook_response_module": {
+        "accepted": 200,
+        "queue_full": 400,
+        "rate_limited": 429
+      }
+    },
+    "retry_model": {
+      "store_incomplete_executions": true,
+      "auto_retry_enabled_for": [
+        "RateLimitError",
+        "ConnectionError",
+        "ModuleTimeoutError"
+      ],
+      "exponential_backoff_schedule": [
+        "1m",
+        "10m",
+        "10m",
+        "30m",
+        "30m",
+        "30m",
+        "3h",
+        "3h"
+      ],
+      "parallel_incomplete_execution_retries_per_scenario": 3
+    },
+    "history_and_versioning": {
+      "manual_version_history_window_days": 60,
+      "run_replay_available": true,
+      "run_replay_consumes_credits": true
+    }
+  },
+  "trigger": {
+    "module": "webhooks.customWebhook",
+    "path": "deal-hygiene-machine",
+    "accepts_event_types": [
+      "deal.updated",
+      "call.completed",
+      "account.health_changed"
+    ]
+  },
+  "variables": {
+    "idempotency_key": "deal-hygiene:{{1.event_id}}",
+    "output_schema": "gtm_event_v1"
+  },
+  "modules": [
+    {
+      "id": 1,
+      "name": "Normalize Event",
+      "type": "tools.setVariables",
+      "mapping": {
+        "schema_version": "gtm_event_v1",
+        "event_id": "{{1.event_id}}",
+        "event_type": "{{1.event_type}}",
+        "source": "{{1.source}}",
+        "occurred_at": "{{1.occurred_at}}",
+        "ingested_at": "{{ifempty(1.ingested_at; now)}}",
+        "trace": "{{1.trace}}",
+        "subject": "{{1.subject}}",
+        "attributes": "{{ifempty(1.attributes; emptyobject)}}"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Idempotency Lookup",
+      "type": "dataStore.getRecord",
+      "store": "deal_hygiene_runs",
+      "key": "{{variables.idempotency_key}}"
+    },
+    {
+      "id": 3,
+      "name": "Skip Duplicates",
+      "type": "flow.filter",
+      "condition": "{{empty(2.value)}}"
+    },
+    {
+      "id": 4,
+      "name": "enrich_account_health",
+      "type": "http.makeRequest",
+      "request": {
+        "method": "POST",
+        "url": "https://cogs.internal/enrich_account_health/v1/execute",
+        "body": "{{1}}"
+      }
+    },
+    {
+      "id": 5,
+      "name": "deal_score_reasoner",
+      "type": "http.makeRequest",
+      "request": {
+        "method": "POST",
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "body": "{{4.body}}"
+      }
+    },
+    {
+      "id": 6,
+      "name": "directive_alignment",
+      "type": "http.makeRequest",
+      "request": {
+        "method": "POST",
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "body": "{{5.body}}"
+      }
+    },
+    {
+      "id": 7,
+      "name": "route_exec_alert",
+      "type": "http.makeRequest",
+      "request": {
+        "method": "POST",
+        "url": "https://cogs.internal/route_exec_alert/v1/execute",
+        "body": "{{6.body}}"
+      }
+    },
+    {
+      "id": 8,
+      "name": "approval_loop",
+      "type": "http.makeRequest",
+      "request": {
+        "method": "POST",
+        "url": "https://approvals.internal/v1/request",
+        "body": "{{7.body}}"
+      }
+    },
+    {
+      "id": 9,
+      "name": "Approval Router",
+      "type": "flow.router",
+      "routes": [
+        {
+          "name": "approved",
+          "condition": "{{8.body.attributes.approval_status}} = approved"
+        },
+        {
+          "name": "deferred",
+          "condition": "{{8.body.attributes.approval_status}} != approved"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "SFDC Writeback",
+      "type": "salesforce.updateRecord",
+      "route": "approved",
+      "mapping": {
+        "object": "Opportunity",
+        "recordId": "{{8.body.subject.opportunity_id}}",
+        "CloseDate": "{{8.body.attributes.proposed_mutations.close_date}}",
+        "NextStep": "{{8.body.attributes.proposed_mutations.next_step}}"
+      }
+    },
+    {
+      "id": 11,
+      "name": "Emit Output Event",
+      "type": "http.makeRequest",
+      "request": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "body": {
+          "schema_version": "gtm_event_v1",
+          "event_id": "{{1.event_id}}",
+          "event_type": "{{if(9.route = \"approved\"; \"deal.hygiene.remediated\"; \"deal.hygiene.deferred\")}}",
+          "source": "make",
+          "occurred_at": "{{1.occurred_at}}",
+          "ingested_at": "{{now}}",
+          "trace": {
+            "trace_id": "{{1.trace.trace_id}}",
+            "run_id": "{{execution.id}}"
+          },
+          "subject": "{{1.subject}}",
+          "attributes": "{{8.body.attributes}}"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "name": "Idempotency Store",
+      "type": "dataStore.upsertRecord",
+      "store": "deal_hygiene_runs",
+      "key": "{{variables.idempotency_key}}",
+      "value": {
+        "terminal_event_type": "{{11.request.body.event_type}}",
+        "updated_at": "{{now}}"
+      }
+    }
+  ],
+  "error_handlers": [
+    {
+      "on_module_types": [
+        "http.makeRequest",
+        "salesforce.updateRecord"
+      ],
+      "strategy": "break_with_incomplete_execution_retry",
+      "on_failure": {
+        "type": "http.makeRequest",
+        "url": "https://events.internal/v1/dead-letter",
+        "body": {
+          "machine_id": "deal-hygiene-machine",
+          "event_id": "{{1.event_id}}",
+          "trace": "{{1.trace}}",
+          "failed_module": "{{error.module}}",
+          "error_message": "{{error.message}}"
+        }
+      }
+    }
+  ]
+}

@@ -10,6 +10,7 @@ Guidelines:
 
 Current shared smart-cog set:
 - `approval_loop`: human-in-the-loop approval gate before high-impact actions.
+  - See `approval_loop.md` for prompt-channel and callback contract details.
 - `enrich_account_health`: deterministic + feature enrichment for account/deal health.
 - `route_exec_alert`: severity-based alert target selection.
 - `deal_score_reasoner`: score-band calculation and next-play recommendation.

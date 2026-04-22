@@ -1,0 +1,173 @@
+{
+  "title": "Deal Hygiene Machine - Approval Gated Remediation",
+  "version": "1.1.0",
+  "machine_id": "deal-hygiene-machine",
+  "trigger": {
+    "app": "webhooks",
+    "event": "catch_hook",
+    "path": "/deal-hygiene-machine",
+    "accepts_event_types": [
+      "deal.updated",
+      "call.completed",
+      "account.health_changed"
+    ]
+  },
+  "gtm_event_v1_mapping": {
+    "required": [
+      "schema_version",
+      "event_id",
+      "event_type",
+      "source",
+      "occurred_at",
+      "ingested_at",
+      "trace",
+      "subject",
+      "attributes"
+    ],
+    "notes": "Preserve non-canonical provider fields under raw and keep trace correlation stable across all steps."
+  },
+  "steps": [
+    {
+      "id": "normalize_validate",
+      "type": "code",
+      "name": "Normalize to gtm_event_v1",
+      "input": {
+        "required_fields": [
+          "schema_version",
+          "event_id",
+          "event_type",
+          "source",
+          "occurred_at",
+          "ingested_at",
+          "trace",
+          "subject",
+          "attributes"
+        ]
+      }
+    },
+    {
+      "id": "idempotency_lookup",
+      "type": "storage_get",
+      "provider": "storage_by_zapier",
+      "key_template": "deal-hygiene:${event_id}"
+    },
+    {
+      "id": "enrich_account_health",
+      "type": "webhook_action",
+      "url": "https://cogs.internal/enrich_account_health/v1/execute",
+      "method": "POST"
+    },
+    {
+      "id": "deal_score_reasoner",
+      "type": "webhook_action",
+      "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+      "method": "POST"
+    },
+    {
+      "id": "directive_alignment",
+      "type": "webhook_action",
+      "url": "https://cogs.internal/directive_alignment/v1/execute",
+      "method": "POST"
+    },
+    {
+      "id": "route_exec_alert",
+      "type": "webhook_action",
+      "url": "https://cogs.internal/route_exec_alert/v1/execute",
+      "method": "POST"
+    },
+    {
+      "id": "approval_loop",
+      "type": "webhook_action",
+      "url": "https://approval.internal/request",
+      "method": "POST",
+      "input_fields": [
+        "event_id",
+        "subject",
+        "attributes.hygiene_score",
+        "attributes.proposed_mutations",
+        "trace"
+      ]
+    },
+    {
+      "id": "approval_filter",
+      "type": "filter",
+      "condition": "approval_status == 'approved'"
+    },
+    {
+      "id": "sfdc_writeback",
+      "type": "salesforce_action",
+      "action": "update_record",
+      "object": "Opportunity",
+      "record_id_path": "subject.opportunity_id"
+    },
+    {
+      "id": "emit_output_event",
+      "type": "webhook_action",
+      "url": "https://events.internal/v1/publish",
+      "method": "POST",
+      "event_type_on_approved": "deal.hygiene.remediated",
+      "event_type_on_non_approved": "deal.hygiene.deferred"
+    },
+    {
+      "id": "idempotency_store",
+      "type": "storage_set",
+      "provider": "storage_by_zapier",
+      "key_template": "deal-hygiene:${event_id}",
+      "value_fields": [
+        "event_id",
+        "event_type",
+        "attributes.approval_status",
+        "trace.trace_id",
+        "trace.run_id"
+      ]
+    }
+  ],
+  "zapier_runtime_constraints": {
+    "paths": {
+      "max_path_branches_per_group": 10,
+      "max_nested_path_steps_per_zap": 3,
+      "execution": "sequential_left_to_right",
+      "must_be_final_step": true
+    },
+    "filters": {
+      "consume_tasks": false,
+      "behavior": "stops_downstream_actions_when_conditions_fail"
+    },
+    "code": {
+      "javascript_runtime": "nodejs_22",
+      "io_limit_mb": 6,
+      "plan_specific_limits": true
+    },
+    "webhooks": {
+      "catch_raw_hook_max_mb": 2,
+      "max_trigger_payload_mb": 10,
+      "max_action_payload_mb": 5,
+      "rate_limit": {
+        "requests_per_5_minutes_per_user": 20000,
+        "legacy_requests_per_5_minutes_per_zap": 1000
+      }
+    },
+    "replay": {
+      "max_autoreplay_attempts": 5,
+      "filter_and_paths_replay_supported": false,
+      "replay_window_days": 60
+    },
+    "templates": {
+      "classic_template_includes_values": false,
+      "classic_template_supports_code_steps": false,
+      "guided_templates_supported": true
+    },
+    "import_export": {
+      "team_or_enterprise_required": true,
+      "json_only": true
+    }
+  },
+  "error_policy": {
+    "max_retries": 3,
+    "retry_backoff": "exponential",
+    "dead_letter": {
+      "enabled": true,
+      "target": "https://events.internal/v1/dead-letter"
+    }
+  }
+}

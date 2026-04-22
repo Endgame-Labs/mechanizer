@@ -1,0 +1,244 @@
+{
+  "name": "sales-coaching-machine-call-complete-v2",
+  "machine_id": "sales-coaching-machine",
+  "artifact_type": "make_scenario_blueprint_reference",
+  "metadata": {
+    "version": 2,
+    "scheduling": {
+      "type": "immediate",
+      "max_runs_per_minute": 45,
+      "sequential_processing": true
+    },
+    "make_runtime": {
+      "blueprint_max_size_mb": 2,
+      "webhook_rate_limit": "up_to_300_requests_per_10_seconds",
+      "default_webhook_responses_without_webhook_response_module": {
+        "accepted": 200,
+        "queue_full": 400,
+        "rate_limited": 429
+      },
+      "retry": {
+        "store_incomplete_executions": true,
+        "auto_retry_errors": [
+          "RateLimitError",
+          "ConnectionError",
+          "ModuleTimeoutError"
+        ],
+        "backoff_schedule": [
+          "1m",
+          "10m",
+          "10m",
+          "30m",
+          "30m",
+          "30m",
+          "3h",
+          "3h"
+        ]
+      },
+      "history_constraints": {
+        "manual_version_restore_window_days": 60,
+        "run_replay_requires_history_retention": true
+      }
+    }
+  },
+  "modules": [
+    {
+      "id": 1,
+      "module": "webhooks:customWebhook",
+      "name": "Call Completed Webhook",
+      "parameters": {
+        "name": "sales-coaching-call-completed"
+      }
+    },
+    {
+      "id": 2,
+      "module": "flow:router",
+      "name": "Route by Event Type"
+    },
+    {
+      "id": 3,
+      "module": "json:createJSON",
+      "name": "Normalize to gtm_event_v1",
+      "parameters": {
+        "json": {
+          "event_id": "{{1.id}}",
+          "event_type": "{{1.type}}",
+          "source": "gong",
+          "occurred_at": "{{1.call.occurred_at}}",
+          "ingested_at": "{{now}}",
+          "trace": {
+            "trace_id": "{{executionId}}",
+            "parent_id": null
+          },
+          "subject": {
+            "type": "call",
+            "id": "{{1.call.id}}"
+          },
+          "attributes": {
+            "account_id": "{{1.call.account_id}}",
+            "opportunity_id": "{{1.call.opportunity_id}}",
+            "rep_email": "{{1.call.rep_email}}",
+            "directive_set_version": "sko_2026_q2_v3"
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "module": "http:actionSendData",
+      "name": "Fetch Endgame Context",
+      "parameters": {
+        "url": "https://api.endgame.example/v1/context/sales-coaching",
+        "method": "post",
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": "{{toJSON(3)}}",
+        "timeout": 20
+      }
+    },
+    {
+      "id": 5,
+      "module": "http:actionSendData",
+      "name": "Directive Alignment Check",
+      "parameters": {
+        "url": "https://api.directive-alignment.example/v1/check",
+        "method": "post",
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": "{\"recommendation\":\"Ask rep to confirm pain metric and economic buyer by next call\",\"directive_set_version\":\"{{3.attributes.directive_set_version}}\",\"context\":{{4.body}}}",
+        "timeout": 20
+      }
+    },
+    {
+      "id": 6,
+      "module": "http:actionSendData",
+      "name": "Approval Loop",
+      "parameters": {
+        "url": "https://approval.internal/request",
+        "method": "post",
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": "{\"event_id\":\"{{3.event_id}}\",\"subject_id\":\"{{3.subject.id}}\",\"proposed_action\":\"coaching_task_or_escalation\",\"timeout_seconds\":1800}"
+      }
+    },
+    {
+      "id": 7,
+      "module": "flow:router",
+      "name": "Approval and Alignment Router"
+    },
+    {
+      "id": 8,
+      "module": "salesforce:createRecord",
+      "name": "Create Coaching Task",
+      "parameters": {
+        "object": "Task",
+        "fields": {
+          "Subject": "Coaching: Discovery and stakeholder validation",
+          "Description": "Directive-aligned recommendation from call-complete event",
+          "WhatId": "{{3.attributes.opportunity_id}}",
+          "OwnerEmail__c": "{{3.attributes.rep_email}}",
+          "TraceId__c": "{{3.trace.trace_id}}"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "module": "slack:createMessage",
+      "name": "Escalate for Manual Review",
+      "parameters": {
+        "channel": "#revops-escalations",
+        "text": "Directive alignment or approval failed for call {{3.subject.id}}. Manual QA required."
+      }
+    },
+    {
+      "id": 10,
+      "module": "http:actionSendData",
+      "name": "Emit Output Event",
+      "parameters": {
+        "url": "https://event-bus.example/v1/events",
+        "method": "post",
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": "{\"event_type\":\"{{if(7.route = \\\"approved\\\"; \\\"coaching.recommendation.created\\\"; \\\"coaching.recommendation.blocked\\\")}}\",\"source\":\"make\",\"trace\":{{3.trace}},\"attributes\":{\"alignment_status\":\"{{5.body.status}}\",\"alignment_score\":\"{{5.body.score}}\",\"approval_status\":\"{{6.body.approval_status}}\"}}"
+      }
+    },
+    {
+      "id": 11,
+      "module": "http:actionSendData",
+      "name": "Dead Letter",
+      "parameters": {
+        "url": "https://event-bus.example/v1/dead-letter",
+        "method": "post",
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": "{\"machine_id\":\"sales-coaching-machine\",\"trace_id\":\"{{executionId}}\",\"event_id\":\"{{3.event_id}}\",\"error\":\"{{error.message}}\"}"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "from": 2,
+      "to": 3,
+      "filter": "{{1.type}} = call.completed"
+    },
+    {
+      "from": 3,
+      "to": 4
+    },
+    {
+      "from": 4,
+      "to": 5
+    },
+    {
+      "from": 5,
+      "to": 6
+    },
+    {
+      "from": 6,
+      "to": 7
+    },
+    {
+      "from": 7,
+      "to": 8,
+      "filter": "{{6.body.approval_status}} = approved AND {{5.body.status}} = pass AND {{5.body.score}} >= 0.85"
+    },
+    {
+      "from": 7,
+      "to": 9,
+      "filter": "{{6.body.approval_status}} != approved OR {{5.body.status}} != pass OR {{5.body.score}} < 0.85"
+    },
+    {
+      "from": 8,
+      "to": 10,
+      "label": "approved"
+    },
+    {
+      "from": 9,
+      "to": 10,
+      "label": "blocked"
+    }
+  ],
+  "errorRoute": {
+    "to": 11
+  }
+}

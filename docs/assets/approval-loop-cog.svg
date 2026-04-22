@@ -1,61 +1,70 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
-  <title id="title">Approval Loop Cog</title>
-  <desc id="desc">Cog-like approval loop for discounts and exceptions with agent recommendation and human sign-off.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Approval Loop Cog with Human Prompt Channels</title>
+  <desc id="desc">Approval loop showing three human prompt channels: Claude ask-user, Slack form, and webhook callback for bespoke UI.</desc>
   <defs>
-    <linearGradient id="bg5" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f9fafc"/>
-      <stop offset="100%" stop-color="#eef2f8"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fbff"/>
+      <stop offset="100%" stop-color="#eef4fb"/>
     </linearGradient>
-    <marker id="arrow5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#43556e"/>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#3d5068"/>
     </marker>
     <style>
-      .t{font:700 34px 'Inter', 'Segoe UI', sans-serif; fill:#24364a}
-      .l{font:600 18px 'Inter', 'Segoe UI', sans-serif; fill:#334a64}
-      .m{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#5c6f83}
-      .n{fill:#ffffff; stroke:#cad4e2; stroke-width:2}
-      .a{fill:#eef3ff; stroke:#a8bbdb; stroke-width:2}
-      .f{stroke:#43556e; stroke-width:3; fill:none; marker-end:url(#arrow5)}
-      .p{stroke:#7b8da3; stroke-width:2.5; stroke-dasharray:9 7; fill:none}
-      .z{stroke:#ff9a4f; stroke-width:4; fill:none}
-      .gear{fill:none; stroke:#9baac0; stroke-width:16; stroke-linecap:round}
+      .title { font: 700 34px 'Inter', 'Segoe UI', sans-serif; fill: #24364a; }
+      .h { font: 600 18px 'Inter', 'Segoe UI', sans-serif; fill: #334a64; }
+      .b { font: 500 14px 'Inter', 'Segoe UI', sans-serif; fill: #5a6d83; }
+      .box { fill: #ffffff; stroke: #c9d6e7; stroke-width: 2; }
+      .channel { fill: #edf4ff; stroke: #a9bfdd; stroke-width: 2; }
+      .line { stroke: #3d5068; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #6f84a0; stroke-width: 2.5; stroke-dasharray: 8 7; fill: none; marker-end: url(#arrow); }
+      .gear { fill: none; stroke: #9db0c8; stroke-width: 15; stroke-linecap: round; }
     </style>
   </defs>
 
-  <rect width="1200" height="700" fill="url(#bg5)"/>
-  <text x="60" y="70" class="t">Approval Loop Cog</text>
+  <rect width="1200" height="720" fill="url(#bg)"/>
+  <text x="56" y="70" class="title">Approval Loop Smart Cog</text>
 
-  <circle cx="600" cy="340" r="165" class="gear" stroke-dasharray="22 18"/>
-  <circle cx="600" cy="340" r="78" fill="#ffffff" stroke="#cad4e2" stroke-width="2"/>
-  <text x="560" y="336" class="l">Loop</text>
-  <text x="536" y="358" class="m">governed cadence</text>
+  <rect x="66" y="130" width="260" height="96" rx="14" class="box"/>
+  <text x="95" y="172" class="h">Proposed Action</text>
+  <text x="95" y="195" class="b">CRM write, send, or policy exception</text>
 
-  <rect x="145" y="140" width="220" height="92" rx="14" class="n"/>
-  <text x="178" y="182" class="l">Quote Request</text>
-  <text x="178" y="204" class="m">discount or term ask</text>
+  <circle cx="545" cy="355" r="168" class="gear" stroke-dasharray="22 17"/>
+  <circle cx="545" cy="355" r="82" fill="#ffffff" stroke="#c9d6e7" stroke-width="2"/>
+  <text x="492" y="351" class="h">approval_loop</text>
+  <text x="503" y="373" class="b">request + wait + callback</text>
 
-  <rect x="835" y="140" width="230" height="92" rx="14" class="a"/>
-  <text x="867" y="182" class="l">Agent Risk Read</text>
-  <text x="867" y="204" class="m">margin + precedent</text>
+  <rect x="860" y="118" width="280" height="94" rx="14" class="channel"/>
+  <text x="888" y="159" class="h">Claude ask-user</text>
+  <text x="888" y="182" class="b">question prompt + human choice</text>
 
-  <rect x="910" y="440" width="210" height="92" rx="14" class="n"/>
-  <text x="944" y="482" class="l">Approver Node</text>
-  <text x="944" y="504" class="m">legal/finance/sales</text>
+  <rect x="860" y="258" width="280" height="94" rx="14" class="channel"/>
+  <text x="888" y="299" class="h">Slack Form</text>
+  <text x="888" y="322" class="b">interactive approve/reject form</text>
 
-  <rect x="140" y="450" width="250" height="92" rx="14" class="n"/>
-  <text x="172" y="492" class="l">Rep Commit Path</text>
-  <text x="172" y="514" class="m">approved language pack</text>
+  <rect x="860" y="398" width="280" height="94" rx="14" class="channel"/>
+  <text x="888" y="439" class="h">Webhook Callback UI</text>
+  <text x="888" y="462" class="b">bespoke app posts signed callback</text>
 
-  <path d="M365 186 C470 120,730 120,835 186" class="f"/>
-  <path d="M950 232 C1045 290,1060 372,1015 440" class="f"/>
-  <path d="M910 486 C760 585,430 590,390 496" class="f"/>
-  <path d="M240 450 C120 370,125 250,200 210" class="f"/>
+  <rect x="860" y="550" width="280" height="94" rx="14" class="box"/>
+  <text x="888" y="592" class="h">Decision Payload</text>
+  <text x="888" y="615" class="b">status, approver, reason, timestamp</text>
 
-  <path d="M260 232 C300 300,300 380,260 450" class="p"/>
-  <path d="M835 232 C790 290,790 390,835 440" class="p"/>
+  <rect x="64" y="560" width="300" height="96" rx="14" class="box"/>
+  <text x="95" y="602" class="h">Execute or Block</text>
+  <text x="95" y="625" class="b">branch on approval_status</text>
 
-  <polyline points="595,155 622,120 650,154 676,119" class="z"/>
+  <path d="M326 178 C420 178,430 260,460 290" class="line"/>
+  <path d="M625 280 C740 190,760 165,860 165" class="line"/>
+  <path d="M630 335 C740 310,760 305,860 305" class="line"/>
+  <path d="M625 388 C740 430,760 445,860 445" class="line"/>
 
-  <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#cad4e2"/>
-  <text x="82" y="645" class="m">Legend: Circular cog = approval cadence, solid arrows = decision handoffs, dashed arcs = policy sync, orange zap = escalation event.</text>
+  <path d="M1000 212 C1000 230,1000 238,1000 258" class="dash"/>
+  <path d="M1000 352 C1000 370,1000 378,1000 398" class="dash"/>
+  <path d="M1000 492 C1000 515,1000 525,1000 550" class="dash"/>
+
+  <path d="M860 598 C760 598,700 520,620 430" class="line"/>
+  <path d="M460 430 C390 520,340 590,364 608" class="line"/>
+
+  <rect x="56" y="678" width="1088" height="30" rx="8" fill="#ffffff" stroke="#c9d6e7"/>
+  <text x="76" y="699" class="b">Channels supported: claude_ask_user_question | slack_form | webhook_callback. Callback must return approval_request_id and trace linkage.</text>
 </svg>

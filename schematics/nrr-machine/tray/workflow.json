@@ -1,0 +1,198 @@
+{
+  "workflow_name": "nrr_machine_low_no_touch",
+  "machine_id": "nrr-machine",
+  "version": "1.1.0",
+  "tray_runtime": {
+    "project": "nrr-machine",
+    "trigger_mode": "callable",
+    "callable_trigger": {
+      "name": "nrr_event_ingest",
+      "operation": "trigger_and_respond"
+    },
+    "scheduled_trigger": {
+      "enabled": true,
+      "cron": "0 */6 * * *",
+      "timezone": "America/Los_Angeles"
+    }
+  },
+  "contract": {
+    "input_schema": "gtm_event_v1",
+    "idempotency_key": "event_id",
+    "approval_required_before_side_effects": true
+  },
+  "steps": [
+    {
+      "key": "normalize_validate",
+      "operation": "script",
+      "language": "javascript",
+      "notes": "Validate required gtm_event_v1 keys and normalize trace/timestamps."
+    },
+    {
+      "key": "idempotency_check",
+      "operation": "data_storage_get",
+      "input": {
+        "key": "nrr-machine:${steps.normalize_validate.output.event_id}"
+      }
+    },
+    {
+      "key": "skip_if_duplicate",
+      "operation": "boolean_condition",
+      "condition": "steps.idempotency_check.found == false"
+    },
+    {
+      "key": "fetch_context",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://context.internal/enrich",
+        "timeout_seconds": 20,
+        "body": {
+          "providers": [
+            "salesforce_headless_360",
+            "telemetry",
+            "billing",
+            "endgame_mcp"
+          ],
+          "event": "${steps.normalize_validate.output}"
+        }
+      }
+    },
+    {
+      "key": "segment_gate",
+      "operation": "boolean_condition",
+      "condition": "steps.fetch_context.output.segment in ['low_touch','no_touch']"
+    },
+    {
+      "key": "score_and_play",
+      "operation": "script",
+      "language": "javascript",
+      "logic": "score=Math.round((0.45*health_risk)+(0.35*renewal_risk)+(0.2*expansion_signal)); play=(score>=78)?'critical_retention':((score>=72 && health_risk<60)?'expansion_push':'monitor_and_nudge');"
+    },
+    {
+      "key": "compose_draft",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://messaging.internal/compose",
+        "timeout_seconds": 15
+      }
+    },
+    {
+      "key": "approval_loop",
+      "operation": "http_client",
+      "request": {
+        "method": "POST",
+        "url": "https://approval.internal/request",
+        "body": {
+          "event_id": "${steps.normalize_validate.output.event_id}",
+          "account_id": "${steps.normalize_validate.output.subject.id}",
+          "score": "${steps.score_and_play.score}",
+          "play": "${steps.score_and_play.play}",
+          "actions": [
+            "outbound_email_send",
+            "renewal_plan_update"
+          ],
+          "timeout_seconds": 1800
+        }
+      }
+    },
+    {
+      "key": "approved_branch",
+      "operation": "branch",
+      "branches": [
+        {
+          "name": "approved",
+          "condition": "steps.approval_loop.output.approval_status == 'approved'",
+          "steps": [
+            {
+              "key": "send_outbound",
+              "operation": "send_email",
+              "error_handling": "manual"
+            },
+            {
+              "key": "update_sfdc",
+              "operation": "salesforce_update",
+              "input": {
+                "idempotency_key": "${steps.normalize_validate.output.event_id}"
+              },
+              "error_handling": "manual"
+            },
+            {
+              "key": "emit_executed",
+              "operation": "http_client",
+              "request": {
+                "method": "POST",
+                "url": "https://events.internal/emit",
+                "body": {
+                  "event_type": "nrr.play.executed"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "blocked",
+          "condition": "steps.approval_loop.output.approval_status != 'approved'",
+          "steps": [
+            {
+              "key": "emit_blocked",
+              "operation": "http_client",
+              "request": {
+                "method": "POST",
+                "url": "https://events.internal/emit",
+                "body": {
+                  "event_type": "nrr.play.blocked",
+                  "reason": "approval_rejected_or_timeout"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "idempotency_store",
+      "operation": "data_storage_put",
+      "input": {
+        "key": "nrr-machine:${steps.normalize_validate.output.event_id}",
+        "value": {
+          "status": "completed",
+          "updated_at": "${meta.now}"
+        }
+      }
+    }
+  ],
+  "error_handling": {
+    "default_step_mode": "automatic",
+    "manual_paths_for": [
+      "send_outbound",
+      "update_sfdc"
+    ],
+    "dead_letter_target": "nrr-machine-dlq",
+    "alerting_payload_fields": [
+      "workflow_uuid",
+      "step_name",
+      "step_log_url",
+      "message",
+      "created"
+    ]
+  },
+  "sdlc": {
+    "project_versioning": true,
+    "promotion_flow": [
+      "save_version_in_dev",
+      "export_project_json",
+      "import_to_stage_or_prod",
+      "resolve_auth_service_connector_mappings",
+      "run_import_preview_checks",
+      "create_destination_version"
+    ],
+    "api_pipeline_endpoints": [
+      "GET /core/v1/projects/{projectId}/versions",
+      "GET /core/v1/projects/{projectId}/versions/{versionNumber}/export",
+      "POST /core/v1/projects/{projectId}/imports/requirements",
+      "POST /core/v1/projects/{projectId}/imports/previews",
+      "POST /core/v1/projects/{projectId}/imports"
+    ]
+  }
+}

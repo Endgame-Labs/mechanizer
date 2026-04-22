@@ -145,6 +145,8 @@ Validation must confirm:
 - Smart-cog version correctness.
 - Required adapter coverage presence.
 - Heartbeat metadata validity for claw-like mode.
+- Machine diagram exists at `docs/assets/<machine-id>.svg`.
+- Root `README.md` diagram gallery includes the machine.
 
 ## 10) Compatibility Policy
 

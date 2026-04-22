@@ -1,11 +1,11 @@
 schema_version: cog_v1
 cog:
   id: approval_loop
-  version: v1.0.0
+  version: v1.1.0
   display_name: Approval Loop Smart Cog
   owner: revops-platform
   category: routing
-  description: Routes high-impact actions into a propose-review-approve workflow before external side effects.
+  description: Routes high-impact actions into a propose-review-approve workflow before external side effects with explicit human prompt channels.
   tags: [approval, governance, human-in-the-loop, safety]
 input_contract:
   required_fields:
@@ -16,20 +16,30 @@ input_contract:
   optional_fields:
     - attributes.policy_tags
     - attributes.reviewer_group
+    - attributes.approval_prompt.channel
+    - attributes.approval_prompt.prompt_text
+    - attributes.approval_prompt.form_schema
+    - attributes.approval_prompt.callback_url
+    - attributes.approval_prompt.callback_method
+    - attributes.approval_prompt.callback_auth_ref
+    - attributes.approval_prompt.timeout_seconds
   accepted_schema_versions:
     - gtm_event_v1
 output_contract:
   emitted_fields:
+    - attributes.approval_request_id
+    - attributes.approval_channel
     - attributes.approval_status
     - attributes.approval_decision_by
     - attributes.approval_decision_at
     - attributes.approval_reason
+    - attributes.approval_callback_status
   guaranteed_fields:
     - attributes.approval_status
   failure_mode: soft_fail
 execution:
   idempotent: true
-  timeout_seconds: 45
+  timeout_seconds: 1800
   max_retries: 2
   retry_backoff: linear
   depends_on: []
@@ -39,9 +49,19 @@ examples:
       proposed_action: sfdc_update
       risk_level: high
       policy_tags: [commercial_commitment]
+      approval_prompt:
+        channel: webhook_callback
+        prompt_text: "Approve close date change and updated next steps?"
+        callback_url: "https://ops-ui.example.com/api/approval-callback"
+        callback_method: POST
+        callback_auth_ref: "secret://approval-callback-token"
+        timeout_seconds: 1800
   output:
     attributes:
+      approval_request_id: apr_34991
+      approval_channel: webhook_callback
       approval_status: approved
       approval_decision_by: manager@example.com
       approval_decision_at: 2026-04-22T20:10:00Z
       approval_reason: within policy thresholds
+      approval_callback_status: delivered

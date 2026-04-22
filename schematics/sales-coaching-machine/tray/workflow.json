@@ -1,0 +1,215 @@
+{
+  "name": "sales-coaching-machine-call-complete",
+  "machine_id": "sales-coaching-machine",
+  "version": "1.1.0",
+  "trigger": {
+    "type": "callable",
+    "operation": "trigger_and_respond",
+    "input_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "call"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "call.completed"
+          ]
+        },
+        "call": {
+          "type": "object",
+          "required": [
+            "id",
+            "occurred_at",
+            "opportunity_id",
+            "rep_email"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "occurred_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "opportunity_id": {
+              "type": "string"
+            },
+            "account_id": {
+              "type": "string"
+            },
+            "rep_email": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "event_type",
+        "trace",
+        "attributes"
+      ]
+    }
+  },
+  "steps": [
+    {
+      "id": "validate_event_type",
+      "type": "boolean_condition",
+      "input": {
+        "left": "$.steps.trigger.body.type",
+        "operator": "equals",
+        "right": "call.completed"
+      }
+    },
+    {
+      "id": "normalize_gtm_event",
+      "type": "script",
+      "language": "javascript",
+      "code": "return {event_id: $.steps.trigger.body.id, event_type: $.steps.trigger.body.type, source: 'gong', occurred_at: $.steps.trigger.body.call.occurred_at, ingested_at: $.meta.timestamp, trace: {trace_id: $.steps.trigger.body.trace?.trace_id || $.meta.run_id, run_id: $.meta.run_id, parent_id: $.steps.trigger.body.trace?.parent_id || null}, subject: {type: 'call', id: $.steps.trigger.body.call.id}, attributes: {opportunity_id: $.steps.trigger.body.call.opportunity_id, account_id: $.steps.trigger.body.call.account_id, rep_email: $.steps.trigger.body.call.rep_email, directive_set_version: 'sko_2026_q2_v3'}};"
+    },
+    {
+      "id": "fetch_endgame_context",
+      "type": "http_client",
+      "config": {
+        "method": "POST",
+        "url": "https://api.endgame.example/v1/context/sales-coaching",
+        "timeout_seconds": 20,
+        "error_mode": "automatic",
+        "body": {
+          "trace": "$.steps.normalize_gtm_event.trace",
+          "subject": "$.steps.normalize_gtm_event.subject",
+          "attributes": "$.steps.normalize_gtm_event.attributes"
+        }
+      }
+    },
+    {
+      "id": "directive_alignment_check",
+      "type": "http_client",
+      "config": {
+        "method": "POST",
+        "url": "https://api.directive-alignment.example/v1/check",
+        "timeout_seconds": 20,
+        "error_mode": "automatic",
+        "body": {
+          "recommendation": "Re-open discovery around pain timeline before proposal revision",
+          "directive_set_version": "$.steps.normalize_gtm_event.attributes.directive_set_version",
+          "context": "$.steps.fetch_endgame_context.body"
+        }
+      }
+    },
+    {
+      "id": "branch_on_alignment",
+      "type": "branch",
+      "branches": [
+        {
+          "name": "pass",
+          "when": "$.steps.directive_alignment_check.body.status == 'pass' && $.steps.directive_alignment_check.body.score >= 0.85",
+          "steps": [
+            {
+              "id": "create_salesforce_task",
+              "type": "salesforce.create_record",
+              "error_handling": "manual",
+              "input": {
+                "object": "Task",
+                "fields": {
+                  "Subject": "Coaching: Re-validate pain and buying process",
+                  "Description": "Directive-aligned recommendation from completed call",
+                  "WhatId": "$.steps.normalize_gtm_event.attributes.opportunity_id",
+                  "OwnerEmail__c": "$.steps.normalize_gtm_event.attributes.rep_email",
+                  "TraceId__c": "$.steps.normalize_gtm_event.trace.trace_id"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "fail",
+          "when": "$.steps.directive_alignment_check.body.status != 'pass'",
+          "steps": [
+            {
+              "id": "notify_slack_escalation",
+              "type": "slack.post_message",
+              "input": {
+                "channel": "#revops-escalations",
+                "text": "Directive alignment failed for call $.steps.normalize_gtm_event.subject.id"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "emit_output",
+      "type": "http_client",
+      "config": {
+        "method": "POST",
+        "url": "https://event-bus.example/v1/events",
+        "body": {
+          "schema_version": "gtm_event_v1",
+          "event_type": "coaching.recommendation.created",
+          "source": "tray",
+          "occurred_at": "$.steps.normalize_gtm_event.occurred_at",
+          "ingested_at": "$.meta.timestamp",
+          "trace": "$.steps.normalize_gtm_event.trace",
+          "subject": "$.steps.normalize_gtm_event.subject",
+          "attributes": {
+            "alignment_status": "$.steps.directive_alignment_check.body.status",
+            "alignment_score": "$.steps.directive_alignment_check.body.score"
+          }
+        }
+      }
+    },
+    {
+      "id": "callable_response",
+      "type": "callable_workflow_response",
+      "body": {
+        "event_type": "coaching.recommendation.created",
+        "trace": "$.steps.normalize_gtm_event.trace",
+        "attributes": {
+          "alignment_status": "$.steps.directive_alignment_check.body.status",
+          "alignment_score": "$.steps.directive_alignment_check.body.score"
+        }
+      }
+    }
+  ],
+  "error_handler": {
+    "mode": "automatic_default_with_manual_overrides",
+    "steps": [
+      {
+        "id": "dead_letter_write",
+        "type": "http_client",
+        "config": {
+          "method": "POST",
+          "url": "https://event-bus.example/v1/dead-letter",
+          "body": {
+            "machine_id": "sales-coaching-machine",
+            "trace_id": "$.meta.run_id",
+            "step_log_url": "$.errors.step_log_url",
+            "error": "$.error"
+          }
+        }
+      }
+    ]
+  },
+  "sdlc": {
+    "project_versioning": true,
+    "import_export_unit": "project",
+    "promotion": {
+      "manual_first_prod_import": true,
+      "api_automation_after_initial_mapping": true,
+      "required_checks": [
+        "imports_requirements",
+        "imports_previews"
+      ]
+    }
+  }
+}

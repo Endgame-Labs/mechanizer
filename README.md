@@ -111,9 +111,11 @@ All forms must honor shared contracts.
 2. Update `machine.yaml` with objective, triggers, KPIs, outputs.
 3. Keep standard adapter folders, even if placeholders initially.
 4. Add/modify reusable smart cogs in `_shared/cogs` only when broadly reusable.
-5. Add examples and runbook notes.
-6. Run validation checklists in `skills/`.
-7. Document any breaking change and migration path.
+5. Add machine diagram SVG at `docs/assets/<machine-id>.svg`.
+6. Add examples and runbook notes.
+7. Add the new diagram entry under the root README "Diagram Gallery".
+8. Run validation checklists in `skills/`.
+9. Document any breaking change and migration path.
 
 ## Diagrams
 - `docs/assets/flow-overview.svg`

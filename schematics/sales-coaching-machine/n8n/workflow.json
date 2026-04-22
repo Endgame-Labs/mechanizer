@@ -1,0 +1,411 @@
+{
+  "name": "sales-coaching-machine-call-completed-v2",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "timezone": "America/Los_Angeles"
+  },
+  "meta": {
+    "machine_id": "sales-coaching-machine",
+    "schema_version": "gtm_event_v1",
+    "idempotency_key": "event_id",
+    "n8n_notes": {
+      "error_workflow": "Attach Error Trigger workflow in Workflow Settings",
+      "queue_mode_ready": true
+    }
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "path": "sales-coaching/call-completed",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook_call_completed",
+      "name": "Webhook - Call Completed",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 280]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.headers['x-gong-signature'] || ''}}",
+              "operation": "notEmpty"
+            },
+            {
+              "value1": "={{$json.body.type || ''}}",
+              "operation": "equal",
+              "value2": "call.completed"
+            }
+          ]
+        }
+      },
+      "id": "verify_signature",
+      "name": "Verify Signature + Event Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [430, 280]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const b = $json.body;\nif (!b?.id) throw new Error('Missing body.id');\nif (!b?.call?.id) throw new Error('Missing call.id');\nreturn {\n  event_id: b.id,\n  event_type: b.type,\n  source: 'gong',\n  occurred_at: b.call.occurred_at,\n  ingested_at: new Date().toISOString(),\n  trace: { trace_id: `trace_${b.id}`, run_id: `${b.id}:${Date.now()}` },\n  subject: { entity_type: 'call', entity_id: b.call.id },\n  attributes: {\n    account_id: b.call.account_id,\n    opportunity_id: b.call.opportunity_id,\n    rep_email: b.call.rep_email,\n    transcript_id: b.call.transcript_id || null,\n    directive_set_version: 'sko_2026_q2_v3'\n  }\n};"
+      },
+      "id": "normalize_event",
+      "name": "Normalize to gtm_event_v1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [670, 280]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/enrich_account_health/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "id": "enrich_account_health",
+      "name": "enrich_account_health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [910, 180],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/deal_score_reasoner/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "id": "deal_score_reasoner",
+      "name": "deal_score_reasoner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1150, 180],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "id": "directive_alignment",
+      "name": "directive_alignment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1390, 180],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/route_exec_alert/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "id": "route_exec_alert",
+      "name": "route_exec_alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1630, 180],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://approval.internal/request",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, timeout_seconds: 1800, actions: ['coaching_task_create', 'summary_send', 'score_update'] } }}"
+      },
+      "id": "approval_loop",
+      "name": "approval_loop",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1870, 180],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.approval_status || $json.attributes?.approval_status || ''}}",
+              "operation": "equal",
+              "value2": "approved"
+            }
+          ]
+        }
+      },
+      "id": "approved_gate",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2110, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://salesforce-headless-360.example/v1/tasks",
+        "sendBody": true,
+        "jsonBody": "={{ { opportunity_id: $json.attributes.opportunity_id, owner_email: $json.attributes.rep_email, title: 'Coaching Action: Discovery Gap Follow-up', notes: 'Directive-aligned recommendation generated from latest call', trace_id: $json.trace.trace_id, idempotency_key: $json.event_id } }}"
+      },
+      "id": "create_task",
+      "name": "Create Salesforce Coaching Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2350, 90],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "sendBody": true,
+        "jsonBody": "={{ { channel: '#sales-coaching', text: `Coaching recommendation ready for ${$json.subject.entity_id}`, metadata: { event_id: $json.event_id, trace_id: $json.trace.trace_id } } }}"
+      },
+      "id": "send_summary",
+      "name": "Send Coaching Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2350, 250],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'coaching.recommendation.created' } }}"
+      },
+      "id": "emit_created",
+      "name": "Emit coaching.recommendation.created",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2590, 170]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'coaching.recommendation.deferred', coaching_status: 'needs_review' } }}"
+      },
+      "id": "emit_deferred",
+      "name": "Emit coaching.recommendation.deferred",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2350, 390]
+    },
+    {
+      "parameters": {
+        "responseCode": 202,
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'accepted', machine_id: 'sales-coaching-machine' } }}"
+      },
+      "id": "respond_accepted",
+      "name": "Respond Accepted",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2830, 170]
+    },
+    {
+      "parameters": {
+        "responseCode": 401,
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'unauthorized_or_unsupported_event' } }}"
+      },
+      "id": "respond_rejected",
+      "name": "Respond Rejected",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [670, 470]
+    }
+  ],
+  "connections": {
+    "Webhook - Call Completed": {
+      "main": [
+        [
+          {
+            "node": "Verify Signature + Event Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Signature + Event Type": {
+      "main": [
+        [
+          {
+            "node": "Normalize to gtm_event_v1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize to gtm_event_v1": {
+      "main": [
+        [
+          {
+            "node": "enrich_account_health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "enrich_account_health": {
+      "main": [
+        [
+          {
+            "node": "deal_score_reasoner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deal_score_reasoner": {
+      "main": [
+        [
+          {
+            "node": "directive_alignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "directive_alignment": {
+      "main": [
+        [
+          {
+            "node": "route_exec_alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "route_exec_alert": {
+      "main": [
+        [
+          {
+            "node": "approval_loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "approval_loop": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Create Salesforce Coaching Task",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Coaching Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Emit coaching.recommendation.deferred",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Salesforce Coaching Task": {
+      "main": [
+        [
+          {
+            "node": "Emit coaching.recommendation.created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Coaching Summary": {
+      "main": [
+        [
+          {
+            "node": "Emit coaching.recommendation.created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit coaching.recommendation.created": {
+      "main": [
+        [
+          {
+            "node": "Respond Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emit coaching.recommendation.deferred": {
+      "main": [
+        [
+          {
+            "node": "Respond Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
