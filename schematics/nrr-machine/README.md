@@ -9,10 +9,12 @@ Identify expansion risk and opportunity signals to improve net revenue retention
 
 ## Inputs
 - `gtm_event_v1` events from CRM/call intelligence/product telemetry.
+- Required context providers: Endgame MCP, `endgame-cli`, and Salesforce Headless 360 surfaces.
 
 ## Outputs
 - Structured actions/alerts/tasks using adapter-native constructs.
 - Normalized event emissions for downstream machines.
+- Outbound email or commercial-impact actions must route through the `approval_loop` smart cog.
 
 ## Platform Notes
 - `n8n/`: workflow export placeholder and implementation notes.

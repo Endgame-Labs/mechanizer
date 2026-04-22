@@ -2,6 +2,12 @@
 
 `mechanizer` is a contract-first library of reusable revenue automation schematics.
 
+Deterministic workflows are still the backbone of reliable revenue automation, but the next generation of orchestration adds **agentic reasoning gates** only where judgment is required. In `mechanizer`, those reasoning nodes are modeled as **Smart Cogs**: contract-bound units that can use MCP, CLI, and API tools with strict guardrails.
+
+Smart Cogs are only useful when they have the right context. Every current machine example in this repo assumes:
+- Endgame context/tooling via Endgame MCP and [`endgame-labs/endgame-cli`](https://github.com/Endgame-Labs/endgame-cli)
+- CRM/system context exposed headlessly (for example [Salesforce Headless 360](https://www.salesforce.com/news/stories/salesforce-headless-360-announcement/agentforce-developer-experience-tdx-release/) as API/MCP/CLI surfaces for agent workflows)
+
 It gives you one canonical machine spec and multiple runtime adapters so the same business flow can run on:
 - `n8n`
 - `zapier`
@@ -15,14 +21,14 @@ It gives you one canonical machine spec and multiple runtime adapters so the sam
 Revenue teams want portable automation, not lock-in.
 
 Most teams eventually mix low-code flows, API jobs, and agentic decisioning. `mechanizer` standardizes that with:
-- Shared contracts for events and reusable cogs.
+- Shared contracts for events and reusable smart cogs.
 - Reusable machine designs (`Mechanize Schematics`).
 - Runtime-specific implementations that can be swapped without redefining the business logic.
 
 ## At A Glance
 - `schematics/` contains machine blueprints and adapters.
 - `schematics/_shared/contracts/` defines canonical I/O contracts.
-- `schematics/_shared/cogs/` defines reusable cog manifests.
+- `schematics/_shared/cogs/` defines reusable smart-cog manifests.
 - `skills/` contains contributor playbooks for validation and packaging.
 - `docs/assets/` contains visual diagrams for onboarding and docs.
 
@@ -45,12 +51,12 @@ Most teams eventually mix low-code flows, API jobs, and agentic decisioning. `me
 
 ## Core Concepts
 - **Machine**: End-to-end business automation with declared triggers, KPIs, SLAs, and outputs.
-- **Cog**: Reusable unit of logic (deterministic code, rule gates, tool calls, or skills/agents).
+- **Smart Cog**: Reusable unit of logic (deterministic code, rule gates, tool calls, or skills/agents), with contract-enforced inputs/outputs.
 - **Contract**: Schema that defines canonical payload structure.
 - **Adapter**: Runtime implementation for a platform.
 
-## Supported Cog Styles
-A cog can be implemented as:
+## Supported Smart Cog Styles
+A smart cog can be implemented as:
 - Skill-based agentic step.
 - Deterministic Python/data transform.
 - CLI command wrapper.
@@ -58,6 +64,10 @@ A cog can be implemented as:
 - Approval-loop state machine.
 
 All forms must honor shared contracts.
+
+## Context First
+- Endgame MCP and `endgame-cli` are required context providers in all current example machines.
+- Headless CRM/system interfaces (for example Salesforce Headless 360) are treated as first-class context + action layers for Smart Cogs.
 
 ## Starter Machines
 - `deal-hygiene-machine`: stage-change/cron hygiene checks with directives and approval loops.
@@ -76,14 +86,14 @@ All forms must honor shared contracts.
 1. Read [`AGENTS.md`](./AGENTS.md) for architecture and contracts.
 2. Open one machine under `schematics/<machine-id>/`.
 3. Implement one adapter first (usually easiest for your stack).
-4. Validate shared contracts and cog compatibility via `skills/` playbooks.
+4. Validate shared contracts and smart-cog compatibility via `skills/` playbooks.
 5. Package/publish sanitized artifacts only.
 
 ## New Contributor Workflow
 1. Create or copy a machine folder.
 2. Update `machine.yaml` with objective, triggers, KPIs, outputs.
 3. Keep standard adapter folders, even if placeholders initially.
-4. Add/modify reusable cogs in `_shared/cogs` only when broadly reusable.
+4. Add/modify reusable smart cogs in `_shared/cogs` only when broadly reusable.
 5. Add examples and runbook notes.
 6. Run validation checklists in `skills/`.
 7. Document any breaking change and migration path.

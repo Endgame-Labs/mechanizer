@@ -1,9 +1,9 @@
-# Skill: Validate Cog Compatibility
+# Skill: Validate Smart Cog Compatibility
 
-Checks reusable cog definitions for semantic and structural compatibility.
+Checks reusable smart cog definitions for semantic and structural compatibility.
 
 ## Objective
-Prevent shared cog changes from silently breaking machine adapters.
+Prevent shared smart cog changes from silently breaking machine adapters.
 
 ## Compatibility Rules
 - New optional input/output fields: allowed.
@@ -12,7 +12,7 @@ Prevent shared cog changes from silently breaking machine adapters.
 - Changing `failure_mode` semantics: breaking unless version bumped.
 
 ## Procedure
-1. Diff changed `.cog.yaml` against previous version.
+1. Diff changed `.cog.yaml` smart-cog manifests against previous version.
 2. Compare required fields, guaranteed outputs, and execution semantics.
 3. Require version bump for any breaking delta.
 4. Ensure downstream machines list compatible cog versions.

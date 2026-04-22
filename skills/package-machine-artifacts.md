@@ -10,13 +10,13 @@ Produce deterministic artifacts for one machine across selected adapters.
 - machine `README.md`
 - selected platform adapter folders
 - `claw-like/HEARTBEAT.md`
-- referenced shared cog manifests
+- referenced shared smart cog manifests
 - contract version manifest (schema IDs + versions)
 
 ## Procedure
 1. Select machine and adapter targets.
 2. Copy canonical files into a staging directory.
-3. Resolve shared cog dependencies and include exact versions.
+3. Resolve shared smart cog dependencies and include exact versions.
 4. Generate `MANIFEST.json` with checksums and timestamps.
 5. Archive as `mechanizer-<machine-id>-<version>.tar.gz`.
 

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
   <title id="title">NRR Machine</title>
-  <desc id="desc">Net Revenue Retention flow showing renewal detection, expansion paths, risk mitigation, and agent guided interventions.</desc>
+  <desc id="desc">Net revenue retention flow with smart-cog scoring and approval loop before outbound email and account updates.</desc>
   <defs>
     <linearGradient id="bg4" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#f7fbf7"/>
@@ -15,6 +15,7 @@
       .m{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#4c7059}
       .n{fill:#ffffff; stroke:#bedfcb; stroke-width:2}
       .a{fill:#eaf8f0; stroke:#8fcaab; stroke-width:2}
+      .g{fill:#fff4e8; stroke:#f0ae65; stroke-width:2.5}
       .f{stroke:#2f6a45; stroke-width:3; fill:none; marker-end:url(#arrow4)}
       .p{stroke:#6a9a7f; stroke-width:2.5; stroke-dasharray:10 8; fill:none}
       .z{stroke:#ff9446; stroke-width:4; fill:none}
@@ -24,46 +25,48 @@
   <rect width="1200" height="700" fill="url(#bg4)"/>
   <text x="60" y="70" class="t">NRR Machine</text>
 
-  <rect x="80" y="145" width="220" height="94" rx="14" class="n"/>
-  <text x="110" y="188" class="l">Account Signals</text>
-  <text x="110" y="210" class="m">usage, tickets, invoices</text>
+  <rect x="70" y="145" width="220" height="94" rx="14" class="n"/>
+  <text x="100" y="188" class="l">Account Signals</text>
+  <text x="100" y="210" class="m">usage, tickets, invoices</text>
 
-  <rect x="360" y="145" width="250" height="94" rx="14" class="a"/>
-  <text x="392" y="188" class="l">Agent Health Score</text>
-  <text x="392" y="210" class="m">expansion vs churn risk</text>
+  <rect x="340" y="145" width="260" height="94" rx="14" class="a"/>
+  <text x="372" y="188" class="l">Smart Cog: Health Score</text>
+  <text x="372" y="210" class="m">expansion vs churn risk</text>
 
-  <rect x="670" y="145" width="220" height="94" rx="14" class="n"/>
-  <text x="702" y="188" class="l">Play Selector</text>
-  <text x="702" y="210" class="m">renew, expand, rescue</text>
+  <rect x="650" y="145" width="220" height="94" rx="14" class="n"/>
+  <text x="682" y="188" class="l">Play Selector</text>
+  <text x="682" y="210" class="m">renew, expand, rescue</text>
 
-  <rect x="950" y="145" width="180" height="94" rx="14" class="n"/>
-  <text x="982" y="188" class="l">CSM Action</text>
-  <text x="982" y="210" class="m">execute motion</text>
+  <rect x="920" y="145" width="210" height="94" rx="14" class="g"/>
+  <text x="948" y="188" class="l">Approval Loop</text>
+  <text x="948" y="210" class="m">outbound gate</text>
 
-  <rect x="260" y="360" width="280" height="102" rx="14" class="n"/>
-  <text x="292" y="408" class="l">Renewal Lane</text>
-  <text x="292" y="430" class="m">term + price alignment</text>
+  <rect x="240" y="360" width="280" height="102" rx="14" class="n"/>
+  <text x="272" y="408" class="l">Renewal Lane</text>
+  <text x="272" y="430" class="m">term + price alignment</text>
 
-  <rect x="620" y="360" width="260" height="102" rx="14" class="n"/>
-  <text x="652" y="408" class="l">Expansion Lane</text>
-  <text x="652" y="430" class="m">seat + module growth</text>
+  <rect x="580" y="360" width="260" height="102" rx="14" class="n"/>
+  <text x="612" y="408" class="l">Expansion Lane</text>
+  <text x="612" y="430" class="m">seat + module growth</text>
 
-  <rect x="940" y="360" width="200" height="102" rx="14" class="a"/>
-  <text x="970" y="408" class="l">Agent NRR Audit</text>
-  <text x="970" y="430" class="m">measure retention delta</text>
+  <rect x="880" y="360" width="260" height="102" rx="14" class="n"/>
+  <text x="908" y="398" class="l">Outbound Email + SFDC</text>
+  <text x="908" y="420" class="m">approved execution only</text>
+  <text x="908" y="442" class="m">writeback + sequence send</text>
 
-  <path d="M300 192 L360 192" class="f"/>
-  <path d="M610 192 L670 192" class="f"/>
-  <path d="M890 192 L950 192" class="f"/>
-  <path d="M1040 239 L1040 360" class="f"/>
-  <path d="M940 411 L880 411" class="f"/>
-  <path d="M620 411 L540 411" class="f"/>
+  <path d="M290 192 L340 192" class="f"/>
+  <path d="M600 192 L650 192" class="f"/>
+  <path d="M870 192 L920 192" class="f"/>
+  <path d="M1025 239 L1025 360" class="f"/>
 
-  <path d="M400 239 L400 360" class="p"/>
+  <path d="M390 239 L390 360" class="p"/>
   <path d="M760 239 L760 360" class="p"/>
+
+  <path d="M880 411 L840 411" class="f"/>
+  <path d="M580 411 L520 411" class="f"/>
 
   <polyline points="620,286 644,252 671,286 695,252" class="z"/>
 
   <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#bedfcb"/>
-  <text x="82" y="645" class="m">Legend: Solid arrows = retention workflow, dashed pipes = account data sync, orange zap = churn-risk interruption trigger.</text>
+  <text x="82" y="645" class="m">Legend: Solid arrows = retention workflow, dashed pipes = context sync, orange box = approval gate before email/SFDC actions.</text>
 </svg>

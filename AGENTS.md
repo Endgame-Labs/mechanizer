@@ -5,7 +5,7 @@ Technical architecture, contracts, and contribution standards for `mechanizer`.
 ## 1) System Architecture
 
 `mechanizer` is contract-first:
-- Define canonical contracts and cog interfaces once.
+- Define canonical contracts and smart-cog interfaces once.
 - Implement machine behavior once in `machine.yaml`.
 - Map that behavior into platform adapters.
 
@@ -55,14 +55,14 @@ Shared contracts live in:
 - `attributes`: extension map.
 
 ### `cog_v1` semantics
-- `cog`: identity, ownership, category, version.
+- `cog`: identity, ownership, category, version (smart-cog contract key).
 - `input_contract`: required and optional fields.
 - `output_contract`: emitted and guaranteed fields.
 - `execution`: idempotency, timeout, retries, backoff.
 
-## 4) Cog Abstraction
+## 4) Smart Cog Abstraction
 
-A cog is a reusable logic primitive and may be implemented as:
+A smart cog is a reusable logic primitive and may be implemented as:
 - Agentic skill/tool chain.
 - Deterministic Python transform.
 - CLI-backed operation.
@@ -127,7 +127,7 @@ Recommended keys:
 1. Copy an existing machine folder as a template.
 2. Rename IDs and update `machine.yaml`.
 3. Keep all required adapter folders.
-4. Add/adjust reusable cogs under `_shared/cogs` when generic.
+4. Add/adjust reusable smart cogs under `_shared/cogs` when generic.
 5. Add runbook notes and sample payloads.
 6. Validate contracts and compatibility.
 7. Document migration notes for breaking changes.
@@ -142,7 +142,7 @@ Use skills in `skills/`:
 
 Validation must confirm:
 - Shared contract compatibility.
-- Cog version correctness.
+- Smart-cog version correctness.
 - Required adapter coverage presence.
 - Heartbeat metadata validity for claw-like mode.
 

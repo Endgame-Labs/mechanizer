@@ -9,3 +9,10 @@
 ## Runtime Expectations
 - Scheduler must honor the cron and timezone defined in HEARTBEAT.
 - Each successful run must emit a heartbeat signal with machine ID and timestamp.
+
+## Required Context
+- Include Endgame context/tool access via Endgame MCP and `endgame-cli`.
+- Include CRM/system context via Salesforce Headless 360-compatible API/MCP/CLI access.
+
+## Approval Gate
+- Route SFDC write operations and outbound email actions through `approval_loop` before execution.

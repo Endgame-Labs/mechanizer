@@ -16,15 +16,15 @@ triggers:
     event_types: [deal.updated, call.completed, account.health_changed]
 inputs:
   contract: gtm_event_v1
-  sources: [salesforce, hubspot, gong, product_telemetry]
+  sources: [salesforce_headless_360, salesforce, hubspot, gong, product_telemetry, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
-  side_effects: [task_create, alert_send, note_append]
+  side_effects: [task_create, alert_send, note_append, sfdc_update]
 slo:
   p95_end_to_end_seconds: 120
   availability: "99.5%"
 dependencies:
-  cogs: [enrich_account_health@v1.0.0, route_exec_alert@v1.0.0]
+  cogs: [enrich_account_health@v1.0.0, route_exec_alert@v1.0.0, approval_loop@v1.0.0]
 feature_flags: []
 security:
   pii_policy: "minimize"

@@ -16,7 +16,7 @@ triggers:
     event_types: [call.completed, deal.stage_changed, rep.activity_low]
 inputs:
   contract: gtm_event_v1
-  sources: [gong, salesforce, hubspot, outreach]
+  sources: [gong, salesforce_headless_360, salesforce, hubspot, outreach, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
   side_effects: [coaching_task_create, summary_send, score_update]

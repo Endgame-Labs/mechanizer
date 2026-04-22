@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
   <title id="title">Deal Hygiene Machine</title>
-  <desc id="desc">Flowchart for deal record normalization with agent-in-the-loop checks and remediation loops.</desc>
+  <desc id="desc">Flowchart for deal hygiene with smart-cog validation and approval loop before Salesforce updates.</desc>
   <defs>
     <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#f8faf9"/>
@@ -15,6 +15,7 @@
       .m{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#4f696d}
       .n{fill:#ffffff; stroke:#b9d8d5; stroke-width:2}
       .a{fill:#ecfaf6; stroke:#8acdb9; stroke-width:2}
+      .g{fill:#fff4e8; stroke:#f0ae65; stroke-width:2.5}
       .f{stroke:#23656f; stroke-width:3; fill:none; marker-end:url(#arrow2)}
       .p{stroke:#5e8c96; stroke-width:2.5; stroke-dasharray:9 7; fill:none}
       .z{stroke:#ff9e4f; stroke-width:4; fill:none}
@@ -28,37 +29,43 @@
   <text x="110" y="192" class="l">CRM Snapshot</text>
   <text x="110" y="214" class="m">open opportunities</text>
 
-  <rect x="370" y="150" width="230" height="92" rx="14" class="a"/>
-  <text x="405" y="192" class="l">Agent Validator</text>
-  <text x="405" y="214" class="m">missing fields + drift</text>
+  <rect x="350" y="150" width="240" height="92" rx="14" class="a"/>
+  <text x="385" y="192" class="l">Smart Cog: Validator</text>
+  <text x="385" y="214" class="m">missing fields + drift</text>
 
-  <rect x="670" y="150" width="230" height="92" rx="14" class="n"/>
-  <text x="702" y="192" class="l">Rule Engine</text>
-  <text x="702" y="214" class="m">close date, stage, owner</text>
+  <rect x="650" y="150" width="240" height="92" rx="14" class="n"/>
+  <text x="686" y="192" class="l">Rule Engine</text>
+  <text x="686" y="214" class="m">close date, stage, owner</text>
 
-  <rect x="960" y="150" width="170" height="92" rx="14" class="n"/>
-  <text x="988" y="192" class="l">Scored</text>
-  <text x="988" y="214" class="m">cleanliness index</text>
+  <rect x="950" y="150" width="190" height="92" rx="14" class="g"/>
+  <text x="978" y="190" class="l">Approval Loop</text>
+  <text x="978" y="212" class="m">human review gate</text>
 
-  <rect x="320" y="360" width="280" height="96" rx="14" class="n"/>
-  <text x="350" y="402" class="l">Rep Fix Queue</text>
-  <text x="350" y="424" class="m">guided corrections</text>
+  <rect x="930" y="360" width="210" height="96" rx="14" class="n"/>
+  <text x="954" y="402" class="l">SFDC Update</text>
+  <text x="954" y="424" class="m">writeback + audit note</text>
 
-  <rect x="670" y="360" width="300" height="96" rx="14" class="a"/>
-  <text x="700" y="402" class="l">Agent Recheck</text>
-  <text x="700" y="424" class="m">validate before commit</text>
+  <rect x="300" y="360" width="290" height="96" rx="14" class="n"/>
+  <text x="330" y="402" class="l">Rep Fix Queue</text>
+  <text x="330" y="424" class="m">guided corrections</text>
 
-  <path d="M300 196 L370 196" class="f"/>
-  <path d="M600 196 L670 196" class="f"/>
-  <path d="M900 196 L960 196" class="f"/>
-  <path d="M820 242 L820 360" class="f"/>
-  <path d="M670 408 L600 408" class="f"/>
+  <rect x="650" y="360" width="240" height="96" rx="14" class="a"/>
+  <text x="680" y="402" class="l">Smart Cog: Recheck</text>
+  <text x="680" y="424" class="m">validate before commit</text>
 
-  <path d="M460 242 L460 360" class="p"/>
-  <path d="M460 456 C460 540,900 540,900 456" class="p"/>
+  <path d="M300 196 L350 196" class="f"/>
+  <path d="M590 196 L650 196" class="f"/>
+  <path d="M890 196 L950 196" class="f"/>
+  <path d="M1045 242 L1045 360" class="f"/>
+
+  <path d="M770 242 L770 360" class="f"/>
+  <path d="M650 408 L590 408" class="f"/>
+
+  <path d="M450 242 L450 360" class="p"/>
+  <path d="M450 456 C450 540,930 540,930 456" class="p"/>
 
   <polyline points="618,286 642,252 670,286 694,252" class="z"/>
 
   <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#b9d8d5"/>
-  <text x="82" y="645" class="m">Legend: Blue arrows = processing path, dashed loops = remediation cycle, orange zap = urgent hygiene alert.</text>
+  <text x="82" y="645" class="m">Legend: Blue arrows = processing path, dashed loops = remediation cycle, orange box = approval gate before Salesforce writes.</text>
 </svg>

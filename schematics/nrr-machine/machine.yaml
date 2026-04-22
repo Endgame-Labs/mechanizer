@@ -16,15 +16,15 @@ triggers:
     event_types: [account.health_changed, usage.declined, renewal.window_opened]
 inputs:
   contract: gtm_event_v1
-  sources: [product_telemetry, gainsight, salesforce, stripe]
+  sources: [product_telemetry, gainsight, salesforce_headless_360, salesforce, stripe, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
-  side_effects: [csm_task_create, exec_alert_send, renewal_plan_update]
+  side_effects: [csm_task_create, exec_alert_send, renewal_plan_update, outbound_email_send]
 slo:
   p95_end_to_end_seconds: 240
   availability: "99.5%"
 dependencies:
-  cogs: [enrich_account_health@v1.0.0, route_exec_alert@v1.0.0]
+  cogs: [enrich_account_health@v1.0.0, route_exec_alert@v1.0.0, approval_loop@v1.0.0]
 feature_flags: []
 security:
   pii_policy: "minimize"

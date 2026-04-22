@@ -12,7 +12,7 @@ Ensure event payloads and machine examples conform to canonical schema contracts
 ## Procedure
 1. Verify schema IDs and versions are unchanged unless intentionally bumped.
 2. Validate all machine example payloads against `gtm_event_v1`.
-3. Validate `.cog.yaml` documents against `cog_v1`.
+3. Validate `.cog.yaml` smart-cog manifests against `cog_v1`.
 4. Fail on unknown required fields or incompatible type changes.
 5. Generate a compatibility note if schema changes are non-additive.
 
