@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
   <title id="title">Revenue Automation Flow Overview</title>
-  <desc id="desc">Abstract flowchart showing agents-in-the-loop automation for inbound to expansion revenue activities.</desc>
+  <desc id="desc">Abstract flowchart showing agents-in-the-loop automation for inbound to expansion revenue activities with integration surface callouts.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#f7fafc"/>
@@ -63,6 +63,10 @@
   <path d="M710 240 L710 340" class="pipe"/>
 
   <polyline points="552,288 576,255 602,286 626,252" class="zap"/>
+
+  <rect x="60" y="530" width="1080" height="62" rx="12" fill="#ffffff" stroke="#c4d4e3"/>
+  <text x="82" y="557" class="m">Integration callouts: Endgame MCP/CLI | Salesforce Headless 360 | Exa/Perplexity/Parallel</text>
+  <text x="82" y="579" class="m">Call recorders: Gong/Zoom/Chorus | Enablement: Seismic/Highspot</text>
 
   <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#c4d4e3"/>
   <text x="82" y="645" class="meta">Legend: Solid arrows = process flow, dashed pipes = system sync, orange zap = high-priority automation trigger.</text>

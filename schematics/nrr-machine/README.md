@@ -27,6 +27,18 @@ Use this machine for scaled retention + expansion motion where human teams canno
 - Optional external context:
   - Exa-style web/company signals for expansion or risk enrichment.
 
+## Integration Callouts
+- Core context plane:
+  - Endgame MCP/CLI for context graph, extracted facts, and directive-backed action planning.
+- CRM/action layer:
+  - Salesforce Headless 360 for renewal state, opportunity updates, and approved writebacks.
+- Call recorder inputs:
+  - Gong/Zoom/Chorus to incorporate conversation risk or champion-signal changes.
+- Enablement alignment:
+  - Seismic/Highspot for approved renewal and expansion messaging frameworks.
+- Research enrichment:
+  - Exa/Perplexity/Parallel for public signals (hiring, launches, funding, market shifts).
+
 ## End-to-End Flow (Canonical)
 1. Ingest signal as `gtm_event_v1`.
 2. Enrich account health (`enrich_account_health`).

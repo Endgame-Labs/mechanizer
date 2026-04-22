@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
   <title id="title">NRR Machine</title>
-  <desc id="desc">Net revenue retention flow with smart-cog scoring and approval loop before outbound email and account updates.</desc>
+  <desc id="desc">Net revenue retention flow with smart-cog scoring, approval loop before outbound actions, and integration callouts.</desc>
   <defs>
     <linearGradient id="bg4" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#f7fbf7"/>
@@ -66,6 +66,10 @@
   <path d="M580 411 L520 411" class="f"/>
 
   <polyline points="620,286 644,252 671,286 695,252" class="z"/>
+
+  <rect x="60" y="530" width="1080" height="62" rx="12" fill="#ffffff" stroke="#bedfcb"/>
+  <text x="82" y="557" class="m">Integrations: Endgame MCP/CLI + Salesforce Headless 360 + Exa/Perplexity/Parallel</text>
+  <text x="82" y="579" class="m">Signals: Gong/Zoom/Chorus + billing/usage | Enablement: Seismic/Highspot</text>
 
   <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#bedfcb"/>
   <text x="82" y="645" class="m">Legend: Solid arrows = retention workflow, dashed pipes = context sync, orange box = approval gate before email/SFDC actions.</text>

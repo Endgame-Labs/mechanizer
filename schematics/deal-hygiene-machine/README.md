@@ -25,6 +25,18 @@ Use this machine when your team needs deterministic hygiene checks with selectiv
 - Optional enrichment:
   - Exa/public web context for company-level changes that may explain data drift.
 
+## Integration Callouts
+- Core context plane:
+  - Endgame MCP/CLI for context graph, extracted facts, hybrid retrieval, and directive grounding.
+- CRM/action layer:
+  - Salesforce Headless 360 + CRM APIs for event triggers and writebacks.
+- Call recorder inputs:
+  - Gong/Zoom/Chorus signals can provide post-call evidence for hygiene validation.
+- Enablement alignment:
+  - Seismic/Highspot directives can be checked before policy-sensitive changes.
+- Research enrichment:
+  - Exa/Perplexity/Parallel can add public-company context for ambiguous hygiene cases.
+
 ## End-to-End Flow (Canonical)
 1. Ingest event as `gtm_event_v1`.
 2. Normalize and enrich account/deal context (`enrich_account_health`).

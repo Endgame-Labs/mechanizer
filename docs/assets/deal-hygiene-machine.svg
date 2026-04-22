@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
   <title id="title">Deal Hygiene Machine</title>
-  <desc id="desc">Flowchart for deal hygiene with smart-cog validation and approval loop before Salesforce updates.</desc>
+  <desc id="desc">Flowchart for deal hygiene with smart-cog validation, approval loop before Salesforce updates, and integration callouts.</desc>
   <defs>
     <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#f8faf9"/>
@@ -65,6 +65,10 @@
   <path d="M450 456 C450 540,930 540,930 456" class="p"/>
 
   <polyline points="618,286 642,252 670,286 694,252" class="z"/>
+
+  <rect x="60" y="530" width="1080" height="62" rx="12" fill="#ffffff" stroke="#b9d8d5"/>
+  <text x="82" y="557" class="m">Integrations: Endgame MCP/CLI + Salesforce Headless 360 + Exa/Perplexity/Parallel</text>
+  <text x="82" y="579" class="m">Additional signals: Gong/Zoom/Chorus | Enablement constraints: Seismic/Highspot</text>
 
   <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#b9d8d5"/>
   <text x="82" y="645" class="m">Legend: Blue arrows = processing path, dashed loops = remediation cycle, orange box = approval gate before Salesforce writes.</text>

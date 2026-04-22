@@ -25,6 +25,18 @@ Use this machine when you want consistent coaching quality at scale without forc
 - Conversation + enablement systems:
   - Gong/Zoom transcripts and Seismic/Highspot directive material.
 
+## Integration Callouts
+- Core context plane:
+  - Endgame MCP/CLI for account graph, extracted facts, and cross-source retrieval.
+- CRM/action layer:
+  - Salesforce Headless 360 for stage movement, ownership context, and follow-up task writebacks.
+- Call recorder inputs:
+  - Gong/Zoom/Chorus for transcript, summary, and call-event triggers.
+- Enablement alignment:
+  - Seismic/Highspot for coaching rubric and approved messaging constraints.
+- Research enrichment:
+  - Exa/Perplexity/Parallel for external market or competitor context during coaching prep.
+
 ## End-to-End Flow (Canonical)
 1. Ingest call/pipeline event as `gtm_event_v1`.
 2. Pull related account and interaction context from Endgame tools.

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
   <title id="title">Sales Coaching Machine</title>
-  <desc id="desc">Pipeline for call capture, agent analysis, manager coaching prompts, and behavior feedback loops.</desc>
+  <desc id="desc">Pipeline for call capture, agent analysis, manager coaching prompts, behavior feedback loops, and integration callouts.</desc>
   <defs>
     <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#f9f8ff"/>
@@ -58,6 +58,10 @@
   <path d="M800 452 C800 530,430 530,430 452" class="p"/>
 
   <polyline points="595,290 620,254 648,288 673,252" class="z"/>
+
+  <rect x="60" y="530" width="1080" height="62" rx="12" fill="#ffffff" stroke="#c8d4ea"/>
+  <text x="82" y="557" class="m">Integrations: Endgame MCP/CLI + Salesforce Headless 360 + Gong/Zoom/Chorus (call recorders)</text>
+  <text x="82" y="579" class="m">Enablement: Seismic/Highspot | Optional enrichment: Exa/Perplexity/Parallel</text>
 
   <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#c8d4ea"/>
   <text x="82" y="645" class="m">Legend: Solid arrows = coaching workflow, dashed arcs = performance feedback loop, orange zap = high-impact teachable moment.</text>

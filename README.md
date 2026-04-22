@@ -8,7 +8,7 @@ Smart Cogs are only useful when they have the right context and tool surface. Ev
 - Endgame MCP + [`endgame-cli`](https://github.com/Endgame-Labs/endgame-cli)
   - Unified GTM context graph with extracted facts and hybrid semantic + keyword retrieval across notes, docs, interactions, entities, and datasets.
   - Includes enablement/directive retrieval for coaching, messaging, and policy alignment.
-  - Example: combine `search_document_insights`, `search_salesforce_notes`, `search_slack_messages`, `get_interaction_history`, and `query_data` before `approval_loop`.
+  - Example: combine document insights, Salesforce notes, Slack messages, interaction history, and dataset-query outputs before `approval_loop`.
 - [Salesforce Headless 360](https://www.salesforce.com/news/stories/salesforce-headless-360-announcement/agentforce-developer-experience-tdx-release/)
   - API/MCP/CLI-first CRM access for triggers, metadata-aware workflows, and deterministic writebacks.
   - Example: gate opportunity/account updates through `approval_loop`, then execute approved headless writebacks.
