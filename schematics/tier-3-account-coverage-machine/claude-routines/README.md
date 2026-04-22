@@ -25,6 +25,11 @@ Run scalable tier-3 account monitoring and actioning in Claude routines with exp
 - API `text` should carry account identifiers + event summary.
 - Keep MCP write tools restricted to execution stage and relevant accounts.
 
+## Claude <-> ChatGPT Workspace Agent Interoperability
+- Claude routines and Workspace Agents interoperate through the same `gtm_event_v1` envelope; no adapter-specific payload drift is allowed.
+- Handoffs between runtimes must preserve `event_id`, `trace.trace_id`, subject identity, and approval state.
+- If one runtime drafts and the other executes, enforce the same `approval_loop` contract before outbound or CRM side effects.
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

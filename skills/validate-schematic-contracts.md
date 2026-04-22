@@ -21,6 +21,7 @@ Ensure event payloads and machine examples conform to canonical schema contracts
 - Any breaking change is documented with migration path.
 - Machine README reflects new/changed required fields.
 - Machine README links to the machine's diagram entry in root `README.md` when applicable.
+- If workspace-agent handoff behavior is documented, it preserves `gtm_event_v1` at boundaries.
 
 ## Suggested Tooling
 - `ajv` or equivalent JSON Schema validator.

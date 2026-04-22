@@ -29,6 +29,11 @@ Operational guidance for running `account-health-audit-machine` as a Claude Code
 - Treat API trigger `text` as freeform string; parse explicitly in routine logic.
 - Preserve `trace.trace_id` through every external call.
 
+## Claude <-> ChatGPT Workspace Agent Interoperability
+- Interop between Claude routines and Workspace Agents must use `gtm_event_v1` only; avoid runtime-specific envelope fields.
+- Preserve `event_id`, `trace.trace_id`, schedule metadata, and audit output attributes across runtime boundaries.
+- If audit generation and downstream execution are split across runtimes, enforce the same approval policy before any mutation side effects.
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

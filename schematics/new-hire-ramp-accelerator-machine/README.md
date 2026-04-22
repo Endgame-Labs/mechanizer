@@ -61,3 +61,9 @@ Use this machine when new reps need a high-quality starting package within minut
   - Keep cog phases explicit and deterministic at boundaries.
 - `claw-like/`:
   - `HEARTBEAT.md` is schedule and liveness source of truth.
+
+## ChatGPT Workspace Agents Support
+- ChatGPT + Slack: manager/enablement prompts and status updates can run through ChatGPT Workspace with Slack handoff for reviewer notifications.
+- Cloud/background runs: long onboarding assembly and delayed approval waits can execute as background runs without blocking the initiating session.
+- Approval gates: preserve `approval_loop` before any CRM, docs, or outbound mutation; only approved actions proceed.
+- Governance/visibility: keep run traces, tool-call history, and approval decisions auditable in workspace activity logs.

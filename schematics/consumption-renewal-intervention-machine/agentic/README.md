@@ -31,6 +31,12 @@ Detect consumption and renewal deterioration, propose intervention plans, and ex
 - Use background mode for long-running or delayed-approval runs.
 - For MCP connectors, keep sensitive tool calls approval-gated.
 
+### Deployment Mapping (ChatGPT Workspace Agents)
+- ChatGPT workspace agent = planner/manager entrypoint for event ingest and run orchestration.
+- Slack surface = notification + approval interaction channel for `slack_notify` and gated optional actions.
+- Background execution = delayed approvals/resume and long-running cohort processing without foreground session coupling.
+- Guardrails/governance = workspace policy + approval_loop gates before mutation tools and terminal emission.
+
 ### Claude-Compatible Agents
 - Supported pattern: Messages API tool loop (`stop_reason: "tool_use"` -> execute -> `tool_result`).
 - Tool contracts use `name` + `input_schema`; set strict tool behavior when needed.

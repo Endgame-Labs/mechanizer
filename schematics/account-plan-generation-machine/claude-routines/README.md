@@ -26,6 +26,9 @@ Run repeatable account-plan generation in Claude routines with explicit policy a
 - API routine `text` should carry run context (for example account list, reason for rerun).
 - Configure only required MCP connectors for this routine to reduce injection and overreach risk.
 
+## Interoperability Note
+When handing off from ChatGPT Workspace Agents or other runtimes into Claude routines (or back), preserve `gtm_event_v1` as the event envelope contract for all ingress/egress boundaries.
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

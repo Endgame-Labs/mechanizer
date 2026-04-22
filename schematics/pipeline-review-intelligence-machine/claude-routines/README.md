@@ -25,6 +25,13 @@ Runtime guidance for weekly pipeline review prep with deterministic checks and a
 - API `text` should include review window or manager scope.
 - Keep MCP servers scoped to pipeline review context and outputs.
 
+## Claude Routine Interoperability
+- Claude routines remain interoperable with ChatGPT Workspace Agents by preserving canonical `gtm_event_v1` envelopes at boundaries.
+- Handoff contract:
+  - Claude routine output emits `gtm_event_v1` with stable `event_id`, `trace`, `subject`, and reviewed `attributes`.
+  - ChatGPT Workspace Agent intake consumes the same `gtm_event_v1` payload for downstream distribution, approval continuation, or replay.
+- This handoff keeps cross-provider execution deterministic, auditable, and idempotent across background and approval-resume paths.
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

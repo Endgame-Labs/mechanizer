@@ -53,3 +53,9 @@ Use this machine when the renewal book is too large for manual review and CSMs n
   }
 }
 ```
+
+## ChatGPT Workspace Agents Support
+- ChatGPT + Slack: renewal-risk triage prompts can execute in ChatGPT Workspace with Slack delivery for CSM and exec visibility.
+- Cloud/background runs: daily sweeps and delayed approval waits can continue in cloud/background execution windows.
+- Approval gates: keep `approval_loop` in front of optional CRM/outbound mutations; mandatory notifications remain policy-safe.
+- Governance/visibility: retain workspace run timelines, tool invocations, and approval outcomes for audit and incident review.

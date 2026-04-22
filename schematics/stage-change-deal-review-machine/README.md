@@ -90,3 +90,13 @@ Output event (Slack findings path, simplified):
   - Keep stages explicit: validate, enrich, score, align, route, approve, execute.
 - `claw-like/`:
   - Use heartbeat schedule for missed-event backfill and stale-run alerting.
+
+## ChatGPT Workspace Agents Support
+- ChatGPT/Slack:
+  - Supported for findings delivery to manager and seller channels, including threaded follow-up on stage-review outcomes.
+- Cloud/background runs:
+  - Stage-change review and backfill sweeps can run in cloud/background mode when enrichment or approvals extend runtime.
+- Approval gates:
+  - `approval_loop` remains the required authorization gate before any CRM writeback action.
+- Governance/visibility:
+  - Preserve workspace-visible traces for tool calls, approval decisions, and emitted stage-review events.

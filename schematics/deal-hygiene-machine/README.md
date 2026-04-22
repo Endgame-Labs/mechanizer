@@ -122,6 +122,16 @@ Output event (simplified):
 }
 ```
 
+## ChatGPT Workspace Agents Support
+- ChatGPT + Slack surfaces:
+  - Supports operator-facing interactions in ChatGPT workspace threads and Slack-connected surfaces for alert triage and remediation review.
+- Cloud/background execution:
+  - Maps machine stages to cloud-hosted agent runs with background continuation for delayed approvals or long remediation batches.
+- Approval gates for sensitive actions:
+  - Keeps `approval_loop` mandatory before high-impact mutations (for example SFDC stage/date updates) even when initiated from workspace agent surfaces.
+- Enterprise governance/visibility expectations:
+  - Assumes org-level auditability (trace IDs, proposed vs approved deltas, actor attribution), policy controls, and admin visibility across agent runs.
+
 ## Adapter Notes
 - `n8n/`, `zapier/`, `tray/`, `make/`:
   - Keep deterministic field mapping identical to contract names.

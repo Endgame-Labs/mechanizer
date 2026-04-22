@@ -121,6 +121,16 @@ Output event (simplified):
 - `claw-like/`:
   - Drive scheduling and liveness from `HEARTBEAT.md`.
 
+## ChatGPT Workspace Agents Support
+- ChatGPT and Slack surfaces:
+  - This machine can be exposed as a Workspace Agent in ChatGPT and Slack while preserving the canonical audit pipeline and `gtm_event_v1` contract boundaries.
+- Cloud and background runs:
+  - Scheduled weekday audits and ad hoc reruns can execute in cloud/background mode with deterministic completion emits.
+- Approval gates for sensitive actions:
+  - Read-only audit generation can auto-run; any downstream mutation (CRM/tasks/outbound) remains approval-gated per `approval_loop` policy.
+- Governance and visibility:
+  - Workspace governance should retain run evidence, rationale artifacts, and full lineage (`event_id`, `trace`) for audit replay and compliance review.
+
 ## Safety and Audit
 - Preserve `event_id` and `trace.trace_id` through all phases.
 - Emit deterministic rationale for each roadmap priority decision.

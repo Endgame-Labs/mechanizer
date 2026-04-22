@@ -54,6 +54,11 @@ Manager-facing task creation can auto-run; external messaging or HRIS/CRM profil
 - For schedules, run planner in bounded windows and emit explicit no-op heartbeat events when no action is required.
 - Long-running work may continue in background, but terminal contract emission must remain idempotent and replay-safe.
 
+## ChatGPT Workspace Deployment Mapping (Apr 22, 2026)
+- Map `planner -> executor -> evaluator` to Workspace Agent stages; map Slack notifications to reviewer/owner channels.
+- Run executor phases in cloud/background mode when onboarding package generation exceeds interactive latency budgets.
+- Keep Workspace approvals bound to `approval_loop` so only approved terminal actions emit canonical completion events.
+
 ## References
 - OpenAI Agents SDK: https://developers.openai.com/api/docs/guides/agents
 - OpenAI Using tools: https://developers.openai.com/api/docs/guides/tools

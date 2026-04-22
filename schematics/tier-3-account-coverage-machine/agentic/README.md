@@ -49,6 +49,11 @@ Automate low-touch/no-touch account coverage with deterministic scoring, play se
 ## Approval/HITL Policy
 Outbound outreach and CRM note/task mutations require HITL approval.
 
+## ChatGPT Workspace Agents Deployment Mapping
+- Map Workspace Agent planning/execution steps to the existing planner -> executor -> evaluator phases; do not collapse phase ownership.
+- Route ChatGPT or Slack invocations into the same `gtm_event_v1` input contract and emit the same terminal event types.
+- Use Workspace background execution for long cohort runs, but preserve idempotency keys and manager-owned approval decisions.
+
 ## Scheduled and Background Loop Pattern (Optional)
 - Trigger modes: event-driven, cron-driven, or hybrid.
 - For schedules, run planner in bounded windows and emit explicit no-op heartbeat events when no action is required.

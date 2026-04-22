@@ -31,6 +31,11 @@ Generate evidence-backed coaching actions from call and CRM context, with guarde
 - Use background mode for long-running or delayed-approval runs.
 - For MCP connectors, keep sensitive tool calls approval-gated.
 
+#### ChatGPT Workspace Agents Mapping
+- Map planner/executor/evaluator stages to a workspace agent flow exposed in ChatGPT with Slack-connected escalation surfaces.
+- Use cloud/background runs for digest windows, deferred approvals, and multi-step coaching pipelines.
+- Keep `approval_loop` as the control-stage gate before workflow-changing `write_action` tools.
+
 ### Claude-Compatible Agents
 - Supported pattern: Messages API tool loop (`stop_reason: "tool_use"` -> execute -> `tool_result`).
 - Tool contracts use `name` + `input_schema`; set strict tool behavior when needed.

@@ -24,6 +24,10 @@ Runtime guide for daily renewal-risk monitoring with mandatory CSM visibility an
 - API `text` may carry alert details; parse into structured attributes before scoring.
 - Limit write-capable connectors to execution stage only.
 
+## ChatGPT Workspace Interoperability Note (Apr 22, 2026)
+- For Claude-to-Workspace handoff, exchange only `gtm_event_v1` envelopes and preserve `event_id`, `trace`, and subject identity for deterministic continuation.
+- Keep routine outputs contract-normalized so ChatGPT Workspace Agents can continue approval-gated paths without custom field translation.
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

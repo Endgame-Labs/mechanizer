@@ -31,6 +31,12 @@ Assemble deterministic pre-meeting briefs from calendar, CRM, and interaction co
 - Use background mode for long-running or delayed-approval runs.
 - For MCP connectors, keep sensitive tool calls approval-gated.
 
+### Deployment Mapping (ChatGPT Workspace Agents)
+- ChatGPT workspace agent = planner/manager entrypoint for meeting-trigger ingest and orchestration.
+- Slack surface = brief delivery and approval interaction surface for gated high-severity sends.
+- Background execution = upcoming-meeting sweeps and delayed approval resumes across cloud runs.
+- Guardrails/governance = workspace policy + approval_loop before sensitive outbound delivery.
+
 ### Claude-Compatible Agents
 - Supported pattern: Messages API tool loop (`stop_reason: "tool_use"` -> execute -> `tool_result`).
 - Tool contracts use `name` + `input_schema`; set strict tool behavior when needed.

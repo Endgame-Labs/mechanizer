@@ -27,6 +27,10 @@ Runtime guide for generating repeatable onboarding/ramp packages for new reps wi
 - API `text` should include rep identifier + ramp context (start date, segment, team).
 - Limit MCP connectors to onboarding-relevant systems only.
 
+## ChatGPT Workspace Interoperability Note (Apr 22, 2026)
+- For cross-runtime handoff to ChatGPT Workspace Agents, emit and consume `gtm_event_v1` only, preserving `event_id`, `trace`, and canonical subject fields for replay-safe continuation.
+- Keep Claude routine outputs normalized to contract keys so Workspace runners can resume approval-gated execution without adapter-specific remapping.
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

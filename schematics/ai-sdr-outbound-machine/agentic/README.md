@@ -49,6 +49,11 @@ Orchestrate outbound research and sequence drafting with strict policy checks an
 ## Approval/HITL Policy
 Sequence activation, outbound sends, and CRM ownership/task writes require explicit HITL approval.
 
+## ChatGPT Workspace Agents Deployment Mapping
+- Deploy the Workspace Agent as a surface layer (ChatGPT/Slack) over the same planner -> executor -> evaluator contract graph.
+- Convert workspace invocations to canonical `gtm_event_v1` inputs before tool execution and emit unchanged output contracts.
+- Use background runs for list sweeps and delayed approvals, with manager-owned final approval and replay-safe idempotency controls.
+
 ## Scheduled and Background Loop Pattern (Optional)
 - Trigger modes: event-driven, cron-driven, or hybrid.
 - For schedules, run planner in bounded windows and emit explicit no-op heartbeat events when no action is required.

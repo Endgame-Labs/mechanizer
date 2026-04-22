@@ -31,6 +31,12 @@ Generate actionable account plans (whitespace and plays) with controlled mutatio
 - Use background mode for long-running or delayed-approval runs.
 - For MCP connectors, keep sensitive tool calls approval-gated.
 
+### Deployment Mapping (ChatGPT Workspace Agents)
+- ChatGPT workspace agent = planner/manager entrypoint for plan-refresh ingest and run control.
+- Slack surface = plan summary, escalation, and approval interaction surface prior to writes.
+- Background execution = bulk cohort refresh and deferred-approval continuation in cloud runtime.
+- Guardrails/governance = workspace policy + approval_loop gates before CRM/document mutation tools.
+
 ### Claude-Compatible Agents
 - Supported pattern: Messages API tool loop (`stop_reason: "tool_use"` -> execute -> `tool_result`).
 - Tool contracts use `name` + `input_schema`; set strict tool behavior when needed.

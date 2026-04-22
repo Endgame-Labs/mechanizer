@@ -28,6 +28,10 @@ Runtime implementation for NRR intervention selection and execution in Claude ro
 - API trigger uses per-routine bearer token and `/fire` endpoint.
 - Keep API payload in `text`; routine parses/marshals into `attributes`.
 
+## ChatGPT Workspace Interoperability Note (Apr 22, 2026)
+- Claude routines can hand off post-decision or blocked-action events to a ChatGPT Workspace Agent for operator workflow continuation.
+- Keep the cross-runtime contract envelope fixed at `gtm_event_v1` and carry forward the same `event_id`/`trace` lineage.
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

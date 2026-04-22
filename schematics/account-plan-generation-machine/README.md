@@ -63,3 +63,9 @@ Use this machine when account planning must be continuously refreshed across man
   - Keep cog phases explicit and deterministic at boundaries.
 - `claw-like/`:
   - `HEARTBEAT.md` is schedule and liveness source of truth.
+
+## ChatGPT Workspace Agents Support
+- Surfaces: supports ChatGPT workspace operation with Slack-facing summaries, review prompts, and escalations.
+- Execution: supports cloud/background execution for cohort refresh and long-running planning jobs.
+- Sensitive actions: gates CRM/document write actions behind explicit approval before execution.
+- Governance/visibility: maintains auditable run state via contract events, approval decisions, and terminal status emission.

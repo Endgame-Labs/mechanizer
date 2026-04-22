@@ -31,6 +31,11 @@ Detect and remediate deal-quality issues with approval-gated CRM writeback.
 - Use background mode for long-running or delayed-approval runs.
 - For MCP connectors, keep sensitive tool calls approval-gated.
 
+#### ChatGPT Workspace Agents Mapping
+- Deploy planner/executor/evaluator phases as a workspace agent workflow that can be invoked from ChatGPT and Slack-connected surfaces.
+- Use cloud/background execution for delayed review queues or long hygiene sweeps; resume from checkpointed state.
+- Keep `approval_loop` as the final control gate before any `write_action` tool (especially SFDC mutations).
+
 ### Claude-Compatible Agents
 - Supported pattern: Messages API tool loop (`stop_reason: "tool_use"` -> execute -> `tool_result`).
 - Tool contracts use `name` + `input_schema`; set strict tool behavior when needed.

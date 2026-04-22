@@ -54,6 +54,11 @@ Outreach sends, CRM note/task writes, and playbook state changes require HITL ap
 - For schedules, run planner in bounded windows and emit explicit no-op heartbeat events when no action is required.
 - Long-running work may continue in background, but terminal contract emission must remain idempotent and replay-safe.
 
+## ChatGPT Workspace Deployment Mapping (Apr 22, 2026)
+- Map `planner -> executor -> evaluator` into Workspace Agent run phases; route CSM/exec notifications through Slack-connected delivery steps.
+- Use cloud/background runs for schedule-driven renewal sweeps and approval-latent retries.
+- Keep Workspace approval actions bound to `approval_loop` so only approved optional mutations are emitted downstream.
+
 ## References
 - OpenAI Agents SDK: https://developers.openai.com/api/docs/guides/agents
 - OpenAI Using tools: https://developers.openai.com/api/docs/guides/tools

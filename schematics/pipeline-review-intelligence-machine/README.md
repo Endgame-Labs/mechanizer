@@ -77,3 +77,13 @@ Output event (simplified):
   - Keep enrichment, scoring, alignment, summary generation, routing, and approval as explicit phases.
 - `claw-like/`:
   - Use `HEARTBEAT.md` schedule for weekly prep plus stale-run alerting.
+
+## ChatGPT Workspace Agents Support
+- ChatGPT/Slack:
+  - Supported for manager and seller-facing review summaries with Slack delivery and thread follow-up.
+- Cloud/background runs:
+  - Weekly prep and ad-hoc refresh runs can execute in cloud background mode for long-running enrichment/scoring phases.
+- Approval gates:
+  - `approval_loop` remains mandatory before outbound summary distribution or any CRM mutation-capable action.
+- Governance/visibility:
+  - Keep run logs, tool-call traces, and approval decisions visible to machine owners for audit and replay-safe operations.

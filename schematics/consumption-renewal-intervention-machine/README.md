@@ -50,3 +50,9 @@ Use this machine when renewal cohorts are too large for manual daily inspection 
   }
 }
 ```
+
+## ChatGPT Workspace Agents Support
+- Surfaces: supports ChatGPT workspace execution with Slack-facing notifications and action prompts.
+- Execution: supports cloud/background runs for daily sweeps and delayed approval resumes.
+- Sensitive actions: keeps renewal mutations and outbound actions behind explicit approval checkpoints.
+- Governance/visibility: preserves run traceability through event IDs, approval state, and emitted terminal events.

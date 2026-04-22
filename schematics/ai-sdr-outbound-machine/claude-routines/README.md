@@ -28,6 +28,11 @@ Operational runtime guide for outbound research + sequence drafting + qualified 
 - API `text` can include alert body / campaign hint; parse defensively.
 - Scope MCP servers to exact outbound needs and disable unrelated connectors.
 
+## Claude <-> ChatGPT Workspace Agent Interoperability
+- Use `gtm_event_v1` as the sole cross-runtime handoff contract between Claude routines and Workspace Agents.
+- Preserve `event_id`, `trace.trace_id`, persona/account subject fields, and qualification/approval attributes during transfers.
+- Cross-runtime execution splits (draft in one runtime, publish in another) must still enforce `approval_loop` before outbound or CRM mutation.
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

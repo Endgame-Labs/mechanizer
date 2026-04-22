@@ -111,6 +111,16 @@ Output event (simplified):
 }
 ```
 
+## ChatGPT Workspace Agents Support
+- ChatGPT + Slack surfaces:
+  - Supports manager/rep coaching workflows in ChatGPT workspace threads and Slack-connected notifications/escalation surfaces.
+- Cloud/background execution:
+  - Supports cloud execution with background continuation for digest generation, delayed approvals, and multi-step coaching action pipelines.
+- Approval gates for sensitive actions:
+  - Preserves `approval_loop` before workflow-changing side effects (for example CRM task creation or high-risk outbound manager notifications).
+- Enterprise governance/visibility expectations:
+  - Assumes enterprise governance for policy checks, run/audit telemetry, actor attribution, and admin visibility across workspace agent operations.
+
 ## Adapter Notes
 - `n8n/`, `zapier/`, `tray/`, `make/`:
   - Keep transcript-derived fields normalized to `gtm_event_v1` before scoring.

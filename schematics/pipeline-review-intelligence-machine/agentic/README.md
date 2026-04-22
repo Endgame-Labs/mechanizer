@@ -40,6 +40,18 @@ Build weekly pipeline intelligence summaries and prioritized actions with determ
 - LangGraph/Temporal-style durable execution is valid if checkpoints are deterministic and idempotent.
 - Persist run state between planner/executor/evaluator phases to support retries and HITL resumes.
 
+## Provider Mapping (ChatGPT Workspace Agents, Apr 22, 2026)
+- Planner/evaluator orchestration:
+  - Map to ChatGPT Workspace Agent instructions and tool policy boundaries.
+- Executor tool calls:
+  - Map `read_context`, `reasoning_transform`, `write_action`, and `control` tool classes to ChatGPT agent tools/MCP connectors with strict schemas.
+- Collaboration surface:
+  - Map manager/seller-facing notifications to ChatGPT + Slack channels with approval-state-aware messaging.
+- Background execution:
+  - Map scheduled prep and delayed-approval runs to cloud/background execution while preserving idempotent terminal emits.
+- Governance:
+  - Map approvals, traces, and emitted events to workspace-visible run history for ownership and auditability.
+
 ## MCP + CLI Integration Pattern
 - Discover and cache tools via `tools/list`; invoke via `tools/call`.
 - Fetch contextual docs/data via `resources/list` + `resources/read`.

@@ -23,6 +23,10 @@ Smart Cogs are only useful when they have the right context and tool surface. Ev
 - Enablement systems (Seismic + Highspot)
   - Used for: directive/playbook retrieval and outbound-message validation.
   - Example: compare generated coaching or outbound drafts against approved enablement content before send.
+- ChatGPT Workspace Agents (OpenAI, announced April 22, 2026)
+  - Product note: https://openai.com/index/introducing-workspace-agents-in-chatgpt/
+  - Used for: shared, cloud-running agents that operate in ChatGPT and Slack with org-level controls.
+  - Example: run weekly reporting or lead-routing workflows with approval checkpoints on sensitive actions.
 
 It gives you one canonical machine spec and multiple runtime adapters so the same business flow can run on:
 - `n8n`
@@ -111,6 +115,11 @@ All forms must honor shared contracts.
 3. `claw-like/`: heartbeat-driven recurring execution via `HEARTBEAT.md`.
 
 `claw-like` mode is intentionally cron-native and can run as a lightweight scheduler + runner loop.
+
+### ChatGPT Workspace Agents Mapping
+- Workspace Agents are treated as a deployment surface for `agentic/` mode, not a separate folder contract.
+- Keep event and tool contracts stable (`gtm_event_v1`, shared cogs), then map execution to ChatGPT + Slack surfaces.
+- Sensitive actions must remain approval-gated (`approval_loop`) regardless of runtime surface.
 
 ## Quick Start
 1. Read [`AGENTS.md`](./AGENTS.md) for architecture and contracts.

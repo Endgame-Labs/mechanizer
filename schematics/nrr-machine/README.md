@@ -135,6 +135,16 @@ Output event (simplified):
 }
 ```
 
+## ChatGPT Workspace Agents Support
+- ChatGPT + Slack surfaces:
+  - Supports retention/expansion operator workflows in ChatGPT workspace threads and Slack-connected approval/notification surfaces.
+- Cloud/background execution:
+  - Supports cloud-hosted execution with background continuation for queued cohort sweeps, delayed approvals, and long-running play orchestration.
+- Approval gates for sensitive actions:
+  - Requires `approval_loop` for outbound sends and commercial-impact CRM updates, including actions triggered from workspace agent sessions.
+- Enterprise governance/visibility expectations:
+  - Expects enterprise controls for policy enforcement, run-level audit trails, trace lineage, and admin visibility into side-effecting actions.
+
 ## Adapter Notes
 - `n8n/`, `zapier/`, `tray/`, `make/`:
   - Keep approval node immediately before outbound and CRM write actions.

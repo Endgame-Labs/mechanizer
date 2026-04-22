@@ -26,6 +26,10 @@ Operational runtime guide for coaching recommendation generation with evidence c
 - API trigger body `text` should include call/opportunity refs; parser resolves IDs.
 - Restrict MCP servers so research tools are separate from write tools.
 
+## ChatGPT Workspace Interoperability Note (Apr 22, 2026)
+- Claude routine recommendations can hand off to a ChatGPT Workspace Agent for manager-facing review, coordination, or approval completion.
+- Maintain `gtm_event_v1` as the handoff envelope so traceability and downstream adapter behavior stay contract-stable.
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

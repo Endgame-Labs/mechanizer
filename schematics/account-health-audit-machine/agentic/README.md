@@ -49,6 +49,11 @@ Run periodic or event-driven account health audits and emit deterministic narrat
 ## Approval/HITL Policy
 Read-only audit generation can auto-run; any downstream CRM/update workflow spawned from audit output must require HITL in the consuming workflow.
 
+## ChatGPT Workspace Agents Deployment Mapping
+- Map Workspace Agent execution to planner -> executor -> evaluator without changing ownership of approval or terminal emit decisions.
+- Normalize ChatGPT/Slack requests into `gtm_event_v1` before execution and keep emitted audit events contract-identical.
+- Use workspace background execution for scheduled or long-running audits while preserving deterministic checkpoints and replay safety.
+
 ## Scheduled and Background Loop Pattern (Optional)
 - Trigger modes: event-driven, cron-driven, or hybrid.
 - For schedules, run planner in bounded windows and emit explicit no-op heartbeat events when no action is required.

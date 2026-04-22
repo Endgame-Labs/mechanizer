@@ -74,3 +74,9 @@ Output event (simplified):
   - Keep enrichment, scoring, alignment, composition, and approval as explicit phases.
 - `claw-like/`:
   - Use heartbeat-driven meeting-window sweeps and stale-run alerts.
+
+## ChatGPT Workspace Agents Support
+- Surfaces: supports ChatGPT workspace execution with Slack delivery and action follow-up handoff.
+- Execution: supports cloud/background runs for meeting-window sweeps and regenerate requests.
+- Sensitive actions: requires approval before high-severity or executive outbound brief delivery.
+- Governance/visibility: keeps event lineage, approval outcomes, and delivery status observable in emitted events.

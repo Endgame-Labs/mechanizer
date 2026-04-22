@@ -29,6 +29,9 @@ Run pre-meeting brief generation in Claude routines with explicit quality, polic
 - API `text` can include meeting ID + urgency note; parse and map into attributes.
 - Keep connector set narrow; remove write connectors not used by delivery branch.
 
+## Interoperability Note
+When handing off from ChatGPT Workspace Agents or other runtimes into Claude routines (or back), preserve `gtm_event_v1` as the event envelope contract for all ingress/egress boundaries.
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

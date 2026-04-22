@@ -80,3 +80,13 @@ Output event (simplified):
   - Keep enrichment, scoring, alignment, drafting, and approval as explicit stages.
 - `claw-like/`:
   - Use heartbeat schedule for refresh runs and stale-run alerting.
+
+## ChatGPT Workspace Agents Support
+- ChatGPT and Slack surfaces:
+  - This machine can run as a Workspace Agent in ChatGPT and Slack with the same contract-first stage model used by other adapters.
+- Cloud and background runs:
+  - Prospect sweeps, sequence refreshes, and delayed approvals can run in cloud/background mode while keeping deterministic terminal emits.
+- Approval gates for sensitive actions:
+  - Sequence publication, outbound sends, and CRM ownership/stage mutations remain blocked behind `approval_loop`.
+- Governance and visibility:
+  - Workspace governance views should expose tool traces, approval outcomes, and `gtm_event_v1` lineage (`event_id`, `trace`) for audit.

@@ -81,6 +81,16 @@ Output event (simplified):
 - `claw-like/`:
   - Use heartbeat cadence for low-touch cohort sweeps and stale detection.
 
+## ChatGPT Workspace Agents Support
+- ChatGPT and Slack surfaces:
+  - This machine can run as a Workspace Agent surfaced in ChatGPT and Slack while preserving canonical stage boundaries and `gtm_event_v1` ingress/egress.
+- Cloud and background runs:
+  - Cohort sweeps and delayed approval resumes can execute as cloud/background runs; terminal emits remain idempotent and replay-safe.
+- Approval gates for sensitive actions:
+  - Outbound sends and CRM mutations stay behind `approval_loop`; Workspace Agent execution must not bypass contract-defined HITL checkpoints.
+- Governance and visibility:
+  - Keep run logs, approval decisions, trace lineage, and tool-call evidence visible to workspace governance/audit views using the existing `event_id` and `trace` contracts.
+
 ## Safety and Audit
 - No outbound or CRM mutation before explicit approval.
 - Persist score reasons, decision thresholds, and directive IDs.

@@ -26,6 +26,9 @@ Runtime guidance for daily under-consumption renewal detection, intervention pla
 - Keep API trigger payload in `text` concise: account ID(s), reason, urgency.
 - Use least-privilege MCP connectors and isolate write tools to execution stage.
 
+## Interoperability Note
+When handing off from ChatGPT Workspace Agents or other runtimes into Claude routines (or back), preserve `gtm_event_v1` as the event envelope contract for all ingress/egress boundaries.
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

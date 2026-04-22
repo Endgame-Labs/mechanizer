@@ -40,6 +40,18 @@ Review stage-change events for qualification integrity and perform approval-gate
 - LangGraph/Temporal-style durable execution is valid if checkpoints are deterministic and idempotent.
 - Persist run state between planner/executor/evaluator phases to support retries and HITL resumes.
 
+## Provider Mapping (ChatGPT Workspace Agents, Apr 22, 2026)
+- Planner/evaluator orchestration:
+  - Map policy-aware review planning and terminal evaluation to ChatGPT Workspace Agent instruction + control boundaries.
+- Executor tool calls:
+  - Map `read_context`, `reasoning_transform`, `write_action`, and `control` classes to ChatGPT agent tools/MCP connectors with strict schemas.
+- Collaboration surface:
+  - Map findings distribution to ChatGPT + Slack channels with approval-state-aware routing.
+- Background execution:
+  - Map high-latency enrichment and delayed-approval flows to cloud/background runs while preserving idempotent event emission.
+- Governance:
+  - Map approvals, traces, and emitted outcomes to workspace-visible run history for owner oversight and audit.
+
 ## MCP + CLI Integration Pattern
 - Discover and cache tools via `tools/list`; invoke via `tools/call`.
 - Fetch contextual docs/data via `resources/list` + `resources/read`.

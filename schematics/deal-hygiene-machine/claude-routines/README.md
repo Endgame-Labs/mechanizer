@@ -26,6 +26,10 @@ Concrete runtime implementation guide for deal hygiene detection/remediation in 
 - API `/fire` payload arrives as freeform `text`; parse/validate before stageing.
 - Keep write-capable MCP servers available only to execution path.
 
+## ChatGPT Workspace Interoperability Note (Apr 22, 2026)
+- Claude routine outputs can hand off to a ChatGPT Workspace Agent for operator-facing triage or approval handling.
+- Preserve the canonical envelope as `gtm_event_v1` across handoff boundaries (`event_id`, `trace`, `subject`, and `attributes` unchanged except additive enrichment).
+
 ## References
 - https://code.claude.com/docs/en/routines
 - https://code.claude.com/docs/en/mcp

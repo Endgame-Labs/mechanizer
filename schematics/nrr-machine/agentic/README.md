@@ -31,6 +31,11 @@ Detect retention risk and expansion opportunities and execute approved action pl
 - Use background mode for long-running or delayed-approval runs.
 - For MCP connectors, keep sensitive tool calls approval-gated.
 
+#### ChatGPT Workspace Agents Mapping
+- Deploy planner/executor/evaluator as workspace-agent stages reachable from ChatGPT and Slack-connected operating surfaces.
+- Use cloud/background execution for cohort rescoring, delayed approvals, and queued play execution.
+- Enforce `approval_loop` immediately before outbound or CRM mutation `write_action` tools.
+
 ### Claude-Compatible Agents
 - Supported pattern: Messages API tool loop (`stop_reason: "tool_use"` -> execute -> `tool_result`).
 - Tool contracts use `name` + `input_schema`; set strict tool behavior when needed.
