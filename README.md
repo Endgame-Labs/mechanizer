@@ -82,7 +82,7 @@ A smart cog can be implemented as:
 All forms must honor shared contracts.
 
 ## Context First
-- Endgame MCP and `endgame-cli` are required context providers in all current example machines.
+- Endgame MCP and `endgame-cli` are strong context providers for Smart Cogs.
 - Headless CRM/system interfaces (for example Salesforce Headless 360) are treated as first-class context + action layers for Smart Cogs.
 - Exa and similar research providers are optional enrichment layers for public-company and market context.
 
