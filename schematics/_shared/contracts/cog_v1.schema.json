@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mechanizer.dev/schemas/cog_v1.schema.json",
+  "title": "cog_v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "cog",
+    "input_contract",
+    "output_contract",
+    "execution"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "cog_v1"
+    },
+    "cog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "display_name", "owner", "category"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_\\-]+$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v[0-9]+(\\.[0-9]+){0,2}$"
+        },
+        "display_name": { "type": "string" },
+        "owner": { "type": "string" },
+        "category": {
+          "type": "string",
+          "enum": ["enrichment", "scoring", "routing", "normalization", "qa", "notification"]
+        },
+        "description": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "input_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_fields"],
+      "properties": {
+        "required_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "optional_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "accepted_schema_versions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "output_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["emitted_fields"],
+      "properties": {
+        "emitted_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "guaranteed_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "failure_mode": {
+          "type": "string",
+          "enum": ["raise", "soft_fail", "emit_partial"]
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["idempotent", "timeout_seconds", "max_retries"],
+      "properties": {
+        "idempotent": { "type": "boolean" },
+        "timeout_seconds": { "type": "integer", "minimum": 1 },
+        "max_retries": { "type": "integer", "minimum": 0 },
+        "retry_backoff": {
+          "type": "string",
+          "enum": ["fixed", "linear", "exponential"]
+        },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "examples": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "input": { "type": "object", "additionalProperties": true },
+        "output": { "type": "object", "additionalProperties": true }
+      }
+    }
+  }
+}

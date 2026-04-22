@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Sales Coaching Machine</title>
+  <desc id="desc">Pipeline for call capture, agent analysis, manager coaching prompts, and behavior feedback loops.</desc>
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f9f8ff"/>
+      <stop offset="100%" stop-color="#eef3ff"/>
+    </linearGradient>
+    <marker id="arrow3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#355c9a"/>
+    </marker>
+    <style>
+      .t{font:700 34px 'Inter', 'Segoe UI', sans-serif; fill:#1f3766}
+      .l{font:600 18px 'Inter', 'Segoe UI', sans-serif; fill:#29477e}
+      .m{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#566985}
+      .n{fill:#ffffff; stroke:#c8d4ea; stroke-width:2}
+      .a{fill:#eef3ff; stroke:#9fb8e1; stroke-width:2}
+      .f{stroke:#355c9a; stroke-width:3; fill:none; marker-end:url(#arrow3)}
+      .p{stroke:#7d95bb; stroke-width:2.5; stroke-dasharray:10 8; fill:none}
+      .z{stroke:#ff9447; stroke-width:4; fill:none}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg3)"/>
+  <text x="60" y="70" class="t">Sales Coaching Machine</text>
+
+  <rect x="80" y="145" width="200" height="94" rx="14" class="n"/>
+  <text x="115" y="188" class="l">Call Intake</text>
+  <text x="115" y="210" class="m">audio + transcript</text>
+
+  <rect x="340" y="145" width="240" height="94" rx="14" class="a"/>
+  <text x="370" y="188" class="l">Agent Analyzer</text>
+  <text x="370" y="210" class="m">talk ratio, objection map</text>
+
+  <rect x="640" y="145" width="220" height="94" rx="14" class="n"/>
+  <text x="673" y="188" class="l">Coach Builder</text>
+  <text x="673" y="210" class="m">actionable snippets</text>
+
+  <rect x="920" y="145" width="220" height="94" rx="14" class="n"/>
+  <text x="956" y="188" class="l">Manager Review</text>
+  <text x="956" y="210" class="m">approve + personalize</text>
+
+  <rect x="300" y="350" width="260" height="102" rx="14" class="n"/>
+  <text x="332" y="398" class="l">Rep Playbook Card</text>
+  <text x="332" y="420" class="m">one behavior to train</text>
+
+  <rect x="650" y="350" width="300" height="102" rx="14" class="a"/>
+  <text x="680" y="398" class="l">Agent Follow-up</text>
+  <text x="680" y="420" class="m">measure adoption in next calls</text>
+
+  <path d="M280 192 L340 192" class="f"/>
+  <path d="M580 192 L640 192" class="f"/>
+  <path d="M860 192 L920 192" class="f"/>
+  <path d="M1030 239 L1030 350" class="f"/>
+  <path d="M650 401 L560 401" class="f"/>
+
+  <path d="M430 239 L430 350" class="p"/>
+  <path d="M800 452 C800 530,430 530,430 452" class="p"/>
+
+  <polyline points="595,290 620,254 648,288 673,252" class="z"/>
+
+  <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#c8d4ea"/>
+  <text x="82" y="645" class="m">Legend: Solid arrows = coaching workflow, dashed arcs = performance feedback loop, orange zap = high-impact teachable moment.</text>
+</svg>

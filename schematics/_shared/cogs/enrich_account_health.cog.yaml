@@ -1,0 +1,46 @@
+schema_version: cog_v1
+cog:
+  id: enrich_account_health
+  version: v1.0.0
+  display_name: Enrich Account Health
+  owner: revenue-ops
+  category: enrichment
+  description: Adds health indicators and risk hints from CRM + product telemetry.
+  tags: [health, enrichment, nrr]
+input_contract:
+  required_fields:
+    - subject.account_id
+    - attributes.arr
+    - metrics.product_usage_30d
+  optional_fields:
+    - attributes.csm_owner
+    - attributes.last_qbr_at
+  accepted_schema_versions: [gtm_event_v1]
+output_contract:
+  emitted_fields:
+    - attributes.health_score
+    - attributes.risk_band
+    - attributes.health_reasons
+  guaranteed_fields:
+    - attributes.health_score
+    - attributes.risk_band
+  failure_mode: emit_partial
+execution:
+  idempotent: true
+  timeout_seconds: 30
+  max_retries: 2
+  retry_backoff: exponential
+  depends_on: []
+examples:
+  input:
+    subject:
+      account_id: acct_123
+    attributes:
+      arr: 54000
+    metrics:
+      product_usage_30d: 0.62
+  output:
+    attributes:
+      health_score: 71
+      risk_band: monitor
+      health_reasons: [usage_decline]

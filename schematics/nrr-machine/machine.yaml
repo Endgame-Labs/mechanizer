@@ -1,0 +1,33 @@
+machine_id: nrr-machine
+version: v1.0.0
+owners:
+  - team: customer-success-ops
+    contact: csops@example.com
+objective: "Identify expansion risk and opportunity signals to improve net revenue retention outcomes."
+kpis:
+  - id: kpi_1
+    name: "NRR improvement against baseline"
+    target: "define-per-org"
+  - id: kpi_2
+    name: "At-risk account intervention lead time"
+    target: "define-per-org"
+triggers:
+  - type: event
+    event_types: [account.health_changed, usage.declined, renewal.window_opened]
+inputs:
+  contract: gtm_event_v1
+  sources: [product_telemetry, gainsight, salesforce, stripe]
+outputs:
+  event_contract: gtm_event_v1
+  side_effects: [csm_task_create, exec_alert_send, renewal_plan_update]
+slo:
+  p95_end_to_end_seconds: 240
+  availability: "99.5%"
+dependencies:
+  cogs: [enrich_account_health@v1.0.0, route_exec_alert@v1.0.0]
+feature_flags: []
+security:
+  pii_policy: "minimize"
+  secret_source: "platform_secret_store"
+rollback:
+  mode: "disable_triggers_and_drain"

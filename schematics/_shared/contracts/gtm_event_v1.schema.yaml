@@ -1,0 +1,84 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://mechanizer.dev/schemas/gtm_event_v1.schema.yaml"
+title: "gtm_event_v1"
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - event_id
+  - event_type
+  - source
+  - occurred_at
+  - ingested_at
+  - trace
+  - subject
+properties:
+  schema_version:
+    const: gtm_event_v1
+  event_id:
+    type: string
+    minLength: 8
+    description: Globally unique immutable event identifier
+  event_type:
+    type: string
+    pattern: "^[a-z0-9_]+\\.[a-z0-9_]+$"
+    description: noun.verb style event classification
+  source:
+    type: string
+    minLength: 2
+  occurred_at:
+    type: string
+    format: date-time
+  ingested_at:
+    type: string
+    format: date-time
+  trace:
+    type: object
+    additionalProperties: false
+    required: [trace_id]
+    properties:
+      trace_id:
+        type: string
+        minLength: 8
+      span_id:
+        type: string
+      parent_span_id:
+        type: string
+      run_id:
+        type: string
+  actor:
+    type: object
+    additionalProperties: false
+    properties:
+      actor_id:
+        type: string
+      actor_type:
+        type: string
+        enum: [user, system, workflow, api_key]
+      email:
+        type: string
+        format: email
+  subject:
+    type: object
+    additionalProperties: false
+    required: [entity_type, entity_id]
+    properties:
+      entity_type:
+        type: string
+      entity_id:
+        type: string
+      account_id:
+        type: string
+      opportunity_id:
+        type: string
+  metrics:
+    type: object
+    additionalProperties:
+      type: number
+  attributes:
+    type: object
+    additionalProperties: true
+  raw:
+    description: Optional provider-native payload snapshot
+    type: object
+    additionalProperties: true

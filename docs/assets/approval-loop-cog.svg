@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Approval Loop Cog</title>
+  <desc id="desc">Cog-like approval loop for discounts and exceptions with agent recommendation and human sign-off.</desc>
+  <defs>
+    <linearGradient id="bg5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f9fafc"/>
+      <stop offset="100%" stop-color="#eef2f8"/>
+    </linearGradient>
+    <marker id="arrow5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#43556e"/>
+    </marker>
+    <style>
+      .t{font:700 34px 'Inter', 'Segoe UI', sans-serif; fill:#24364a}
+      .l{font:600 18px 'Inter', 'Segoe UI', sans-serif; fill:#334a64}
+      .m{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#5c6f83}
+      .n{fill:#ffffff; stroke:#cad4e2; stroke-width:2}
+      .a{fill:#eef3ff; stroke:#a8bbdb; stroke-width:2}
+      .f{stroke:#43556e; stroke-width:3; fill:none; marker-end:url(#arrow5)}
+      .p{stroke:#7b8da3; stroke-width:2.5; stroke-dasharray:9 7; fill:none}
+      .z{stroke:#ff9a4f; stroke-width:4; fill:none}
+      .gear{fill:none; stroke:#9baac0; stroke-width:16; stroke-linecap:round}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg5)"/>
+  <text x="60" y="70" class="t">Approval Loop Cog</text>
+
+  <circle cx="600" cy="340" r="165" class="gear" stroke-dasharray="22 18"/>
+  <circle cx="600" cy="340" r="78" fill="#ffffff" stroke="#cad4e2" stroke-width="2"/>
+  <text x="560" y="336" class="l">Loop</text>
+  <text x="536" y="358" class="m">governed cadence</text>
+
+  <rect x="145" y="140" width="220" height="92" rx="14" class="n"/>
+  <text x="178" y="182" class="l">Quote Request</text>
+  <text x="178" y="204" class="m">discount or term ask</text>
+
+  <rect x="835" y="140" width="230" height="92" rx="14" class="a"/>
+  <text x="867" y="182" class="l">Agent Risk Read</text>
+  <text x="867" y="204" class="m">margin + precedent</text>
+
+  <rect x="910" y="440" width="210" height="92" rx="14" class="n"/>
+  <text x="944" y="482" class="l">Approver Node</text>
+  <text x="944" y="504" class="m">legal/finance/sales</text>
+
+  <rect x="140" y="450" width="250" height="92" rx="14" class="n"/>
+  <text x="172" y="492" class="l">Rep Commit Path</text>
+  <text x="172" y="514" class="m">approved language pack</text>
+
+  <path d="M365 186 C470 120,730 120,835 186" class="f"/>
+  <path d="M950 232 C1045 290,1060 372,1015 440" class="f"/>
+  <path d="M910 486 C760 585,430 590,390 496" class="f"/>
+  <path d="M240 450 C120 370,125 250,200 210" class="f"/>
+
+  <path d="M260 232 C300 300,300 380,260 450" class="p"/>
+  <path d="M835 232 C790 290,790 390,835 440" class="p"/>
+
+  <polyline points="595,155 622,120 650,154 676,119" class="z"/>
+
+  <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#cad4e2"/>
+  <text x="82" y="645" class="m">Legend: Circular cog = approval cadence, solid arrows = decision handoffs, dashed arcs = policy sync, orange zap = escalation event.</text>
+</svg>

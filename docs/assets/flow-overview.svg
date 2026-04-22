@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Revenue Automation Flow Overview</title>
+  <desc id="desc">Abstract flowchart showing agents-in-the-loop automation for inbound to expansion revenue activities.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7fafc"/>
+      <stop offset="100%" stop-color="#edf4ff"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2f4b7c"/>
+    </marker>
+    <style>
+      .title{font:700 34px 'Inter', 'Segoe UI', sans-serif; fill:#12304a}
+      .label{font:600 18px 'Inter', 'Segoe UI', sans-serif; fill:#163b59}
+      .meta{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#4f6577}
+      .node{fill:#ffffff; stroke:#c4d4e3; stroke-width:2}
+      .agent{fill:#e8f7ef; stroke:#8bcaa5; stroke-width:2}
+      .line{stroke:#2f4b7c; stroke-width:3; fill:none; marker-end:url(#arrow)}
+      .pipe{stroke:#6e85a0; stroke-dasharray:8 8; stroke-width:2.5; fill:none}
+      .zap{stroke:#ff8a3d; stroke-width:4; fill:none}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <text x="60" y="70" class="title">Revenue Automation Flow Overview</text>
+
+  <rect x="70" y="140" width="190" height="100" rx="16" class="node"/>
+  <text x="95" y="190" class="label">Inbound Signal</text>
+  <text x="95" y="214" class="meta">forms, calls, product</text>
+
+  <rect x="320" y="140" width="220" height="100" rx="16" class="node"/>
+  <text x="350" y="190" class="label">Lead Router</text>
+  <text x="350" y="214" class="meta">intent + territory</text>
+
+  <rect x="600" y="140" width="220" height="100" rx="16" class="agent"/>
+  <text x="635" y="190" class="label">Agent Triage</text>
+  <text x="635" y="214" class="meta">suggest next action</text>
+
+  <rect x="890" y="140" width="230" height="100" rx="16" class="node"/>
+  <text x="920" y="190" class="label">Rep Execution</text>
+  <text x="920" y="214" class="meta">email, call, meeting</text>
+
+  <rect x="320" y="340" width="220" height="100" rx="16" class="node"/>
+  <text x="350" y="390" class="label">Pipeline Update</text>
+  <text x="350" y="414" class="meta">stage + next step</text>
+
+  <rect x="600" y="340" width="220" height="100" rx="16" class="agent"/>
+  <text x="632" y="390" class="label">Agent QA Check</text>
+  <text x="632" y="414" class="meta">hygiene + risk flags</text>
+
+  <rect x="890" y="340" width="230" height="100" rx="16" class="node"/>
+  <text x="930" y="390" class="label">Forecast Rollup</text>
+  <text x="930" y="414" class="meta">manager visibility</text>
+
+  <path d="M260 190 L320 190" class="line"/>
+  <path d="M540 190 L600 190" class="line"/>
+  <path d="M820 190 L890 190" class="line"/>
+  <path d="M1005 240 L1005 340" class="line"/>
+  <path d="M890 390 L820 390" class="line"/>
+  <path d="M600 390 L540 390" class="line"/>
+
+  <path d="M430 240 L430 340" class="pipe"/>
+  <path d="M710 240 L710 340" class="pipe"/>
+
+  <polyline points="552,288 576,255 602,286 626,252" class="zap"/>
+
+  <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#c4d4e3"/>
+  <text x="82" y="645" class="meta">Legend: Solid arrows = process flow, dashed pipes = system sync, orange zap = high-priority automation trigger.</text>
+</svg>

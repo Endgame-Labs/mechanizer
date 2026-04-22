@@ -1,0 +1,41 @@
+schema_version: cog_v1
+cog:
+  id: route_exec_alert
+  version: v1.0.0
+  display_name: Route Executive Alert
+  owner: sales-ops
+  category: routing
+  description: Routes high-severity events to owner, manager, and exec channel.
+  tags: [routing, alerting]
+input_contract:
+  required_fields:
+    - event_type
+    - attributes.severity
+    - attributes.owner_email
+  optional_fields:
+    - attributes.manager_email
+    - attributes.exec_channel
+  accepted_schema_versions: [gtm_event_v1]
+output_contract:
+  emitted_fields:
+    - attributes.alert_targets
+    - attributes.alert_priority
+  guaranteed_fields:
+    - attributes.alert_targets
+  failure_mode: soft_fail
+execution:
+  idempotent: true
+  timeout_seconds: 20
+  max_retries: 3
+  retry_backoff: linear
+  depends_on: []
+examples:
+  input:
+    event_type: deal.at_risk
+    attributes:
+      severity: high
+      owner_email: rep@example.com
+  output:
+    attributes:
+      alert_targets: [rep@example.com, sales-lead@example.com]
+      alert_priority: p1

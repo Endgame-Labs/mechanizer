@@ -1,0 +1,33 @@
+machine_id: sales-coaching-machine
+version: v1.0.0
+owners:
+  - team: sales-ops
+    contact: salesops@example.com
+objective: "Generate actionable coaching moments from calls, activity, and pipeline movement."
+kpis:
+  - id: kpi_1
+    name: "Manager coaching actions completed per week"
+    target: "define-per-org"
+  - id: kpi_2
+    name: "Win-rate lift on coached opportunities"
+    target: "define-per-org"
+triggers:
+  - type: event
+    event_types: [call.completed, deal.stage_changed, rep.activity_low]
+inputs:
+  contract: gtm_event_v1
+  sources: [gong, salesforce, hubspot, outreach]
+outputs:
+  event_contract: gtm_event_v1
+  side_effects: [coaching_task_create, summary_send, score_update]
+slo:
+  p95_end_to_end_seconds: 180
+  availability: "99.5%"
+dependencies:
+  cogs: [route_exec_alert@v1.0.0]
+feature_flags: []
+security:
+  pii_policy: "minimize"
+  secret_source: "platform_secret_store"
+rollback:
+  mode: "disable_triggers_and_drain"

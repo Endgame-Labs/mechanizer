@@ -1,0 +1,33 @@
+machine_id: deal-hygiene-machine
+version: v1.0.0
+owners:
+  - team: revenue-ops
+    contact: revops@example.com
+objective: "Detect and repair deal-data quality issues before forecast and inspection events."
+kpis:
+  - id: kpi_1
+    name: "Reduction in stale or invalid open opportunities"
+    target: "define-per-org"
+  - id: kpi_2
+    name: "Forecast review prep time reduction"
+    target: "define-per-org"
+triggers:
+  - type: event
+    event_types: [deal.updated, call.completed, account.health_changed]
+inputs:
+  contract: gtm_event_v1
+  sources: [salesforce, hubspot, gong, product_telemetry]
+outputs:
+  event_contract: gtm_event_v1
+  side_effects: [task_create, alert_send, note_append]
+slo:
+  p95_end_to_end_seconds: 120
+  availability: "99.5%"
+dependencies:
+  cogs: [enrich_account_health@v1.0.0, route_exec_alert@v1.0.0]
+feature_flags: []
+security:
+  pii_policy: "minimize"
+  secret_source: "platform_secret_store"
+rollback:
+  mode: "disable_triggers_and_drain"

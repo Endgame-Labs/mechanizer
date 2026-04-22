@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Deal Hygiene Machine</title>
+  <desc id="desc">Flowchart for deal record normalization with agent-in-the-loop checks and remediation loops.</desc>
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8faf9"/>
+      <stop offset="100%" stop-color="#eef8f5"/>
+    </linearGradient>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#23656f"/>
+    </marker>
+    <style>
+      .t{font:700 34px 'Inter', 'Segoe UI', sans-serif; fill:#123e46}
+      .l{font:600 18px 'Inter', 'Segoe UI', sans-serif; fill:#1b5258}
+      .m{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#4f696d}
+      .n{fill:#ffffff; stroke:#b9d8d5; stroke-width:2}
+      .a{fill:#ecfaf6; stroke:#8acdb9; stroke-width:2}
+      .f{stroke:#23656f; stroke-width:3; fill:none; marker-end:url(#arrow2)}
+      .p{stroke:#5e8c96; stroke-width:2.5; stroke-dasharray:9 7; fill:none}
+      .z{stroke:#ff9e4f; stroke-width:4; fill:none}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg2)"/>
+  <text x="60" y="70" class="t">Deal Hygiene Machine</text>
+
+  <rect x="80" y="150" width="220" height="92" rx="14" class="n"/>
+  <text x="110" y="192" class="l">CRM Snapshot</text>
+  <text x="110" y="214" class="m">open opportunities</text>
+
+  <rect x="370" y="150" width="230" height="92" rx="14" class="a"/>
+  <text x="405" y="192" class="l">Agent Validator</text>
+  <text x="405" y="214" class="m">missing fields + drift</text>
+
+  <rect x="670" y="150" width="230" height="92" rx="14" class="n"/>
+  <text x="702" y="192" class="l">Rule Engine</text>
+  <text x="702" y="214" class="m">close date, stage, owner</text>
+
+  <rect x="960" y="150" width="170" height="92" rx="14" class="n"/>
+  <text x="988" y="192" class="l">Scored</text>
+  <text x="988" y="214" class="m">cleanliness index</text>
+
+  <rect x="320" y="360" width="280" height="96" rx="14" class="n"/>
+  <text x="350" y="402" class="l">Rep Fix Queue</text>
+  <text x="350" y="424" class="m">guided corrections</text>
+
+  <rect x="670" y="360" width="300" height="96" rx="14" class="a"/>
+  <text x="700" y="402" class="l">Agent Recheck</text>
+  <text x="700" y="424" class="m">validate before commit</text>
+
+  <path d="M300 196 L370 196" class="f"/>
+  <path d="M600 196 L670 196" class="f"/>
+  <path d="M900 196 L960 196" class="f"/>
+  <path d="M820 242 L820 360" class="f"/>
+  <path d="M670 408 L600 408" class="f"/>
+
+  <path d="M460 242 L460 360" class="p"/>
+  <path d="M460 456 C460 540,900 540,900 456" class="p"/>
+
+  <polyline points="618,286 642,252 670,286 694,252" class="z"/>
+
+  <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#b9d8d5"/>
+  <text x="82" y="645" class="m">Legend: Blue arrows = processing path, dashed loops = remediation cycle, orange zap = urgent hygiene alert.</text>
+</svg>
