@@ -1,5 +1,7 @@
 # Sales Coaching Machine
 
+![sales-coaching-machine Diagram](./diagram.svg)
+
 ## Purpose
 Convert post-call activity and pipeline movement into coaching actions that are directive-aligned, evidence-backed, and easy for managers/reps to execute.
 

@@ -5,6 +5,13 @@ n8n implementation for sales coaching signals from call events, with directive c
 ## Artifacts
 - `workflow.json`: importable workflow reference.
 
+## Format Parity
+- Importable workflow JSON: Yes (`workflow.json` is valid JSON and follows n8n workflow export object shape).
+- Required top-level keys: Present (`name`, `nodes`, `connections`).
+- Parity references:
+  - Official n8n export/import docs: https://docs.n8n.io/workflows/export-import/
+  - Community/open workflow source: https://n8n.io/workflows/
+
 ## Triggering
 - Primary trigger: `Webhook` for inbound call completion events.
 - Recommended trigger policy:

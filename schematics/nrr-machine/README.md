@@ -1,5 +1,7 @@
 # NRR Machine
 
+![nrr-machine Diagram](./diagram.svg)
+
 ## Purpose
 Increase net revenue retention in low-touch/no-touch segments by combining deterministic health signals with agentic play selection, messaging, and approval-gated execution.
 

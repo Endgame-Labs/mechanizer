@@ -1,5 +1,7 @@
 # Account Plan Generation Machine
 
+![account-plan-generation-machine Diagram](./diagram.svg)
+
 ## Purpose
 Generate structured account plans at recurring cadence and bulk scale, with stable contract semantics and shared-cog execution.
 

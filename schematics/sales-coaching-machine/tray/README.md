@@ -28,6 +28,13 @@ Tray runtime for `sales-coaching-machine` that evaluates post-call coaching reco
 - Dead-letter branch emits `step_log_url` for replay/triage.
 - Keep child cogs modular via callable workflows to simplify updates.
 
+
+## Format Parity
+- Compatibility posture: `workflow.json` tracks machine intent and step sequencing, but it is not the native Tray project/workflow export JSON envelope.
+- Importability: reference scaffold, not fully importable as-is.
+- Official docs/API examples: [Import / Export](https://tray.ai/documentation/platform/enterprise-core/lifecycle-management/import-export), [Projects API (import, requirements, preview, export)](https://tray.ai/documentation/developer/platform-apis/projects).
+- Public template/community source: [Workflow Threading Template (Tray Library)](https://tray.ai/documentation/library/template/3a24d0a7-f940-4ac7-b455-6a11380fcde5-workflow-threading-template).
+
 ## References
 - Callable workflows: https://tray.ai/documentation/platform/automation-integration/building-workflows/composable-workflows/calling-other-workflows
 - Callable response: https://tray.ai/documentation/connectors/core/callable-workflow-response

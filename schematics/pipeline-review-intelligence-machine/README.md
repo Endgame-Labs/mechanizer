@@ -1,5 +1,7 @@
 # Pipeline Review Intelligence Machine
 
+![pipeline-review-intelligence-machine Diagram](./diagram.svg)
+
 ## Purpose
 Prepare weekly pipeline inspection output with consistent coverage of stale deals, missing next steps, single-threading exposure, and manager-level action summaries.
 

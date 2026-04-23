@@ -1,5 +1,7 @@
 # Meeting Prep Brief Machine
 
+![meeting-prep-brief-machine Diagram](./diagram.svg)
+
 ## Purpose
 Generate and deliver a concise pre-meeting account brief to Slack and inbox with current account context, risk flags, and talk-track guidance.
 

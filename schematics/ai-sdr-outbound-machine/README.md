@@ -1,5 +1,7 @@
 # AI SDR Outbound Machine
 
+![ai-sdr-outbound-machine Diagram](./diagram.svg)
+
 ## Purpose
 Automate outbound prospect research, generate personalized multi-step sequence drafts, and route qualified inbound responses to the right human owner with full contract traceability.
 

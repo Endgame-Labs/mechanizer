@@ -10,7 +10,7 @@ Produce deterministic artifacts for one machine across selected adapters.
 - machine `README.md`
 - selected platform adapter folders
 - `claw-like/HEARTBEAT.md`
-- machine diagram asset: `docs/assets/<machine-id>.svg`
+- machine diagram asset: `schematics/<machine-id>/diagram.svg`
 - Workspace Agents runtime notes (if present in machine docs)
 - referenced shared smart cog manifests
 - contract version manifest (schema IDs + versions)

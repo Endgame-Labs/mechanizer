@@ -1,5 +1,7 @@
 # Deal Hygiene Machine
 
+![deal-hygiene-machine Diagram](./diagram.svg)
+
 ## Purpose
 Detect, score, and remediate CRM data-quality drift before it affects forecast accuracy, pipeline inspection, and downstream automation.
 

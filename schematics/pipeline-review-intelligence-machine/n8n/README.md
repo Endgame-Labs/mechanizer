@@ -5,6 +5,13 @@ Contract-first n8n adapter for `pipeline-review-intelligence-machine` using `gtm
 ## Artifact
 - `workflow.json`: importable reference workflow.
 
+## Format Parity
+- Importable workflow JSON: Yes (`workflow.json` is valid JSON and follows n8n workflow export object shape).
+- Required top-level keys: Present (`name`, `nodes`, `connections`).
+- Parity references:
+  - Official n8n export/import docs: https://docs.n8n.io/workflows/export-import/
+  - Community/open workflow source: https://n8n.io/workflows/
+
 ## Mapping Notes
 - Trigger: webhook or scheduler bridge payload mapped to `gtm_event_v1`.
 - Supported event types:

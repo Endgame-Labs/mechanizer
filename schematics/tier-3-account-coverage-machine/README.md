@@ -1,5 +1,7 @@
 # Tier-3 Account Coverage Machine
 
+![tier-3-account-coverage-machine Diagram](./diagram.svg)
+
 ## Purpose
 Automate long-tail account coverage for low-touch/no-touch segments by combining deterministic signal monitoring, smart-cog scoring, approval-gated outreach, and churn/expansion trigger surfacing.
 

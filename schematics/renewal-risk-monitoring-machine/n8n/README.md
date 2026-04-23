@@ -3,6 +3,13 @@
 ## Artifacts
 - `workflow.json`: importable starter workflow.
 
+## Format Parity
+- Importable workflow JSON: Yes (`workflow.json` is valid JSON and follows n8n workflow export object shape).
+- Required top-level keys: Present (`name`, `nodes`, `connections`).
+- Parity references:
+  - Official n8n export/import docs: https://docs.n8n.io/workflows/export-import/
+  - Community/open workflow source: https://n8n.io/workflows/
+
 ## Triggering
 - `Schedule Trigger` daily at 07:00 America/Los_Angeles.
 - Optional `Webhook` trigger for ad hoc event ingestion.

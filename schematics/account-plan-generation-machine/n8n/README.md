@@ -5,6 +5,13 @@ n8n adapter for recurring and bulk account-plan generation with approval-gated m
 ## Artifacts
 - `workflow.json`: importable reference workflow.
 
+## Format Parity
+- Importable workflow JSON: Yes (`workflow.json` is valid JSON and follows n8n workflow export object shape).
+- Required top-level keys: Present (`name`, `nodes`, `connections`).
+- Parity references:
+  - Official n8n export/import docs: https://docs.n8n.io/workflows/export-import/
+  - Community/open workflow source: https://n8n.io/workflows/
+
 ## Triggering
 - Realtime trigger: `Webhook` for planning events.
 - Batch trigger: `Schedule Trigger` every 6 hours for cohort refresh.

@@ -27,6 +27,13 @@ Tray runtime for `ai-sdr-outbound-machine` combining deterministic outbound work
 - Put outbound and CRM steps on connector-level manual error handling.
 - Publish DLQ events with step log URL for review/replay.
 
+
+## Format Parity
+- Compatibility posture: `workflow.json` tracks machine intent and step sequencing, but it is not the native Tray project/workflow export JSON envelope.
+- Importability: reference scaffold, not fully importable as-is.
+- Official docs/API examples: [Import / Export](https://tray.ai/documentation/platform/enterprise-core/lifecycle-management/import-export), [Projects API (import, requirements, preview, export)](https://tray.ai/documentation/developer/platform-apis/projects).
+- Public template/community source: [Workflow Threading Template (Tray Library)](https://tray.ai/documentation/library/template/3a24d0a7-f940-4ac7-b455-6a11380fcde5-workflow-threading-template).
+
 ## References
 - Callable trigger: https://tray.ai/documentation/connectors/trigger/callable-trigger
 - Call workflow: https://tray.ai/documentation/connectors/core/call-workflow

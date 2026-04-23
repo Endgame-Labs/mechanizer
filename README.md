@@ -126,14 +126,15 @@ All forms must honor shared contracts.
 2. Open one machine under `schematics/<machine-id>/`.
 3. Implement one adapter first (usually easiest for your stack).
 4. Validate shared contracts and smart-cog compatibility via `skills/` playbooks.
-5. Package/publish sanitized artifacts only.
+5. Review adapter format parity notes: `docs/adapter-format-parity-research.md`.
+6. Package/publish sanitized artifacts only.
 
 ## New Contributor Workflow
 1. Create or copy a machine folder.
 2. Update `machine.yaml` with objective, triggers, KPIs, outputs.
 3. Keep standard adapter folders, even if placeholders initially.
 4. Add/modify reusable smart cogs in `_shared/cogs` only when broadly reusable.
-5. Add machine diagram SVG at `docs/assets/<machine-id>.svg`.
+5. Add machine diagram SVG at `schematics/<machine-id>/diagram.svg`.
 6. Add examples and runbook notes.
 7. Add the new diagram entry under the root README "Diagram Gallery".
 8. Run validation checklists in `skills/`.
@@ -141,19 +142,19 @@ All forms must honor shared contracts.
 
 ## Diagrams
 - `docs/assets/flow-overview.svg`
-- `docs/assets/deal-hygiene-machine.svg`
-- `docs/assets/tier-3-account-coverage-machine.svg`
-- `docs/assets/ai-sdr-outbound-machine.svg`
-- `docs/assets/account-health-audit-machine.svg`
-- `docs/assets/consumption-renewal-intervention-machine.svg`
-- `docs/assets/meeting-prep-brief-machine.svg`
-- `docs/assets/account-plan-generation-machine.svg`
-- `docs/assets/pipeline-review-intelligence-machine.svg`
-- `docs/assets/stage-change-deal-review-machine.svg`
-- `docs/assets/new-hire-ramp-accelerator-machine.svg`
-- `docs/assets/renewal-risk-monitoring-machine.svg`
-- `docs/assets/sales-coaching-machine.svg`
-- `docs/assets/nrr-machine.svg`
+- `schematics/deal-hygiene-machine/diagram.svg`
+- `schematics/tier-3-account-coverage-machine/diagram.svg`
+- `schematics/ai-sdr-outbound-machine/diagram.svg`
+- `schematics/account-health-audit-machine/diagram.svg`
+- `schematics/consumption-renewal-intervention-machine/diagram.svg`
+- `schematics/meeting-prep-brief-machine/diagram.svg`
+- `schematics/account-plan-generation-machine/diagram.svg`
+- `schematics/pipeline-review-intelligence-machine/diagram.svg`
+- `schematics/stage-change-deal-review-machine/diagram.svg`
+- `schematics/new-hire-ramp-accelerator-machine/diagram.svg`
+- `schematics/renewal-risk-monitoring-machine/diagram.svg`
+- `schematics/sales-coaching-machine/diagram.svg`
+- `schematics/nrr-machine/diagram.svg`
 - `docs/assets/approval-loop-cog.svg`
 
 ## Diagram Gallery
@@ -162,43 +163,43 @@ All forms must honor shared contracts.
 ![Flow Overview](docs/assets/flow-overview.svg)
 
 ### Deal Hygiene Machine
-![Deal Hygiene Machine](docs/assets/deal-hygiene-machine.svg)
+![Deal Hygiene Machine](schematics/deal-hygiene-machine/diagram.svg)
 
 ### Tier 3 Account Coverage Machine
-![Tier 3 Account Coverage Machine](docs/assets/tier-3-account-coverage-machine.svg)
+![Tier 3 Account Coverage Machine](schematics/tier-3-account-coverage-machine/diagram.svg)
 
 ### AI SDR Outbound Machine
-![AI SDR Outbound Machine](docs/assets/ai-sdr-outbound-machine.svg)
+![AI SDR Outbound Machine](schematics/ai-sdr-outbound-machine/diagram.svg)
 
 ### Account Health Audit Machine
-![Account Health Audit Machine](docs/assets/account-health-audit-machine.svg)
+![Account Health Audit Machine](schematics/account-health-audit-machine/diagram.svg)
 
 ### Consumption Renewal Intervention Machine
-![Consumption Renewal Intervention Machine](docs/assets/consumption-renewal-intervention-machine.svg)
+![Consumption Renewal Intervention Machine](schematics/consumption-renewal-intervention-machine/diagram.svg)
 
 ### Meeting Prep Brief Machine
-![Meeting Prep Brief Machine](docs/assets/meeting-prep-brief-machine.svg)
+![Meeting Prep Brief Machine](schematics/meeting-prep-brief-machine/diagram.svg)
 
 ### Account Plan Generation Machine
-![Account Plan Generation Machine](docs/assets/account-plan-generation-machine.svg)
+![Account Plan Generation Machine](schematics/account-plan-generation-machine/diagram.svg)
 
 ### Pipeline Review Intelligence Machine
-![Pipeline Review Intelligence Machine](docs/assets/pipeline-review-intelligence-machine.svg)
+![Pipeline Review Intelligence Machine](schematics/pipeline-review-intelligence-machine/diagram.svg)
 
 ### Stage Change Deal Review Machine
-![Stage Change Deal Review Machine](docs/assets/stage-change-deal-review-machine.svg)
+![Stage Change Deal Review Machine](schematics/stage-change-deal-review-machine/diagram.svg)
 
 ### New Hire Ramp Accelerator Machine
-![New Hire Ramp Accelerator Machine](docs/assets/new-hire-ramp-accelerator-machine.svg)
+![New Hire Ramp Accelerator Machine](schematics/new-hire-ramp-accelerator-machine/diagram.svg)
 
 ### Renewal Risk Monitoring Machine
-![Renewal Risk Monitoring Machine](docs/assets/renewal-risk-monitoring-machine.svg)
+![Renewal Risk Monitoring Machine](schematics/renewal-risk-monitoring-machine/diagram.svg)
 
 ### Sales Coaching Machine
-![Sales Coaching Machine](docs/assets/sales-coaching-machine.svg)
+![Sales Coaching Machine](schematics/sales-coaching-machine/diagram.svg)
 
 ### NRR Machine
-![NRR Machine](docs/assets/nrr-machine.svg)
+![NRR Machine](schematics/nrr-machine/diagram.svg)
 
 ### Approval Loop Cog
 ![Approval Loop Cog](docs/assets/approval-loop-cog.svg)

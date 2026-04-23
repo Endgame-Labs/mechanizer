@@ -17,3 +17,9 @@ Tray implementation of tier-3 account coverage automation with callable ingest a
 5. Compose outreach plan and run approval.
 6. Execute approved outbound/CRM actions.
 7. Emit `tier3.coverage.executed` or `tier3.coverage.blocked`.
+
+## Format Parity
+- Compatibility posture: `workflow.json` tracks machine intent and step sequencing, but it is not the native Tray project/workflow export JSON envelope.
+- Importability: reference scaffold, not fully importable as-is.
+- Official docs/API examples: [Import / Export](https://tray.ai/documentation/platform/enterprise-core/lifecycle-management/import-export), [Projects API (import, requirements, preview, export)](https://tray.ai/documentation/developer/platform-apis/projects).
+- Public template/community source: [Workflow Threading Template (Tray Library)](https://tray.ai/documentation/library/template/3a24d0a7-f940-4ac7-b455-6a11380fcde5-workflow-threading-template).

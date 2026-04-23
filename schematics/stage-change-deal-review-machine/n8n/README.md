@@ -5,6 +5,13 @@ Contract-first n8n adapter using `gtm_event_v1` for stage-progression review pro
 ## Artifacts
 - `workflow.json`: importable reference workflow.
 
+## Format Parity
+- Importable workflow JSON: Yes (`workflow.json` is valid JSON and follows n8n workflow export object shape).
+- Required top-level keys: Present (`name`, `nodes`, `connections`).
+- Parity references:
+  - Official n8n export/import docs: https://docs.n8n.io/workflows/export-import/
+  - Community/open workflow source: https://n8n.io/workflows/
+
 ## Triggering
 - Primary trigger: `Webhook` (`POST`) for stage-change events.
 - Supported `event_type` values:

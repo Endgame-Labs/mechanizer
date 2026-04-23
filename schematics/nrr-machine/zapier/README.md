@@ -5,6 +5,15 @@ Zapier implementation for low-touch/no-touch NRR orchestration with scoring, app
 ## Artifact
 - `zap.template.json`
 
+## Format Parity
+- Intent: `zap.template.json` in this folder is a reference template for build guidance, not a direct Zapier account export JSON.
+- Compatibility posture: treat this artifact as design-time documentation. Zapier JSON import/export is available on Team and Enterprise plans and expects Zapier-exported JSON; this file may require manual rebuild in the Zap editor before it can be exported/imported between accounts.
+- Official docs:
+  - https://help.zapier.com/hc/en-us/articles/8496308481933-Import-and-export-Zaps-in-your-Team-or-Enterprise-account
+  - https://help.zapier.com/hc/en-us/articles/8496292155405-Share-a-template-of-your-Zap
+- Public template source:
+  - https://zapier.com/templates
+
 ## Recommended Zap Shape
 1. Trigger from NRR signal webhook or scheduled cohort sweep.
 2. Validate and normalize to `gtm_event_v1`.

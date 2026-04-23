@@ -1,5 +1,7 @@
 # New Hire Ramp Accelerator Machine
 
+![new-hire-ramp-accelerator-machine Diagram](./diagram.svg)
+
 ## Purpose
 Generate an onboarding package immediately after rep provisioning, tailored to assigned territory/book, with contract-stable behavior across adapters.
 

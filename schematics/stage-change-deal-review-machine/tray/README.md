@@ -23,3 +23,9 @@ Tray implementation of stage-change review with strict idempotency and approval-
 ## Error and Retry Path
 - Transient connector failures: automatic retries/backoff.
 - Validation/policy failures: terminal findings-only or failed-validation output.
+
+## Format Parity
+- Compatibility posture: `workflow.json` tracks machine intent and step sequencing, but it is not the native Tray project/workflow export JSON envelope.
+- Importability: reference scaffold, not fully importable as-is.
+- Official docs/API examples: [Import / Export](https://tray.ai/documentation/platform/enterprise-core/lifecycle-management/import-export), [Projects API (import, requirements, preview, export)](https://tray.ai/documentation/developer/platform-apis/projects).
+- Public template/community source: [Workflow Threading Template (Tray Library)](https://tray.ai/documentation/library/template/3a24d0a7-f940-4ac7-b455-6a11380fcde5-workflow-threading-template).

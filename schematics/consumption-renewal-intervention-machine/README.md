@@ -1,5 +1,7 @@
 # Consumption Renewal Intervention Machine
 
+![consumption-renewal-intervention-machine Diagram](./diagram.svg)
+
 ## Purpose
 Detect renewals with under-consumption risk on a daily cadence, generate an intervention plan, notify Slack, and optionally execute approved downstream actions.
 

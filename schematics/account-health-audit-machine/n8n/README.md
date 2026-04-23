@@ -5,6 +5,13 @@ Contract-first n8n adapter for `account-health-audit-machine` using `gtm_event_v
 ## Artifacts
 - `workflow.json`: importable reference workflow for n8n.
 
+## Format Parity
+- Importable workflow JSON: Yes (`workflow.json` is valid JSON and follows n8n workflow export object shape).
+- Required top-level keys: Present (`name`, `nodes`, `connections`).
+- Parity references:
+  - Official n8n export/import docs: https://docs.n8n.io/workflows/export-import/
+  - Community/open workflow source: https://n8n.io/workflows/
+
 ## Triggering
 - Primary trigger: `Webhook` (`POST`) for event-driven ingestion.
 - Scheduled trigger option: n8n `Schedule Trigger` set to `0 6 * * 1-5` (`America/Los_Angeles`).

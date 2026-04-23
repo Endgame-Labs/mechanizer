@@ -1,5 +1,7 @@
 # Account Health Audit Machine
 
+![account-health-audit-machine Diagram](./diagram.svg)
+
 ## Purpose
 Run a deterministic scheduled account health audit that fuses warehouse metrics, CRM state, and conversation intelligence into a narrative summary with a prioritized execution roadmap.
 

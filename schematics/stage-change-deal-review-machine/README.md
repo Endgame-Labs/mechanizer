@@ -1,5 +1,7 @@
 # Stage Change Deal Review Machine
 
+![stage-change-deal-review-machine Diagram](./diagram.svg)
+
 ## Purpose
 Run a deterministic deal review when an opportunity advances stage, then either apply approved CRM writeback or post Slack findings for seller action.
 

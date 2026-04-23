@@ -1,5 +1,7 @@
 # Renewal Risk Monitoring Machine
 
+![renewal-risk-monitoring-machine Diagram](./diagram.svg)
+
 ## Purpose
 Identify renewal-near accounts with elevated risk signals, generate recommended plays, alert CSM owners, and optionally execute approved downstream actions.
 

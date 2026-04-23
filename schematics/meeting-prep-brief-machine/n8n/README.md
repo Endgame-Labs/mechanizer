@@ -5,6 +5,13 @@ n8n adapter for `meeting-prep-brief-machine` focused on reliable pre-meeting bri
 ## Artifacts
 - `workflow.json`: importable reference workflow.
 
+## Format Parity
+- Importable workflow JSON: Yes (`workflow.json` is valid JSON and follows n8n workflow export object shape).
+- Required top-level keys: Present (`name`, `nodes`, `connections`).
+- Parity references:
+  - Official n8n export/import docs: https://docs.n8n.io/workflows/export-import/
+  - Community/open workflow source: https://n8n.io/workflows/
+
 ## Triggering
 - Realtime trigger: `Webhook` for `meeting.scheduled`, `account.exec_meeting_booked`, `opportunity.stage_changed`.
 - Batch trigger: `Schedule Trigger` every 15 minutes for near-term meeting sweep.

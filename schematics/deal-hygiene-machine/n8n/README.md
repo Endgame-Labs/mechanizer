@@ -5,6 +5,13 @@ Contract-first n8n adapter for `deal-hygiene-machine` using `gtm_event_v1` as th
 ## Artifacts
 - `workflow.json`: importable reference workflow for n8n.
 
+## Format Parity
+- Importable workflow JSON: Yes (`workflow.json` is valid JSON and follows n8n workflow export object shape).
+- Required top-level keys: Present (`name`, `nodes`, `connections`).
+- Parity references:
+  - Official n8n export/import docs: https://docs.n8n.io/workflows/export-import/
+  - Community/open workflow source: https://n8n.io/workflows/
+
 ## Triggering
 - Primary trigger: `Webhook` (`POST`) for event-driven ingestion.
 - Recommended production setup:

@@ -23,6 +23,13 @@ Tray runtime for `meeting-prep-brief-machine` that composes prep briefs from rev
 - Use Data Storage `Project` scope for event-level dedupe.
 - Keep large meeting/transcript blobs out of Data Storage key limits.
 
+
+## Format Parity
+- Compatibility posture: `workflow.json` tracks machine intent and step sequencing, but it is not the native Tray project/workflow export JSON envelope.
+- Importability: reference scaffold, not fully importable as-is.
+- Official docs/API examples: [Import / Export](https://tray.ai/documentation/platform/enterprise-core/lifecycle-management/import-export), [Projects API (import, requirements, preview, export)](https://tray.ai/documentation/developer/platform-apis/projects).
+- Public template/community source: [Workflow Threading Template (Tray Library)](https://tray.ai/documentation/library/template/3a24d0a7-f940-4ac7-b455-6a11380fcde5-workflow-threading-template).
+
 ## References
 - Scheduled trigger: https://tray.ai/documentation/connectors/triggers/scheduled-trigger/
 - Callable trigger: https://tray.ai/documentation/connectors/trigger/callable-trigger
