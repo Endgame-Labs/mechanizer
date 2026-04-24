@@ -1,0 +1,208 @@
+{
+  "name": "product-propensity-modeling-machine-v1",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "timezone": "America/Los_Angeles"
+  },
+  "meta": {
+    "machine_id": "product-propensity-modeling-machine",
+    "schema_version": "gtm_event_v1",
+    "idempotency_key": "event_id"
+  },
+  "nodes": [
+    {
+      "id": "Webhook_Ingest",
+      "name": "Webhook Ingest",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 260],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "product-propensity-modeling-machine",
+        "responseMode": "onReceived"
+      }
+    },
+    {
+      "id": "Normalize_Validate",
+      "name": "Normalize + Validate gtm_event_v1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 260],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst required = ['event_id', 'event_type', 'source', 'occurred_at', 'trace', 'subject'];\nfor (const key of required) { if (!e[key]) throw new Error(`Missing ${key}`); }\nconst allowed = ['propensity.score_requested', 'propensity.context_ready', 'account.product_signal_changed'];\nif (!allowed.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id && !e.subject?.account_id) throw new Error('Missing subject account identity');\nif (!e.attributes?.product_id) throw new Error('Missing attributes.product_id');\nreturn { ...e, schema_version: 'gtm_event_v1', ingested_at: e.ingested_at || new Date().toISOString(), attributes: { scoring_window: '90d', ...e.attributes }, trace: { ...e.trace, run_id: e.trace?.run_id || `${e.event_id}:${Date.now()}` } };"
+      }
+    },
+    {
+      "id": "Fetch_Endgame_Context",
+      "name": "Fetch Endgame Context",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [740, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://context.internal/endgame/propensity-context",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "Propensity_Score_Reasoner",
+      "name": "propensity_score_reasoner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1000, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/propensity_score_reasoner/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 10000
+    },
+    {
+      "id": "Directive_Alignment",
+      "name": "directive_alignment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1260, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/directive_alignment/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "Route_Exec_Alert",
+      "name": "route_exec_alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1520, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cogs.internal/route_exec_alert/v1/execute",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "Build_Scored_Event",
+      "name": "Build Propensity Scored Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 260],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst score = Number(e.attributes?.propensity_score ?? 0);\nconst band = score >= 80 ? 'high' : score >= 55 ? 'medium' : 'low';\nreturn {\n  ...e,\n  event_type: 'product.propensity.scored',\n  attributes: {\n    ...e.attributes,\n    propensity_score: score,\n    propensity_band: e.attributes?.propensity_band || band,\n    score_confidence: e.attributes?.score_confidence || 'low',\n    reason_codes: e.attributes?.reason_codes || [],\n    recommended_play: e.attributes?.recommended_play || 'monitor_until_more_signal',\n    evidence_refs: e.attributes?.evidence_refs || []\n  }\n};"
+      }
+    },
+    {
+      "id": "Emit_Output",
+      "name": "Emit product.propensity.scored",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2040, 260],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{$json}}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Ingest": {
+      "main": [
+        [
+          {
+            "node": "Normalize + Validate gtm_event_v1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize + Validate gtm_event_v1": {
+      "main": [
+        [
+          {
+            "node": "Fetch Endgame Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Endgame Context": {
+      "main": [
+        [
+          {
+            "node": "propensity_score_reasoner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "propensity_score_reasoner": {
+      "main": [
+        [
+          {
+            "node": "directive_alignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "directive_alignment": {
+      "main": [
+        [
+          {
+            "node": "route_exec_alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "route_exec_alert": {
+      "main": [
+        [
+          {
+            "node": "Build Propensity Scored Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Propensity Scored Event": {
+      "main": [
+        [
+          {
+            "node": "Emit product.propensity.scored",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

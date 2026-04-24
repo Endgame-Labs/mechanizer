@@ -1,0 +1,164 @@
+{
+  "zap_name": "Product Propensity Modeling Machine",
+  "version": "1.1.0",
+  "machine_id": "product-propensity-modeling-machine",
+  "description": "Scheduled or webhook-triggered account-product propensity scoring with Endgame context, idempotent execution, approval gates, and terminal event emission.",
+  "trigger": {
+    "primary": {
+      "app": "schedule_by_zapier",
+      "event": "every_hour",
+      "interval_hours": 6,
+      "timezone": "America/Los_Angeles"
+    },
+    "alternate": {
+      "app": "webhooks_by_zapier",
+      "event": "catch_hook",
+      "path": "/product-propensity/events"
+    },
+    "accepts_event_types": [
+      "propensity.score_requested",
+      "propensity.context_ready",
+      "account.product_signal_changed"
+    ]
+  },
+  "gtm_event_v1_mapping": {
+    "required": [
+      "schema_version",
+      "event_id",
+      "event_type",
+      "source",
+      "occurred_at",
+      "ingested_at",
+      "trace",
+      "subject",
+      "attributes.product_id"
+    ]
+  },
+  "steps": [
+    {
+      "id": "normalize_validate",
+      "app": "code_by_zapier",
+      "event": "run_javascript",
+      "purpose": "Normalize to gtm_event_v1 and fail fast on missing account identity, product_id, trace, or unsupported event_type."
+    },
+    {
+      "id": "filter_supported_events",
+      "app": "filter_by_zapier",
+      "event": "only_continue_if",
+      "rule": "event_type in ['propensity.score_requested','propensity.context_ready','account.product_signal_changed']"
+    },
+    {
+      "id": "idempotency_lookup",
+      "app": "storage_by_zapier",
+      "event": "get_value",
+      "key_template": "product-propensity:${event_id}:${attributes.product_id}"
+    },
+    {
+      "id": "fetch_endgame_context",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://context.internal/endgame/propensity-context",
+        "json": {
+          "event": "{{trigger.raw_body}}",
+          "context_providers": [
+            "endgame_mcp_or_cli",
+            "salesforce_headless_360",
+            "warehouse_bi",
+            "product_telemetry",
+            "gong_or_zoom",
+            "web_research_optional"
+          ]
+        }
+      }
+    },
+    {
+      "id": "propensity_score_reasoner",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://cogs.internal/propensity_score_reasoner/v1/execute"
+      }
+    },
+    {
+      "id": "directive_alignment",
+      "app": "webhooks_by_zapier",
+      "event": "post",
+      "request": {
+        "url": "https://cogs.internal/directive_alignment/v1/execute"
+      }
+    },
+    {
+      "id": "route_score_alert",
+      "app": "paths_by_zapier",
+      "event": "branch",
+      "paths": [
+        {
+          "name": "high_propensity",
+          "condition": "propensity_band == 'high' && score_confidence != 'low'",
+          "actions": [
+            {
+              "app": "slack",
+              "event": "send_channel_message"
+            }
+          ]
+        },
+        {
+          "name": "standard_emit",
+          "condition": "propensity_band != 'high' || score_confidence == 'low'",
+          "actions": [
+            {
+              "app": "webhooks_by_zapier",
+              "event": "post",
+              "request": {
+                "url": "https://events.internal/emit",
+                "json": {
+                  "event_type": "product.propensity.scored"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "idempotency_store",
+      "app": "storage_by_zapier",
+      "event": "set_value",
+      "key_template": "product-propensity:${event_id}:${attributes.product_id}",
+      "value_fields": [
+        "event_id",
+        "trace.trace_id",
+        "trace.run_id",
+        "attributes.product_id",
+        "attributes.propensity_score",
+        "attributes.propensity_band",
+        "attributes.score_confidence",
+        "status"
+      ]
+    }
+  ],
+  "zapier_runtime_profile": {
+    "paths": {
+      "max_branches_per_group": 10,
+      "max_nested_paths_steps": 3,
+      "max_total_steps": 100,
+      "must_be_final_step": true
+    },
+    "code": {
+      "javascript_runtime": "nodejs_22",
+      "io_limit_mb": 6
+    },
+    "webhooks": {
+      "raw_hook_max_mb": 2,
+      "payload_limit_mb": {
+        "triggers": 10,
+        "actions": 5
+      }
+    },
+    "task_usage": {
+      "filters_and_paths_consume_tasks": false,
+      "storage_steps_consume_tasks": false
+    }
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "name": "product-propensity-modeling-machine-v1",
+  "machine_id": "product-propensity-modeling-machine",
+  "version": "1.1.0",
+  "trigger": {
+    "type": "scheduled_or_callable",
+    "scheduled": {
+      "operation": "cron",
+      "cron": "0 */6 * * *",
+      "timezone": "America/Los_Angeles"
+    },
+    "callable": {
+      "operation": "trigger_and_respond"
+    },
+    "input_schema": "gtm_event_v1",
+    "accepts_event_types": [
+      "propensity.score_requested",
+      "propensity.context_ready",
+      "account.product_signal_changed"
+    ]
+  },
+  "config": {
+    "slo": {
+      "p95_end_to_end_seconds": 420
+    },
+    "idempotency_key": "event_id+attributes.product_id",
+    "approval_required_for_side_effects": true
+  },
+  "steps": [
+    {
+      "id": "normalize_validate",
+      "type": "script",
+      "script": "assert_required_gtm_event_v1_fields_and_product_id"
+    },
+    {
+      "id": "idempotency_get",
+      "type": "data_storage.get_value",
+      "input": {
+        "scope": "project",
+        "key": "product-propensity:${steps.normalize_validate.output.event_id}:${steps.normalize_validate.output.attributes.product_id}",
+        "default": null
+      }
+    },
+    {
+      "id": "branch_if_new",
+      "type": "branch",
+      "branches": [
+        {
+          "name": "new",
+          "when": "steps.idempotency_get.output == null"
+        },
+        {
+          "name": "duplicate",
+          "when": "steps.idempotency_get.output != null"
+        }
+      ]
+    },
+    {
+      "id": "endgame_context",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_endgame_context_retrieval",
+      "input": {
+        "event": "${steps.normalize_validate.output}",
+        "providers": [
+          "endgame_mcp",
+          "endgame_cli",
+          "salesforce_headless_360",
+          "warehouse_bi",
+          "product_telemetry",
+          "gong_or_zoom",
+          "web_research_optional"
+        ]
+      }
+    },
+    {
+      "id": "propensity_score_cog",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_propensity_score_reasoner",
+      "input": {
+        "event": "${steps.normalize_validate.output}",
+        "context": "${steps.endgame_context.output}"
+      }
+    },
+    {
+      "id": "directive_alignment_cog",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_directive_alignment",
+      "input": {
+        "analysis": "${steps.propensity_score_cog.output}",
+        "context": "${steps.endgame_context.output}"
+      }
+    },
+    {
+      "id": "approval_needed_gate",
+      "branch": "new",
+      "type": "boolean_condition",
+      "condition": "steps.propensity_score_cog.output.side_effects.length > 0"
+    },
+    {
+      "id": "approval_loop_cog",
+      "branch": "new",
+      "type": "call_workflow",
+      "operation": "fire_and_wait_for_response",
+      "workflow": "shared_approval_loop",
+      "run_when": "steps.approval_needed_gate.output == true",
+      "input": {
+        "machine_id": "product-propensity-modeling-machine",
+        "event_id": "${steps.normalize_validate.output.event_id}",
+        "actions": "${steps.propensity_score_cog.output.side_effects}",
+        "proposal": "${steps.propensity_score_cog.output}",
+        "timeout_seconds": 1800
+      }
+    },
+    {
+      "id": "emit_output_event",
+      "branch": "new",
+      "type": "http.client",
+      "method": "POST",
+      "url": "https://events.internal/v1/publish",
+      "body_template": {
+        "schema_version": "gtm_event_v1",
+        "event_id": "${steps.normalize_validate.output.event_id}",
+        "event_type": "product.propensity.scored",
+        "source": "tray",
+        "trace": "${steps.normalize_validate.output.trace}",
+        "subject": "${steps.normalize_validate.output.subject}",
+        "attributes": {
+          "product_id": "${steps.normalize_validate.output.attributes.product_id}",
+          "propensity_score": "${steps.propensity_score_cog.output.propensity_score}",
+          "propensity_band": "${steps.propensity_score_cog.output.propensity_band}",
+          "score_confidence": "${steps.propensity_score_cog.output.score_confidence}",
+          "reason_codes": "${steps.propensity_score_cog.output.reason_codes}",
+          "recommended_play": "${steps.propensity_score_cog.output.recommended_play}",
+          "evidence_refs": "${steps.propensity_score_cog.output.evidence_refs}",
+          "approval_status": "${steps.approval_loop_cog.output.approval_status || 'not_required'}"
+        }
+      }
+    },
+    {
+      "id": "idempotency_set",
+      "branch": "new",
+      "type": "data_storage.set_value",
+      "input": {
+        "scope": "project",
+        "key": "product-propensity:${steps.normalize_validate.output.event_id}:${steps.normalize_validate.output.attributes.product_id}",
+        "value": {
+          "terminal_event_type": "product.propensity.scored",
+          "updated_at": "${meta.now}"
+        }
+      }
+    },
+    {
+      "id": "response_duplicate",
+      "branch": "duplicate",
+      "type": "callable_workflow_response",
+      "body": {
+        "event_type": "product.propensity.duplicate_ignored",
+        "status": "ignored"
+      }
+    },
+    {
+      "id": "response_new",
+      "branch": "new",
+      "type": "callable_workflow_response",
+      "body": {
+        "event_type": "product.propensity.scored",
+        "trace": "${steps.normalize_validate.output.trace}",
+        "attributes": {
+          "product_id": "${steps.normalize_validate.output.attributes.product_id}",
+          "propensity_score": "${steps.propensity_score_cog.output.propensity_score}",
+          "propensity_band": "${steps.propensity_score_cog.output.propensity_band}",
+          "score_confidence": "${steps.propensity_score_cog.output.score_confidence}"
+        }
+      }
+    }
+  ]
+}

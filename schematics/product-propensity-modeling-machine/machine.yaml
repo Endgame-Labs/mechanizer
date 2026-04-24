@@ -1,0 +1,42 @@
+machine_id: product-propensity-modeling-machine
+version: v1.0.0
+owners:
+  - team: revenue-intelligence
+    contact: revint@example.com
+objective: "Generate auditable account-product propensity scores using Endgame context, CRM/warehouse features, product usage, market-basket signals, and external research signals."
+kpis:
+  - id: kpi_1
+    name: "Propensity score coverage"
+    target: ">= 95% of eligible account-product pairs scored per run"
+  - id: kpi_2
+    name: "Precision at top decile"
+    target: "define-per-org against accepted opportunities or purchases"
+  - id: kpi_3
+    name: "Median score freshness"
+    target: "<= 24h for priority segments"
+triggers:
+  - type: schedule
+    schedule_cron: "0 */6 * * *"
+    timezone: "America/Los_Angeles"
+  - type: event
+    event_types: [propensity.score_requested, propensity.context_ready, account.product_signal_changed]
+inputs:
+  contract: gtm_event_v1
+  sources: [endgame_mcp, endgame_cli, warehouse_bi, salesforce_headless_360, salesforce, hubspot, product_telemetry, gong, zoom, web_research]
+outputs:
+  event_contract: gtm_event_v1
+  side_effects: [propensity_score_publish, crm_propensity_field_upsert, propensity_audience_sync, seller_alert_route]
+slo:
+  p95_end_to_end_seconds: 420
+  availability: "99.5%"
+dependencies:
+  cogs: [propensity_score_reasoner@v1.0.0, directive_alignment@v1.0.0, route_exec_alert@v1.0.0, approval_loop@v1.0.0]
+feature_flags:
+  - external_signal_enrichment
+  - crm_writeback_requires_approval
+security:
+  pii_policy: "minimize"
+  secret_source: "platform_secret_store"
+  model_policy: "emit evidence-backed scores only; never expose raw sensitive features in seller-facing outputs"
+rollback:
+  mode: "disable_schedule_and_drain"

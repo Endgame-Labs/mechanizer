@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Product Propensity Modeling Machine</title>
+  <desc id="desc">Product propensity modeling combines Endgame context, CRM, warehouse, usage, conversation, market-basket, and external signals into account-product propensity scores.</desc>
+  <defs>
+    <linearGradient id="bg5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7faf6"/>
+      <stop offset="100%" stop-color="#e9f4ef"/>
+    </linearGradient>
+    <marker id="arrow5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2b6958"/>
+    </marker>
+    <style>
+      .t{font:700 34px 'Inter', 'Segoe UI', sans-serif; fill:#1f5749}
+      .l{font:600 18px 'Inter', 'Segoe UI', sans-serif; fill:#2a6f5f}
+      .m{font:500 14px 'Inter', 'Segoe UI', sans-serif; fill:#4f6f66}
+      .n{fill:#ffffff; stroke:#bdd8cf; stroke-width:2}
+      .a{fill:#eaf7f2; stroke:#90c7b6; stroke-width:2}
+      .f{stroke:#2b6958; stroke-width:3; fill:none; marker-end:url(#arrow5)}
+      .p{stroke:#6f998d; stroke-width:2.5; stroke-dasharray:10 8; fill:none}
+      .z{stroke:#ff9a4d; stroke-width:4; fill:none}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="url(#bg5)"/>
+  <text x="60" y="70" class="t">Product Propensity Modeling Machine</text>
+
+  <rect x="60" y="145" width="220" height="94" rx="14" class="n"/>
+  <text x="88" y="188" class="l">Score Trigger</text>
+  <text x="88" y="210" class="m">schedule or event</text>
+
+  <rect x="320" y="145" width="240" height="94" rx="14" class="n"/>
+  <text x="352" y="188" class="l">Endgame Context</text>
+  <text x="352" y="210" class="m">account graph + evidence</text>
+
+  <rect x="610" y="145" width="240" height="94" rx="14" class="a"/>
+  <text x="640" y="188" class="l">Feature Merge</text>
+  <text x="640" y="210" class="m">CRM + usage + basket</text>
+
+  <rect x="900" y="145" width="240" height="94" rx="14" class="n"/>
+  <text x="930" y="188" class="l">External Signals</text>
+  <text x="930" y="210" class="m">timing + fit context</text>
+
+  <rect x="280" y="360" width="280" height="100" rx="14" class="a"/>
+  <text x="312" y="405" class="l">Propensity Cog</text>
+  <text x="312" y="427" class="m">score + confidence</text>
+
+  <rect x="620" y="360" width="260" height="100" rx="14" class="n"/>
+  <text x="650" y="405" class="l">Directive + Approval</text>
+  <text x="650" y="427" class="m">safe writeback gate</text>
+
+  <rect x="920" y="360" width="220" height="100" rx="14" class="n"/>
+  <text x="950" y="405" class="l">Output Event</text>
+  <text x="950" y="427" class="m">product.propensity.scored</text>
+
+  <path d="M280 192 L320 192" class="f"/>
+  <path d="M560 192 L610 192" class="f"/>
+  <path d="M850 192 L900 192" class="f"/>
+  <path d="M730 239 L730 360" class="f"/>
+  <path d="M880 410 L920 410" class="f"/>
+  <path d="M560 410 L620 410" class="f"/>
+
+  <path d="M1020 239 L1020 360" class="p"/>
+  <path d="M420 239 L420 360" class="p"/>
+
+  <polyline points="582,290 606,254 634,288 658,252" class="z"/>
+
+  <rect x="60" y="530" width="1080" height="62" rx="12" fill="#ffffff" stroke="#bdd8cf"/>
+  <text x="82" y="557" class="m">Integrations: Endgame MCP/CLI + Warehouse/BI + Salesforce Headless 360 + product telemetry + Gong/Zoom/Chorus + web research</text>
+  <text x="82" y="579" class="m">Contract: gtm_event_v1 end-to-end, with score, confidence, reason codes, recommended play, and evidence refs</text>
+
+  <rect x="60" y="610" width="1080" height="56" rx="12" fill="#ffffff" stroke="#bdd8cf"/>
+  <text x="82" y="645" class="m">Legend: Solid arrows = scoring path, dashed lines = cross-source signal sync, orange mark = high-propensity account-product pair.</text>
+</svg>

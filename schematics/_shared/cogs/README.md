@@ -14,5 +14,6 @@ Current shared smart-cog set:
 - `enrich_account_health`: deterministic + feature enrichment for account/deal health.
 - `route_exec_alert`: severity-based alert target selection.
 - `deal_score_reasoner`: score-band calculation and next-play recommendation.
+- `propensity_score_reasoner`: account-product propensity score calculation with Endgame context and evidence refs.
 - `directive_alignment`: QA pass/fail against enablement directives.
 - `compose_outreach_message`: outbound message draft creation from approved plays.

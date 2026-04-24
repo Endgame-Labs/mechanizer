@@ -1,0 +1,61 @@
+schema_version: cog_v1
+cog:
+  id: propensity_score_reasoner
+  version: v1.0.0
+  display_name: Propensity Score Reasoner
+  owner: revenue-intelligence
+  category: scoring
+  description: Produces account-product propensity scores using Endgame context, behavioral features, market-basket affinity, fit signals, external signals, and calibrated evidence.
+  tags: [propensity, scoring, product, expansion, endgame]
+input_contract:
+  required_fields:
+    - subject.account_id
+    - attributes.product_id
+    - attributes.scoring_window
+    - attributes.context_refs
+  optional_fields:
+    - attributes.market_basket_features
+    - attributes.external_signals
+    - attributes.crm_fit_features
+    - metrics.product_usage_90d
+  accepted_schema_versions: [gtm_event_v1]
+output_contract:
+  emitted_fields:
+    - attributes.propensity_score
+    - attributes.propensity_band
+    - attributes.score_confidence
+    - attributes.reason_codes
+    - attributes.evidence_refs
+    - attributes.recommended_play
+  guaranteed_fields:
+    - attributes.propensity_score
+    - attributes.propensity_band
+    - attributes.score_confidence
+  failure_mode: emit_partial
+execution:
+  idempotent: true
+  timeout_seconds: 60
+  max_retries: 2
+  retry_backoff: exponential
+  depends_on: []
+examples:
+  input:
+    subject:
+      account_id: acct_789
+    attributes:
+      product_id: treasury_plus
+      scoring_window: 90d
+      context_refs:
+        - endgame://accounts/acct_789
+      market_basket_features:
+        co_purchase_lift: 1.8
+      crm_fit_features:
+        segment: enterprise
+  output:
+    attributes:
+      propensity_score: 82
+      propensity_band: high
+      score_confidence: medium
+      reason_codes: [adjacent_product_adoption, peer_affinity, active_exec_thread]
+      evidence_refs: ["endgame://evidence/propensity/acct_789/treasury_plus"]
+      recommended_play: "route_to_owner_with_value_hypothesis"
