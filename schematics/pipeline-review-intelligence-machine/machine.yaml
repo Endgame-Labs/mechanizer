@@ -25,6 +25,10 @@ inputs:
   sources: [salesforce_headless_360, salesforce, hubspot, gong, slack, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - pipeline.review.prep.completed
+    - pipeline.review.prep.deferred
+    - pipeline.review.prep.failed
   side_effects: [manager_summary_send, rep_task_create, alert_send, crm_note_append]
 slo:
   p95_end_to_end_seconds: 300

@@ -19,6 +19,11 @@ inputs:
   sources: [salesforce_headless_360, hubspot, outreach, apollo, clearbit, linkedin, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - sdr.sequence.ready
+    - sdr.sequence.blocked
+    - sdr.response.routed
+    - sdr.sequence.failed
   side_effects: [sequence_draft_create, crm_task_create, qualified_response_route, exec_alert_send]
 slo:
   p95_end_to_end_seconds: 210

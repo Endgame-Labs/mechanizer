@@ -27,12 +27,14 @@ Use this machine when renewal cohorts are too large for manual daily inspection 
 - Optional (approval-gated): `renewal_plan_update`, `csm_task_create`, `outbound_email_send`
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Keep event normalization, idempotency, Slack notification, and approval-gated downstream action behavior stable across workflow runtimes.
-- `agentic/` and `claude-routines/`:
-  - Use the same cog order and preserve `gtm_event_v1` at runtime boundaries.
-- `claw-like/`:
-  - Drive scheduled execution and liveness from `HEARTBEAT.md`.
+- `n8n/`: Keep event normalization, idempotency, Slack notification, and approval-gated downstream action behavior stable.
+- `zapier/`: Keep event normalization, idempotency, Slack notification, and approval-gated downstream action behavior stable.
+- `tray/`: Keep event normalization, idempotency, Slack notification, and approval-gated downstream action behavior stable.
+- `make/`: Keep event normalization, idempotency, Slack notification, and approval-gated downstream action behavior stable.
+- `workato/`: Keep event normalization, idempotency, Slack notification, and approval-gated downstream action behavior stable.
+- `agentic/`: Use the same cog order and preserve `gtm_event_v1` at runtime boundaries.
+- `claude-routines/`: Use the same routine order and preserve `gtm_event_v1` at runtime boundaries.
+- `claw-like/`: Drive scheduled execution and liveness from `HEARTBEAT.md`.
 
 ## Example Input
 ```json
@@ -51,7 +53,7 @@ Use this machine when renewal cohorts are too large for manual daily inspection 
 ## Example Output
 ```json
 {
-  "event_type": "cri.play.executed",
+  "event_type": "consumption.renewal.intervention.executed",
   "attributes": {
     "intervention_score": 84,
     "recommended_play": "renewal_rescue",

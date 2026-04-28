@@ -76,12 +76,14 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Normalize all inbound payloads to `gtm_event_v1` first.
-- `agentic/` and `claude-routines/`:
-  - Keep enrichment, scoring, alignment, drafting, and approval as explicit stages.
-- `claw-like/`:
-  - Use heartbeat schedule for refresh runs and stale-run alerting.
+- `n8n/`: Normalize inbound payloads to `gtm_event_v1` before enrichment, scoring, drafting, approval, and emit.
+- `zapier/`: Normalize inbound payloads to `gtm_event_v1` before enrichment, scoring, drafting, approval, and emit.
+- `tray/`: Normalize inbound payloads to `gtm_event_v1` before enrichment, scoring, drafting, approval, and emit.
+- `make/`: Normalize inbound payloads to `gtm_event_v1` before enrichment, scoring, drafting, approval, and emit.
+- `workato/`: Normalize inbound payloads to `gtm_event_v1` before enrichment, scoring, drafting, approval, and emit.
+- `agentic/`: Keep enrichment, scoring, alignment, drafting, and approval as explicit stages.
+- `claude-routines/`: Keep enrichment, scoring, alignment, drafting, and approval as explicit routine stages.
+- `claw-like/`: Use heartbeat schedule for refresh runs and stale-run alerting.
 
 ## ChatGPT Workspace Agents Support
 - ChatGPT and Slack surfaces:

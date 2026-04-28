@@ -19,6 +19,10 @@ inputs:
   sources: [product_telemetry, gainsight, salesforce_headless_360, salesforce, stripe, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - nrr.play.executed
+    - nrr.play.blocked
+    - nrr.play.failed
   side_effects: [csm_task_create, exec_alert_send, renewal_plan_update, outbound_email_send]
 slo:
   p95_end_to_end_seconds: 240

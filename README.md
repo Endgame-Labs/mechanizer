@@ -110,6 +110,24 @@ All forms must honor shared contracts.
 - `renewal-risk-monitoring-machine`
 - `product-propensity-modeling-machine`
 
+## Machine Index
+| Machine | Primary Triggers | Terminal Events | Adapter Coverage |
+| --- | --- | --- | --- |
+| [`account-health-audit-machine`](schematics/account-health-audit-machine/) | 0 6 * * 1-5<br>audit.run_requested, audit.snapshot_ready | account.health.audit.completed<br>account.health.audit.failed | All required adapters |
+| [`account-plan-generation-machine`](schematics/account-plan-generation-machine/) | account.plan.refresh_requested, account.tier_changed, planning.window_opened<br>0 */6 * * * | account.plan.generated<br>account.plan.blocked<br>account.plan.failed | All required adapters |
+| [`ai-sdr-outbound-machine`](schematics/ai-sdr-outbound-machine/) | prospect.research_requested, account.intent_detected, response.received | sdr.sequence.ready<br>sdr.sequence.blocked<br>sdr.response.routed<br>sdr.sequence.failed | All required adapters |
+| [`consumption-renewal-intervention-machine`](schematics/consumption-renewal-intervention-machine/) | 0 7 * * *<br>renewal.window_opened, renewal.consumption_under_target_detected | consumption.renewal.intervention.executed<br>consumption.renewal.intervention.blocked<br>consumption.renewal.intervention.failed | All required adapters |
+| [`deal-hygiene-machine`](schematics/deal-hygiene-machine/) | deal.updated, call.completed, account.health_changed | deal.hygiene.remediated<br>deal.hygiene.deferred<br>deal.hygiene.failed | All required adapters |
+| [`meeting-prep-brief-machine`](schematics/meeting-prep-brief-machine/) | meeting.scheduled, account.exec_meeting_booked, opportunity.stage_changed | meeting.prep_brief.delivered<br>meeting.prep_brief.blocked<br>meeting.prep_brief.failed | All required adapters |
+| [`new-hire-ramp-accelerator-machine`](schematics/new-hire-ramp-accelerator-machine/) | rep.provisioned, rep.territory_assigned, rep.book_rebalanced<br>0 */4 * * * | rep.onboarding.package_generated<br>rep.onboarding.package_blocked<br>rep.onboarding.failed | All required adapters |
+| [`nrr-machine`](schematics/nrr-machine/) | account.health_changed, usage.declined, renewal.window_opened | nrr.play.executed<br>nrr.play.blocked<br>nrr.play.failed | All required adapters |
+| [`pipeline-review-intelligence-machine`](schematics/pipeline-review-intelligence-machine/) | 0 7 * * 1<br>pipeline.review.requested, deal.updated, activity.logged | pipeline.review.prep.completed<br>pipeline.review.prep.deferred<br>pipeline.review.prep.failed | All required adapters |
+| [`product-propensity-modeling-machine`](schematics/product-propensity-modeling-machine/) | 0 */6 * * *<br>propensity.score_requested, propensity.context_ready, account.product_signal_changed | product.propensity.scored<br>product.propensity.blocked<br>product.propensity.failed | All required adapters |
+| [`renewal-risk-monitoring-machine`](schematics/renewal-risk-monitoring-machine/) | 0 7 * * *<br>renewal.window_opened, account.risk_signal.detected | renewal.risk.play.executed<br>renewal.risk.play.blocked<br>renewal.risk.play.failed | All required adapters |
+| [`sales-coaching-machine`](schematics/sales-coaching-machine/) | call.completed | coaching.recommendation.created<br>coaching.recommendation.blocked<br>coaching.recommendation.failed | All required adapters |
+| [`stage-change-deal-review-machine`](schematics/stage-change-deal-review-machine/) | deal.stage_changed, opportunity.stage_changed | deal.stage_review.writeback_applied<br>deal.stage_review.findings_posted<br>deal.stage_review.failed | All required adapters |
+| [`tier-3-account-coverage-machine`](schematics/tier-3-account-coverage-machine/) | account.health_changed, usage.declined, renewal.window_opened, intent.signal_detected<br>0 */6 * * * | tier3.coverage.executed<br>tier3.coverage.blocked<br>tier3.coverage.failed | All required adapters |
+
 ## Agentic Support Model
 `mechanizer` supports three agentic operating modes:
 1. `agentic/`: provider-agnostic orchestration runbooks.
@@ -144,20 +162,20 @@ All forms must honor shared contracts.
 
 ## Diagrams
 - `docs/assets/flow-overview.svg`
-- `schematics/deal-hygiene-machine/diagram.svg`
-- `schematics/tier-3-account-coverage-machine/diagram.svg`
-- `schematics/ai-sdr-outbound-machine/diagram.svg`
-- `schematics/account-health-audit-machine/diagram.svg`
-- `schematics/consumption-renewal-intervention-machine/diagram.svg`
-- `schematics/meeting-prep-brief-machine/diagram.svg`
-- `schematics/account-plan-generation-machine/diagram.svg`
-- `schematics/pipeline-review-intelligence-machine/diagram.svg`
-- `schematics/stage-change-deal-review-machine/diagram.svg`
-- `schematics/new-hire-ramp-accelerator-machine/diagram.svg`
-- `schematics/renewal-risk-monitoring-machine/diagram.svg`
-- `schematics/product-propensity-modeling-machine/diagram.svg`
-- `schematics/sales-coaching-machine/diagram.svg`
-- `schematics/nrr-machine/diagram.svg`
+- [`schematics/deal-hygiene-machine/diagram.svg`](schematics/deal-hygiene-machine/)
+- [`schematics/tier-3-account-coverage-machine/diagram.svg`](schematics/tier-3-account-coverage-machine/)
+- [`schematics/ai-sdr-outbound-machine/diagram.svg`](schematics/ai-sdr-outbound-machine/)
+- [`schematics/account-health-audit-machine/diagram.svg`](schematics/account-health-audit-machine/)
+- [`schematics/consumption-renewal-intervention-machine/diagram.svg`](schematics/consumption-renewal-intervention-machine/)
+- [`schematics/meeting-prep-brief-machine/diagram.svg`](schematics/meeting-prep-brief-machine/)
+- [`schematics/account-plan-generation-machine/diagram.svg`](schematics/account-plan-generation-machine/)
+- [`schematics/pipeline-review-intelligence-machine/diagram.svg`](schematics/pipeline-review-intelligence-machine/)
+- [`schematics/stage-change-deal-review-machine/diagram.svg`](schematics/stage-change-deal-review-machine/)
+- [`schematics/new-hire-ramp-accelerator-machine/diagram.svg`](schematics/new-hire-ramp-accelerator-machine/)
+- [`schematics/renewal-risk-monitoring-machine/diagram.svg`](schematics/renewal-risk-monitoring-machine/)
+- [`schematics/product-propensity-modeling-machine/diagram.svg`](schematics/product-propensity-modeling-machine/)
+- [`schematics/sales-coaching-machine/diagram.svg`](schematics/sales-coaching-machine/)
+- [`schematics/nrr-machine/diagram.svg`](schematics/nrr-machine/)
 - `docs/assets/approval-loop-cog.svg`
 
 ## Diagram Gallery

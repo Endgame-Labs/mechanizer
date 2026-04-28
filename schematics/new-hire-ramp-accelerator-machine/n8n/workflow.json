@@ -63,7 +63,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const now = new Date().toISOString();\nreturn {\n  event_id: `new-hire-ramp-refresh-${Date.now()}`,\n  event_type: 'rep.onboarding.package_requested',\n  source: 'new_hire_scheduler',\n  occurred_at: now,\n  ingested_at: now,\n  trace: { trace_id: `trace_new_hire_ramp_${Date.now()}` },\n  subject: { entity_type: 'rep', entity_id: 'new_hire_cohort' },\n  attributes: { refresh_mode: 'scheduled' }\n};"
+        "jsCode": "const now = new Date().toISOString();\nreturn {\n  event_id: `new-hire-ramp-refresh-${Date.now()}`,\n  event_type: 'rep.provisioned',\n  source: 'new_hire_scheduler',\n  occurred_at: now,\n  ingested_at: now,\n  trace: { trace_id: `trace_new_hire_ramp_${Date.now()}` },\n  subject: { entity_type: 'rep', entity_id: 'new_hire_cohort' },\n  attributes: { refresh_mode: 'scheduled' }\n};"
       }
     },
     {
@@ -78,7 +78,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const e = $json;\nconst required = ['event_id','event_type','source','occurred_at','trace','subject'];\nfor (const k of required) { if (!e[k]) throw new Error(`Missing ${k}`); }\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nconst supported = ['rep.onboarding.package_requested','rep.created','rep.territory_assigned'];\nif (!supported.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nreturn {\n  ...e,\n  machine_id: 'new-hire-ramp-accelerator-machine',\n  schema_version: 'gtm_event_v1',\n  ingested_at: e.ingested_at || new Date().toISOString(),\n  trace: { ...e.trace, run_id: e.trace?.run_id || `${e.event_id}:${Date.now()}` }\n};"
+        "jsCode": "const e = $json;\nconst required = ['event_id','event_type','source','occurred_at','trace','subject'];\nfor (const k of required) { if (!e[k]) throw new Error(`Missing ${k}`); }\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nconst supported = ['rep.provisioned','rep.territory_assigned','rep.book_rebalanced'];\nif (!supported.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nreturn {\n  ...e,\n  machine_id: 'new-hire-ramp-accelerator-machine',\n  schema_version: 'gtm_event_v1',\n  ingested_at: e.ingested_at || new Date().toISOString(),\n  trace: { ...e.trace, run_id: e.trace?.run_id || `${e.event_id}:${Date.now()}` }\n};"
       }
     },
     {

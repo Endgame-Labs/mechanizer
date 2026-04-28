@@ -7,9 +7,7 @@
     "output_contract": "gtm_event_v1",
     "idempotency_key": "event_id",
     "accepted_event_types": [
-      "call.completed",
-      "deal.stage_changed",
-      "rep.activity_low"
+      "call.completed"
     ],
     "approval_required_before_side_effects": false
   },
@@ -28,9 +26,7 @@
       "input_schema": "gtm_event_v1",
       "path": "/sales-coaching-machine",
       "accepts_event_types": [
-        "call.completed",
-        "deal.stage_changed",
-        "rep.activity_low"
+        "call.completed"
       ]
     },
     {
@@ -108,8 +104,19 @@
         "attributes": {
           "approval_status": "not_required",
           "workato_job_url": "{{job.url}}"
-        }
-      }
+        },
+        "event_type": "coaching.recommendation.created",
+        "terminal_events": {
+          "success": "coaching.recommendation.created",
+          "blocked": "coaching.recommendation.blocked",
+          "failed": "coaching.recommendation.failed",
+          "success_event_type": "coaching.recommendation.created",
+          "blocked_event_type": "coaching.recommendation.blocked"
+        },
+        "event_id": "{{normalize_validate.event_id}}",
+        "subject": "{{normalize_validate.subject}}"
+      },
+      "terminal_event_selector": "success_event_type"
     },
     {
       "id": "write_run_summary",
@@ -145,5 +152,12 @@
         "workato_job_url"
       ]
     }
+  },
+  "terminal_events": {
+    "success": "coaching.recommendation.created",
+    "blocked": "coaching.recommendation.blocked",
+    "failed": "coaching.recommendation.failed",
+    "success_event_type": "coaching.recommendation.created",
+    "blocked_event_type": "coaching.recommendation.blocked"
   }
 }

@@ -24,6 +24,10 @@ inputs:
   sources: [salesforce_headless_360, salesforce, hubspot, endgame_mcp, endgame_cli, enablement_system]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - rep.onboarding.package_generated
+    - rep.onboarding.package_blocked
+    - rep.onboarding.failed
   side_effects: [onboarding_package_upsert, crm_task_create, checklist_writeback, alert_send]
 slo:
   p95_end_to_end_seconds: 300

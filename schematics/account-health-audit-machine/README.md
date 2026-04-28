@@ -116,12 +116,14 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Keep deterministic mapping and priority ordering stable across adapters.
-- `agentic/` and `claude-routines/`:
-  - Use the same cog order and enforce contract checks pre/post reasoning.
-- `claw-like/`:
-  - Drive scheduling and liveness from `HEARTBEAT.md`.
+- `n8n/`: Keep deterministic mapping and priority ordering stable while preserving `gtm_event_v1` normalization and idempotency.
+- `zapier/`: Keep deterministic mapping and priority ordering stable while preserving `gtm_event_v1` normalization and idempotency.
+- `tray/`: Keep deterministic mapping and priority ordering stable while preserving `gtm_event_v1` normalization and idempotency.
+- `make/`: Keep deterministic mapping and priority ordering stable while preserving `gtm_event_v1` normalization and idempotency.
+- `workato/`: Keep deterministic mapping and priority ordering stable while preserving `gtm_event_v1` normalization and idempotency.
+- `agentic/`: Use the same cog order and enforce contract checks pre/post reasoning.
+- `claude-routines/`: Use the same cog order and enforce contract checks pre/post routine execution.
+- `claw-like/`: Drive scheduling and liveness from `HEARTBEAT.md`.
 
 ## ChatGPT Workspace Agents Support
 - ChatGPT and Slack surfaces:

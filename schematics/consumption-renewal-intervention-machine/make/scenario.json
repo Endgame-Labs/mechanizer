@@ -136,7 +136,7 @@
       "parameters": {
         "url": "https://events.internal/emit",
         "method": "POST",
-        "body": "{\"event_type\":\"{{if(9.route = \\\"approved\\\"; \\\"cri.play.executed\\\"; \\\"cri.play.blocked\\\")}}\",\"event_id\":\"{{2.event_id}}\"}"
+        "body": "{\"event_type\":\"{{if(9.route = \\\"approved\\\"; \\\"consumption.renewal.intervention.executed\\\"; \\\"consumption.renewal.intervention.blocked\\\")}}\",\"event_id\":\"{{2.event_id}}\"}"
       }
     }
   ]

@@ -13,6 +13,9 @@ Workato implementation notes for `meeting-prep-brief-machine` using API recipes,
 5. Run `approval_loop` before mutating downstream systems or sending external actions.
 6. Branch approved/deferred, perform allowed side effects, emit terminal `gtm_event_v1`, and write run summary.
 
+## Terminal Events
+- Approved path emits `meeting.prep_brief.delivered` from `emit_terminal_event.body.event_type`.
+- Blocked/deferred path emits `meeting.prep_brief.blocked` from `emit_terminal_event.body.event_type`.
 ## Idempotency and State
 - Use a lookup table key `meeting-prep-brief-machine:{event_id}` before any downstream side effect.
 - Persist terminal status, approval decision when present, `trace.trace_id`, and Workato job URL.

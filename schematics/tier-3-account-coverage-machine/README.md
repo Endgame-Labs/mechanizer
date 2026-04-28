@@ -76,12 +76,14 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Keep approval check immediately before outbound and CRM writes.
-- `agentic/` and `claude-routines/`:
-  - Keep stage boundaries explicit and contract-preserving.
-- `claw-like/`:
-  - Use heartbeat cadence for low-touch cohort sweeps and stale detection.
+- `n8n/`: Keep approval check immediately before outbound and CRM writes.
+- `zapier/`: Keep approval check immediately before outbound and CRM writes.
+- `tray/`: Keep approval check immediately before outbound and CRM writes.
+- `make/`: Keep approval check immediately before outbound and CRM writes.
+- `workato/`: Keep approval check immediately before outbound and CRM writes.
+- `agentic/`: Keep stage boundaries explicit and contract-preserving.
+- `claude-routines/`: Keep routine boundaries explicit and contract-preserving.
+- `claw-like/`: Use heartbeat cadence for low-touch cohort sweeps and stale detection.
 
 ## ChatGPT Workspace Agents Support
 - ChatGPT and Slack surfaces:

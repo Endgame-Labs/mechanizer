@@ -22,7 +22,7 @@ n8n adapter for recurring and bulk account-plan generation with approval-gated m
 - Output terminal events:
   - `account.plan.generated`
   - `account.plan.blocked`
-  - `account.plan.skipped_duplicate`
+  - `account.plan.duplicate_ignored`
   - `account.plan.failed`
 
 ## Flow Mapping

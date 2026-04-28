@@ -25,6 +25,10 @@ inputs:
   sources: [endgame_mcp, endgame_cli, warehouse_bi, salesforce_headless_360, salesforce, hubspot, product_telemetry, gong, zoom, web_research]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - product.propensity.scored
+    - product.propensity.blocked
+    - product.propensity.failed
   side_effects: [propensity_score_publish, crm_propensity_field_upsert, propensity_audience_sync, seller_alert_route]
 slo:
   p95_end_to_end_seconds: 420

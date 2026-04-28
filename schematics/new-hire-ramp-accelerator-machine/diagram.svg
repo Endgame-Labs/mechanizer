@@ -66,7 +66,7 @@
 
   <rect x="60" y="532" width="1080" height="62" rx="12" fill="#ffffff" stroke="#b9dcc8"/>
   <text x="82" y="558" class="m">Package sections: territory_snapshot | starter_accounts | messaging_kit | week_one_plan</text>
-  <text x="82" y="580" class="m">Adapters: n8n, Zapier, Tray, Make, Agentic, Claude Routines, Claw-like</text>
+  <text x="82" y="580" class="m">Adapters: n8n, Zapier, Tray, Make, Workato, Agentic, Claude Routines, Claw-like</text>
 
   <rect x="60" y="612" width="1080" height="56" rx="12" fill="#ffffff" stroke="#b9dcc8"/>
   <text x="82" y="646" class="m">Legend: solid arrows = execution path, dashed = context sync, orange = approval-gated mutation boundary.</text>

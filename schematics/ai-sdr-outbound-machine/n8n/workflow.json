@@ -219,7 +219,7 @@
         "method": "POST",
         "url": "https://events.internal/v1/publish",
         "sendBody": true,
-        "jsonBody": "={{ { ...$json, event_type: 'sdr.outbound.blocked', approval_status: $json.approval_status || 'rejected_or_timeout' } }}"
+        "jsonBody": "={{ { ...$json, event_type: 'sdr.sequence.blocked', approval_status: $json.approval_status || 'rejected_or_timeout' } }}"
       },
       "id": "emit_blocked",
       "name": "Emit Blocked Event",

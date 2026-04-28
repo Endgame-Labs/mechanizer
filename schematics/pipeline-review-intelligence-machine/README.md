@@ -72,13 +72,14 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Keep deterministic canonical mapping for `gtm_event_v1`.
-  - Place `approval_loop` directly before outbound summary delivery and mutation side effects.
-- `agentic/` and `claude-routines/`:
-  - Keep enrichment, scoring, alignment, summary generation, routing, and approval as explicit phases.
-- `claw-like/`:
-  - Use `HEARTBEAT.md` schedule for weekly prep plus stale-run alerting.
+- `n8n/`: Keep deterministic canonical mapping for `gtm_event_v1` and place `approval_loop` before outbound summaries or mutations.
+- `zapier/`: Keep deterministic canonical mapping for `gtm_event_v1` and place `approval_loop` before outbound summaries or mutations.
+- `tray/`: Keep deterministic canonical mapping for `gtm_event_v1` and place `approval_loop` before outbound summaries or mutations.
+- `make/`: Keep deterministic canonical mapping for `gtm_event_v1` and place `approval_loop` before outbound summaries or mutations.
+- `workato/`: Keep deterministic canonical mapping for `gtm_event_v1` and place `approval_loop` before outbound summaries or mutations.
+- `agentic/`: Keep enrichment, scoring, alignment, summary generation, routing, and approval as explicit phases.
+- `claude-routines/`: Keep enrichment, scoring, alignment, summary generation, routing, and approval as explicit routine phases.
+- `claw-like/`: Use `HEARTBEAT.md` schedule for weekly prep plus stale-run alerting.
 
 ## ChatGPT Workspace Agents Support
 - ChatGPT/Slack:

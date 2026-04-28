@@ -19,6 +19,10 @@ inputs:
   sources: [google_calendar, outlook_calendar, salesforce_headless_360, salesforce, gong, product_telemetry, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - meeting.prep_brief.delivered
+    - meeting.prep_brief.blocked
+    - meeting.prep_brief.failed
   side_effects: [slack_brief_send, inbox_brief_send, crm_note_append]
 slo:
   p95_end_to_end_seconds: 180

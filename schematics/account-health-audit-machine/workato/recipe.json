@@ -121,8 +121,19 @@
         "attributes": {
           "approval_status": "not_required",
           "workato_job_url": "{{job.url}}"
-        }
-      }
+        },
+        "event_type": "account.health.audit.completed",
+        "terminal_events": {
+          "success": "account.health.audit.completed",
+          "duplicate": "account.health.audit.duplicate_ignored",
+          "failed": "account.health.audit.failed",
+          "success_event_type": "account.health.audit.completed",
+          "blocked_event_type": "account.health.audit.blocked"
+        },
+        "event_id": "{{normalize_validate.event_id}}",
+        "subject": "{{normalize_validate.subject}}"
+      },
+      "terminal_event_selector": "success_event_type"
     },
     {
       "id": "write_run_summary",
@@ -158,5 +169,12 @@
         "workato_job_url"
       ]
     }
+  },
+  "terminal_events": {
+    "success": "account.health.audit.completed",
+    "duplicate": "account.health.audit.duplicate_ignored",
+    "failed": "account.health.audit.failed",
+    "success_event_type": "account.health.audit.completed",
+    "blocked_event_type": "account.health.audit.blocked"
   }
 }

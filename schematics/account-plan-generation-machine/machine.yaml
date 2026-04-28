@@ -24,6 +24,10 @@ inputs:
   sources: [salesforce_headless_360, salesforce, hubspot, product_telemetry, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - account.plan.generated
+    - account.plan.blocked
+    - account.plan.failed
   side_effects: [account_plan_upsert, crm_note_append, task_create, alert_send]
 slo:
   p95_end_to_end_seconds: 420

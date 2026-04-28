@@ -14,6 +14,9 @@ Workato implementation notes for `account-plan-generation-machine` using API rec
 6. Run `approval_loop` before mutating downstream systems or sending external actions.
 7. Branch approved/deferred, perform allowed side effects, emit terminal `gtm_event_v1`, and write run summary.
 
+## Terminal Events
+- Approved path emits `account.plan.generated` from `emit_terminal_event.body.event_type`.
+- Blocked/deferred path emits `account.plan.blocked` from `emit_terminal_event.body.event_type`.
 ## Idempotency and State
 - Use a lookup table key `account-plan-generation-machine:{event_id}` before any downstream side effect.
 - Persist terminal status, approval decision when present, `trace.trace_id`, and Workato job URL.

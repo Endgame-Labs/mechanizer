@@ -12,6 +12,9 @@ Workato implementation notes for `sales-coaching-machine` using API recipes, rec
 4. Call shared recipe functions for smart cogs: `directive_alignment`, `route_exec_alert`, `deal_score_reasoner`.
 5. Perform deterministic side effects, emit terminal `gtm_event_v1`, and write run summary.
 
+## Terminal Events
+- Successful deterministic completion emits `coaching.recommendation.created` from `emit_terminal_event.body.event_type`.
+- Blocked terminal runs emit `coaching.recommendation.blocked` from `emit_terminal_event.body.terminal_events.blocked_event_type`.
 ## Idempotency and State
 - Use a lookup table key `sales-coaching-machine:{event_id}` before any downstream side effect.
 - Persist terminal status, approval decision when present, `trace.trace_id`, and Workato job URL.

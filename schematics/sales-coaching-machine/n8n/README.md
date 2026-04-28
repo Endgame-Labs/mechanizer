@@ -37,7 +37,7 @@ n8n implementation for sales coaching signals from call events, with directive c
 6. `route_exec_alert`.
 7. `approval_loop`.
 8. Approved branch creates coaching side effects and emits `coaching.recommendation.created`.
-9. Rejected/timeout branch emits `coaching.recommendation.deferred`.
+9. Rejected/timeout branch emits `coaching.recommendation.blocked`.
 
 ## Retries and Error Handling
 - Enable `Retry On Fail` for API-based cog calls and downstream side effects.

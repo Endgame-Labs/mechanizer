@@ -18,7 +18,7 @@
     "approval_required_before_side_effects": true,
     "accepted_event_types": [
       "deal.updated",
-      "opportunity.stage_changed",
+      "call.completed",
       "account.health_changed"
     ]
   },

@@ -20,7 +20,7 @@ Runtime guidance for daily under-consumption renewal detection, intervention pla
 ## Approval Checkpoints
 - `approval_loop` required for all optional mutation actions.
 - Slack summary may be allowed pre-approval if configured as non-mutating notification.
-- Approval denial/timeout -> `cri.play.blocked_optional_actions`.
+- Approval denial/timeout -> `consumption.renewal.intervention.blocked`.
 
 ## External API/MCP Notes
 - Keep API trigger payload in `text` concise: account ID(s), reason, urgency.

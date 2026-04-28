@@ -13,6 +13,9 @@ Workato implementation notes for `deal-hygiene-machine` using API recipes, recip
 5. Run `approval_loop` before mutating downstream systems or sending external actions.
 6. Branch approved/deferred, perform allowed side effects, emit terminal `gtm_event_v1`, and write run summary.
 
+## Terminal Events
+- Approved path emits `deal.hygiene.remediated` from `emit_terminal_event.body.event_type`.
+- Blocked/deferred path emits `deal.hygiene.deferred` from `emit_terminal_event.body.event_type`.
 ## Idempotency and State
 - Use a lookup table key `deal-hygiene-machine:{event_id}` before any downstream side effect.
 - Persist terminal status, approval decision when present, `trace.trace_id`, and Workato job URL.

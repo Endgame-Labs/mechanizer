@@ -7,9 +7,9 @@
 - objective: generate onboarding package artifacts and execute approved downstream actions.
 
 ## Supported Events
-- `rep.onboarding.requested`
-- `rep.start_date_confirmed`
-- `territory.assignment.updated`
+- `rep.provisioned`
+- `rep.territory_assigned`
+- `rep.book_rebalanced`
 
 ## Stage Plan
 1. `validate_input`

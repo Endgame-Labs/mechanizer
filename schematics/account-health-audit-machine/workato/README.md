@@ -13,6 +13,9 @@ Workato implementation notes for `account-health-audit-machine` using API recipe
 5. Call shared recipe functions for smart cogs: `enrich_account_health`, `deal_score_reasoner`, `directive_alignment`, `route_exec_alert`.
 6. Perform deterministic side effects, emit terminal `gtm_event_v1`, and write run summary.
 
+## Terminal Events
+- Successful deterministic completion emits `account.health.audit.completed` from `emit_terminal_event.body.event_type`.
+- Blocked terminal runs emit `account.health.audit.blocked` from `emit_terminal_event.body.terminal_events.blocked_event_type`.
 ## Idempotency and State
 - Use a lookup table key `account-health-audit-machine:{event_id}` before any downstream side effect.
 - Persist terminal status, approval decision when present, `trace.trace_id`, and Workato job URL.

@@ -25,6 +25,10 @@ inputs:
   sources: [salesforce_headless_360, salesforce, gainsight, product_telemetry, support_system, billing_system, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - renewal.risk.play.executed
+    - renewal.risk.play.blocked
+    - renewal.risk.play.failed
   side_effects: [slack_notify, csm_task_create, playbook_recommendation_upsert, exec_alert_route]
 slo:
   p95_end_to_end_seconds: 300

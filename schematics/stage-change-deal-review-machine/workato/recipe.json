@@ -137,8 +137,19 @@
         "attributes": {
           "approval_status": "{{approval_loop.approval_status}}",
           "workato_job_url": "{{job.url}}"
-        }
-      }
+        },
+        "event_type": "{{approval_loop.approval_status == 'approved' ? 'deal.stage_review.writeback_applied' : 'deal.stage_review.findings_posted'}}",
+        "terminal_events": {
+          "success": "deal.stage_review.writeback_applied",
+          "alternate_success": "deal.stage_review.findings_posted",
+          "failed": "deal.stage_review.failed",
+          "approved_event_type": "deal.stage_review.writeback_applied",
+          "deferred_event_type": "deal.stage_review.findings_posted"
+        },
+        "event_id": "{{normalize_validate.event_id}}",
+        "subject": "{{normalize_validate.subject}}"
+      },
+      "terminal_event_selector": "approval_loop.approval_status == 'approved' ? approved_event_type : deferred_event_type"
     },
     {
       "id": "write_run_summary",
@@ -174,5 +185,12 @@
         "workato_job_url"
       ]
     }
+  },
+  "terminal_events": {
+    "success": "deal.stage_review.writeback_applied",
+    "alternate_success": "deal.stage_review.findings_posted",
+    "failed": "deal.stage_review.failed",
+    "approved_event_type": "deal.stage_review.writeback_applied",
+    "deferred_event_type": "deal.stage_review.findings_posted"
   }
 }

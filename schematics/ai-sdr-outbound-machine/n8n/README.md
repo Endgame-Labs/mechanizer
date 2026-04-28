@@ -36,7 +36,7 @@ n8n implementation for SDR outbound research, personalized drafting, approval-ga
 7. `approval_loop`.
 8. `Approved?` gate branches terminal behavior.
 9. Approved branch emits `sdr.sequence.ready` or `sdr.response.routed` based on source event type.
-10. Non-approved branch emits `sdr.outbound.blocked`.
+10. Non-approved branch emits `sdr.sequence.blocked`.
 
 ## Error Handling
 - Enable retries for API calls.

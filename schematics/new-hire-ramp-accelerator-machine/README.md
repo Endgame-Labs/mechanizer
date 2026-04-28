@@ -56,13 +56,14 @@ Use this machine when new reps need a high-quality starting package within minut
 - `rep.onboarding.failed`
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Keep canonical field names aligned with contract keys.
-  - Keep approval gate before CRM/document mutations.
-- `agentic/` and `claude-routines/`:
-  - Keep cog phases explicit and deterministic at boundaries.
-- `claw-like/`:
-  - `HEARTBEAT.md` is schedule and liveness source of truth.
+- `n8n/`: Keep canonical field names aligned with contract keys and keep approval before CRM/document mutations.
+- `zapier/`: Keep canonical field names aligned with contract keys and keep approval before CRM/document mutations.
+- `tray/`: Keep canonical field names aligned with contract keys and keep approval before CRM/document mutations.
+- `make/`: Keep canonical field names aligned with contract keys and keep approval before CRM/document mutations.
+- `workato/`: Keep canonical field names aligned with contract keys and keep approval before CRM/document mutations.
+- `agentic/`: Keep cog phases explicit and deterministic at runtime boundaries.
+- `claude-routines/`: Keep routine phases explicit and deterministic at runtime boundaries.
+- `claw-like/`: `HEARTBEAT.md` is the schedule and liveness source of truth.
 
 ## ChatGPT Workspace Agents Support
 - ChatGPT + Slack: manager/enablement prompts and status updates can run through ChatGPT Workspace with Slack handoff for reviewer notifications.

@@ -70,12 +70,14 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Keep approval immediately before Slack/email delivery nodes.
-- `agentic/` and `claude-routines/`:
-  - Keep enrichment, scoring, alignment, composition, and approval as explicit phases.
-- `claw-like/`:
-  - Use heartbeat-driven meeting-window sweeps and stale-run alerts.
+- `n8n/`: Keep approval immediately before Slack/email delivery nodes.
+- `zapier/`: Keep approval immediately before Slack/email delivery nodes.
+- `tray/`: Keep approval immediately before Slack/email delivery nodes.
+- `make/`: Keep approval immediately before Slack/email delivery nodes.
+- `workato/`: Keep approval immediately before Slack/email delivery nodes.
+- `agentic/`: Keep enrichment, scoring, alignment, composition, and approval as explicit phases.
+- `claude-routines/`: Keep enrichment, scoring, alignment, composition, and approval as explicit routine phases.
+- `claw-like/`: Use heartbeat-driven meeting-window sweeps and stale-run alerts.
 
 ## ChatGPT Workspace Agents Support
 - Surfaces: supports ChatGPT workspace execution with Slack delivery and action follow-up handoff.

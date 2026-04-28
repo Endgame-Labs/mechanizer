@@ -8,8 +8,6 @@
 
 ## Supported Events
 - `call.completed`
-- `deal.stage_changed`
-- `rep.activity_low`
 
 ## Stage Plan
 1. `validate_input`

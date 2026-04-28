@@ -25,6 +25,9 @@ inputs:
   sources: [warehouse_bi, salesforce_headless_360, salesforce, hubspot, gong, zoom, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - account.health.audit.completed
+    - account.health.audit.failed
   side_effects: [account_health_audit_publish, narrative_digest_send, roadmap_task_upsert]
 slo:
   p95_end_to_end_seconds: 300

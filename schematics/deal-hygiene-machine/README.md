@@ -135,13 +135,14 @@ Output event (simplified):
   - Assumes org-level auditability (trace IDs, proposed vs approved deltas, actor attribution), policy controls, and admin visibility across agent runs.
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Keep deterministic field mapping identical to contract names.
-  - Ensure approval node precedes all write actions.
-- `agentic/` and `claude-routines/`:
-  - Use Smart Cogs as explicit staged tools with stable contracts.
-- `claw-like/`:
-  - Use `HEARTBEAT.md` for schedule + liveness guarantees.
+- `n8n/`: Keep deterministic field mapping identical to contract names and ensure approval precedes write actions.
+- `zapier/`: Keep deterministic field mapping identical to contract names and ensure approval precedes write actions.
+- `tray/`: Keep deterministic field mapping identical to contract names and ensure approval precedes write actions.
+- `make/`: Keep deterministic field mapping identical to contract names and ensure approval precedes write actions.
+- `workato/`: Keep deterministic field mapping identical to contract names and ensure approval precedes write actions.
+- `agentic/`: Use Smart Cogs as explicit staged tools with stable contracts.
+- `claude-routines/`: Use routine steps as explicit staged tools with stable contracts.
+- `claw-like/`: Use `HEARTBEAT.md` for schedule and liveness guarantees.
 
 ## Safety and Audit
 - Never execute SFDC writes without `approval_loop` pass for high-impact changes.

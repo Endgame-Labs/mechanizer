@@ -15,7 +15,7 @@ Use this machine when you want consistent coaching quality at scale without forc
 
 ## Trigger Models
 - Realtime trigger:
-  - `call.completed`, `deal.stage_changed`, and engagement-risk events.
+  - `call.completed` post-call events.
 - Batch trigger:
   - Daily digest generation for managers and pipeline review workflows.
 
@@ -124,12 +124,14 @@ Output event (simplified):
   - Assumes enterprise governance for policy checks, run/audit telemetry, actor attribution, and admin visibility across workspace agent operations.
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Keep transcript-derived fields normalized to `gtm_event_v1` before scoring.
-- `agentic/` and `claude-routines/`:
-  - Isolate extraction, scoring, and alignment as explicit Smart Cog phases.
-- `claw-like/`:
-  - Use heartbeat for digest windows and stale-run alerting.
+- `n8n/`: Keep transcript-derived fields normalized to `gtm_event_v1` before scoring.
+- `zapier/`: Keep transcript-derived fields normalized to `gtm_event_v1` before scoring.
+- `tray/`: Keep transcript-derived fields normalized to `gtm_event_v1` before scoring.
+- `make/`: Keep transcript-derived fields normalized to `gtm_event_v1` before scoring.
+- `workato/`: Keep transcript-derived fields normalized to `gtm_event_v1` before scoring.
+- `agentic/`: Isolate extraction, scoring, and alignment as explicit Smart Cog phases.
+- `claude-routines/`: Isolate extraction, scoring, and alignment as explicit routine phases.
+- `claw-like/`: Use heartbeat for digest windows and stale-run alerting.
 
 ## Safety and Audit
 - Keep transcript excerpts and recommendation rationale linked by trace ID.

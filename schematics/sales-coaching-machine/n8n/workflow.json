@@ -210,10 +210,10 @@
         "method": "POST",
         "url": "https://events.internal/v1/publish",
         "sendBody": true,
-        "jsonBody": "={{ { ...$json, event_type: 'coaching.recommendation.deferred', coaching_status: 'needs_review' } }}"
+        "jsonBody": "={{ { ...$json, event_type: 'coaching.recommendation.blocked', coaching_status: 'blocked' } }}"
       },
       "id": "emit_deferred",
-      "name": "Emit coaching.recommendation.deferred",
+      "name": "Emit coaching.recommendation.blocked",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [2350, 390]
@@ -355,7 +355,7 @@
         ],
         [
           {
-            "node": "Emit coaching.recommendation.deferred",
+            "node": "Emit coaching.recommendation.blocked",
             "type": "main",
             "index": 0
           }
@@ -395,7 +395,7 @@
         ]
       ]
     },
-    "Emit coaching.recommendation.deferred": {
+    "Emit coaching.recommendation.blocked": {
       "main": [
         [
           {

@@ -17,7 +17,10 @@
       "name": "Daily Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
-      "position": [120, 260],
+      "position": [
+        120,
+        260
+      ],
       "parameters": {
         "rule": {
           "cronExpression": "0 7 * * *"
@@ -29,7 +32,10 @@
       "name": "Build Daily Event",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [360, 260],
+      "position": [
+        360,
+        260
+      ],
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
@@ -41,21 +47,67 @@
       "name": "Slack Notify",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [620, 260],
+      "position": [
+        620,
+        260
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://slack.internal/notify",
         "sendBody": true,
         "jsonBody": "={{$json}}"
       }
+    },
+    {
+      "id": "4",
+      "name": "Emit renewal.risk.play.executed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        880,
+        260
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://events.internal/v1/publish",
+        "sendBody": true,
+        "jsonBody": "={{ { ...$json, event_type: 'renewal.risk.play.executed' } }}"
+      }
     }
   ],
   "connections": {
     "Daily Trigger": {
-      "main": [[{"node": "Build Daily Event", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Build Daily Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build Daily Event": {
-      "main": [[{"node": "Slack Notify", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Slack Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notify": {
+      "main": [
+        [
+          {
+            "node": "Emit renewal.risk.play.executed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   }
 }

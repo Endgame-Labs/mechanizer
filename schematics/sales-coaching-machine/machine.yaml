@@ -13,12 +13,16 @@ kpis:
     target: "define-per-org"
 triggers:
   - type: event
-    event_types: [call.completed, deal.stage_changed, rep.activity_low]
+    event_types: [call.completed]
 inputs:
   contract: gtm_event_v1
   sources: [gong, salesforce_headless_360, salesforce, hubspot, outreach, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - coaching.recommendation.created
+    - coaching.recommendation.blocked
+    - coaching.recommendation.failed
   side_effects: [coaching_task_create, summary_send, score_update]
 slo:
   p95_end_to_end_seconds: 180

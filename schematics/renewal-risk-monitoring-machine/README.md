@@ -28,12 +28,14 @@ Use this machine when the renewal book is too large for manual review and CSMs n
 - Optional (approval-gated): `csm_task_create`, `playbook_recommendation_upsert`
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Keep risk scoring, alert routing, idempotency, and approval-gated downstream action behavior stable across workflow runtimes.
-- `agentic/` and `claude-routines/`:
-  - Use the same cog order and preserve `gtm_event_v1` at runtime boundaries.
-- `claw-like/`:
-  - Drive scheduled execution and liveness from `HEARTBEAT.md`.
+- `n8n/`: Keep risk scoring, alert routing, idempotency, and approval-gated downstream action behavior stable.
+- `zapier/`: Keep risk scoring, alert routing, idempotency, and approval-gated downstream action behavior stable.
+- `tray/`: Keep risk scoring, alert routing, idempotency, and approval-gated downstream action behavior stable.
+- `make/`: Keep risk scoring, alert routing, idempotency, and approval-gated downstream action behavior stable.
+- `workato/`: Keep risk scoring, alert routing, idempotency, and approval-gated downstream action behavior stable.
+- `agentic/`: Use the same cog order and preserve `gtm_event_v1` at runtime boundaries.
+- `claude-routines/`: Use the same routine order and preserve `gtm_event_v1` at runtime boundaries.
+- `claw-like/`: Drive scheduled execution and liveness from `HEARTBEAT.md`.
 
 ## Example Input
 ```json
@@ -53,7 +55,7 @@ Use this machine when the renewal book is too large for manual review and CSMs n
 ## Example Output
 ```json
 {
-  "event_type": "renewal.risk.monitoring.completed",
+  "event_type": "renewal.risk.play.executed",
   "attributes": {
     "risk_score": 87,
     "risk_tier": "high",

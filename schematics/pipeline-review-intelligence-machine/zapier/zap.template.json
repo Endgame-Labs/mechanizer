@@ -100,7 +100,7 @@
               "request": {
                 "url": "https://events.internal/emit",
                 "json": {
-                  "event_type": "pipeline.review.prep.executed"
+                  "event_type": "pipeline.review.prep.completed"
                 }
               }
             }

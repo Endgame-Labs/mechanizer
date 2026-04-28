@@ -85,13 +85,14 @@ Output event (Slack findings path, simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Keep schema validation and idempotency before cog execution.
-  - Place `approval_loop` immediately before CRM writeback.
-- `agentic/` and `claude-routines/`:
-  - Keep stages explicit: validate, enrich, score, align, route, approve, execute.
-- `claw-like/`:
-  - Use heartbeat schedule for missed-event backfill and stale-run alerting.
+- `n8n/`: Keep schema validation and idempotency before cog execution, with `approval_loop` immediately before CRM writeback.
+- `zapier/`: Keep schema validation and idempotency before cog execution, with `approval_loop` immediately before CRM writeback.
+- `tray/`: Keep schema validation and idempotency before cog execution, with `approval_loop` immediately before CRM writeback.
+- `make/`: Keep schema validation and idempotency before cog execution, with `approval_loop` immediately before CRM writeback.
+- `workato/`: Keep schema validation and idempotency before cog execution, with `approval_loop` immediately before CRM writeback.
+- `agentic/`: Keep stages explicit: validate, enrich, score, align, route, approve, execute.
+- `claude-routines/`: Keep routine stages explicit: validate, enrich, score, align, route, approve, execute.
+- `claw-like/`: Use heartbeat schedule for missed-event backfill and stale-run alerting.
 
 ## ChatGPT Workspace Agents Support
 - ChatGPT/Slack:

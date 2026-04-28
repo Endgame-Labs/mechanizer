@@ -135,12 +135,14 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Preserve the same score thresholds, reason-code schema, idempotency behavior, and terminal event names.
-- `agentic/` and `claude-routines/`:
-  - Use Endgame context tools for evidence gathering and keep score output contract-bound.
-- `claw-like/`:
-  - Drives six-hour refreshes and stale-score detection from `HEARTBEAT.md`.
+- `n8n/`: Preserve score thresholds, reason-code schema, idempotency behavior, and terminal event names.
+- `zapier/`: Preserve score thresholds, reason-code schema, idempotency behavior, and terminal event names.
+- `tray/`: Preserve score thresholds, reason-code schema, idempotency behavior, and terminal event names.
+- `make/`: Preserve score thresholds, reason-code schema, idempotency behavior, and terminal event names.
+- `workato/`: Preserve score thresholds, reason-code schema, idempotency behavior, and terminal event names.
+- `agentic/`: Use Endgame context tools for evidence gathering and keep score output contract-bound.
+- `claude-routines/`: Use Endgame context steps for evidence gathering and keep score output contract-bound.
+- `claw-like/`: Drive six-hour refreshes and stale-score detection from `HEARTBEAT.md`.
 
 ## ChatGPT Workspace Agents Support
 - ChatGPT and Slack surfaces:

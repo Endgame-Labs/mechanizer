@@ -8,8 +8,7 @@
 
 ## Supported Events
 - `renewal.window_opened`
-- `renewal.risk_detected`
-- `renewal.health_changed`
+- `account.risk_signal.detected`
 
 ## Stage Plan
 1. `validate_input`
@@ -38,6 +37,6 @@
 - Apply only approved optional actions with idempotency keys.
 
 9. `emit_result`
-- Success: `renewal.risk.monitoring.completed`.
-- Partial/blocked: `renewal.risk.monitoring.blocked_optional_actions`.
-- Failure: `renewal.risk.monitoring.failed`.
+- Success: `renewal.risk.play.executed`.
+- Partial/blocked: `renewal.risk.play.blocked`.
+- Failure: `renewal.risk.play.failed`.

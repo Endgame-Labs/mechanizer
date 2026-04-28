@@ -155,8 +155,19 @@
         "attributes": {
           "approval_status": "{{approval_loop.approval_status}}",
           "workato_job_url": "{{job.url}}"
-        }
-      }
+        },
+        "event_type": "{{approval_loop.approval_status == 'approved' ? 'renewal.risk.play.executed' : 'renewal.risk.play.blocked'}}",
+        "terminal_events": {
+          "success": "renewal.risk.play.executed",
+          "blocked": "renewal.risk.play.blocked",
+          "failed": "renewal.risk.play.failed",
+          "approved_event_type": "renewal.risk.play.executed",
+          "deferred_event_type": "renewal.risk.play.blocked"
+        },
+        "event_id": "{{normalize_validate.event_id}}",
+        "subject": "{{normalize_validate.subject}}"
+      },
+      "terminal_event_selector": "approval_loop.approval_status == 'approved' ? approved_event_type : deferred_event_type"
     },
     {
       "id": "write_run_summary",
@@ -192,5 +203,12 @@
         "workato_job_url"
       ]
     }
+  },
+  "terminal_events": {
+    "success": "renewal.risk.play.executed",
+    "blocked": "renewal.risk.play.blocked",
+    "failed": "renewal.risk.play.failed",
+    "approved_event_type": "renewal.risk.play.executed",
+    "deferred_event_type": "renewal.risk.play.blocked"
   }
 }

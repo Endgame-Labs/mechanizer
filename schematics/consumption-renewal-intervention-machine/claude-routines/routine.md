@@ -13,7 +13,7 @@
 ## Stage Plan
 1. `validate_input`
 - Contract and event validation.
-- Invalid -> `cri.play.failed_validation`.
+- Invalid -> `consumption.renewal.intervention.failed_validation`.
 
 2. `collect_signals`
 - Pull consumption, contract, renewal, support, and engagement features.
@@ -37,9 +37,9 @@
 - Execute only on `approved` decision.
 
 8. `emit_result`
-- Success: `cri.play.executed`.
-- Partial/blocked: `cri.play.blocked_optional_actions`.
-- Failure: `cri.play.failed`.
+- Success: `consumption.renewal.intervention.executed`.
+- Partial/blocked: `consumption.renewal.intervention.blocked`.
+- Failure: `consumption.renewal.intervention.failed`.
 
 ## Permissions + Safety
 - Stage 1-5: read + notify scope.

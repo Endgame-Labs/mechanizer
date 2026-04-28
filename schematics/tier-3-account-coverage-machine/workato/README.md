@@ -14,6 +14,9 @@ Workato implementation notes for `tier-3-account-coverage-machine` using API rec
 6. Run `approval_loop` before mutating downstream systems or sending external actions.
 7. Branch approved/deferred, perform allowed side effects, emit terminal `gtm_event_v1`, and write run summary.
 
+## Terminal Events
+- Approved path emits `tier3.coverage.executed` from `emit_terminal_event.body.event_type`.
+- Blocked/deferred path emits `tier3.coverage.blocked` from `emit_terminal_event.body.event_type`.
 ## Idempotency and State
 - Use a lookup table key `tier-3-account-coverage-machine:{event_id}` before any downstream side effect.
 - Persist terminal status, approval decision when present, `trace.trace_id`, and Workato job URL.

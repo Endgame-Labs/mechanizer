@@ -19,6 +19,10 @@ inputs:
   sources: [salesforce_headless_360, salesforce, hubspot, gong, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - deal.stage_review.writeback_applied
+    - deal.stage_review.findings_posted
+    - deal.stage_review.failed
   side_effects: [sfdc_update, slack_findings_send, crm_note_append]
 slo:
   p95_end_to_end_seconds: 120

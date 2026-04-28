@@ -54,17 +54,18 @@ Use this machine when account planning must be continuously refreshed across man
 ## Output Events (Examples)
 - `account.plan.generated`
 - `account.plan.blocked`
-- `account.plan.skipped_duplicate`
+- `account.plan.duplicate_ignored`
 - `account.plan.failed`
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
-  - Keep canonical field names aligned with contract keys.
-  - Keep approval gate before CRM/document mutations.
-- `agentic/` and `claude-routines/`:
-  - Keep cog phases explicit and deterministic at boundaries.
-- `claw-like/`:
-  - `HEARTBEAT.md` is schedule and liveness source of truth.
+- `n8n/`: Keep canonical field names aligned with contract keys and keep approval before CRM/document mutations.
+- `zapier/`: Keep canonical field names aligned with contract keys and keep approval before CRM/document mutations.
+- `tray/`: Keep canonical field names aligned with contract keys and keep approval before CRM/document mutations.
+- `make/`: Keep canonical field names aligned with contract keys and keep approval before CRM/document mutations.
+- `workato/`: Keep canonical field names aligned with contract keys and keep approval before CRM/document mutations.
+- `agentic/`: Keep cog phases explicit and deterministic at runtime boundaries.
+- `claude-routines/`: Keep routine phases explicit and deterministic at runtime boundaries.
+- `claw-like/`: `HEARTBEAT.md` is the schedule and liveness source of truth.
 
 ## ChatGPT Workspace Agents Support
 - Surfaces: supports ChatGPT workspace operation with Slack-facing summaries, review prompts, and escalations.

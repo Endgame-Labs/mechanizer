@@ -25,6 +25,10 @@ inputs:
   sources: [product_telemetry, gainsight, salesforce_headless_360, salesforce, stripe, endgame_mcp, endgame_cli]
 outputs:
   event_contract: gtm_event_v1
+  terminal_event_types:
+    - consumption.renewal.intervention.executed
+    - consumption.renewal.intervention.blocked
+    - consumption.renewal.intervention.failed
   side_effects: [slack_notify, renewal_plan_update, csm_task_create, outbound_email_send]
 slo:
   p95_end_to_end_seconds: 300
