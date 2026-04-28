@@ -85,7 +85,7 @@ Output event (Slack findings path, simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Keep schema validation and idempotency before cog execution.
   - Place `approval_loop` immediately before CRM writeback.
 - `agentic/` and `claude-routines/`:

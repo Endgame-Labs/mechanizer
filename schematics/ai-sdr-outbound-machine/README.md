@@ -76,7 +76,7 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Normalize all inbound payloads to `gtm_event_v1` first.
 - `agentic/` and `claude-routines/`:
   - Keep enrichment, scoring, alignment, drafting, and approval as explicit stages.

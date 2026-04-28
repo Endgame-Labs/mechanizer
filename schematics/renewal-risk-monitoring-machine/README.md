@@ -27,6 +27,14 @@ Use this machine when the renewal book is too large for manual review and CSMs n
 - Conditional always-on: `exec_alert_route` for high-severity risk only
 - Optional (approval-gated): `csm_task_create`, `playbook_recommendation_upsert`
 
+## Adapter Notes
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
+  - Keep risk scoring, alert routing, idempotency, and approval-gated downstream action behavior stable across workflow runtimes.
+- `agentic/` and `claude-routines/`:
+  - Use the same cog order and preserve `gtm_event_v1` at runtime boundaries.
+- `claw-like/`:
+  - Drive scheduled execution and liveness from `HEARTBEAT.md`.
+
 ## Example Input
 ```json
 {

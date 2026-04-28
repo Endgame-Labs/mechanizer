@@ -135,7 +135,7 @@ Output event (simplified):
   - Assumes org-level auditability (trace IDs, proposed vs approved deltas, actor attribution), policy controls, and admin visibility across agent runs.
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Keep deterministic field mapping identical to contract names.
   - Ensure approval node precedes all write actions.
 - `agentic/` and `claude-routines/`:

@@ -58,7 +58,7 @@ Use this machine when account planning must be continuously refreshed across man
 - `account.plan.failed`
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Keep canonical field names aligned with contract keys.
   - Keep approval gate before CRM/document mutations.
 - `agentic/` and `claude-routines/`:

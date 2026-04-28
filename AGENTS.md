@@ -12,7 +12,7 @@ Technical architecture, contracts, and contribution standards for `mechanizer`.
 ### Layers
 - Shared layer: `schematics/_shared/*`
 - Machine layer: `schematics/<machine-id>/*`
-- Adapter layer: `n8n`, `zapier`, `tray`, `make`, `agentic`, `claude-routines`, `claw-like`
+- Adapter layer: `n8n`, `zapier`, `tray`, `make`, `workato`, `agentic`, `claude-routines`, `claw-like`
 
 ### Design Goal
 Machine intent stays stable while adapter implementations vary.
@@ -28,6 +28,7 @@ schematics/<machine-id>/
   zapier/
   tray/
   make/
+  workato/
   agentic/
   claude-routines/
   claw-like/

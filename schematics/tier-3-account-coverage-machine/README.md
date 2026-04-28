@@ -76,7 +76,7 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Keep approval check immediately before outbound and CRM writes.
 - `agentic/` and `claude-routines/`:
   - Keep stage boundaries explicit and contract-preserving.

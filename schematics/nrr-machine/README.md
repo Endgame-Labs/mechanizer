@@ -148,7 +148,7 @@ Output event (simplified):
   - Expects enterprise controls for policy enforcement, run-level audit trails, trace lineage, and admin visibility into side-effecting actions.
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Keep approval node immediately before outbound and CRM write actions.
 - `agentic/` and `claude-routines/`:
   - Keep scoring, alignment, message composition, and approval as explicit Smart Cog phases.

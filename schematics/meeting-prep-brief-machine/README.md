@@ -70,7 +70,7 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Keep approval immediately before Slack/email delivery nodes.
 - `agentic/` and `claude-routines/`:
   - Keep enrichment, scoring, alignment, composition, and approval as explicit phases.

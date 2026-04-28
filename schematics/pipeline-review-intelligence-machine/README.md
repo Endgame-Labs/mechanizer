@@ -72,7 +72,7 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Keep deterministic canonical mapping for `gtm_event_v1`.
   - Place `approval_loop` directly before outbound summary delivery and mutation side effects.
 - `agentic/` and `claude-routines/`:

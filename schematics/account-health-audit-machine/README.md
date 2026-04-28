@@ -116,7 +116,7 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Keep deterministic mapping and priority ordering stable across adapters.
 - `agentic/` and `claude-routines/`:
   - Use the same cog order and enforce contract checks pre/post reasoning.

@@ -55,5 +55,5 @@ Optional approval prompt controls:
 ## Adapter Mapping Guidance
 - `agentic`: explicit wait state and callback listener.
 - `claude-routines`: ask-user routine for direct human decision capture.
-- `n8n/zapier/tray/make`: Slack form or webhook callback branch on `approval_status`.
+- `n8n/zapier/tray/make/workato`: Slack form or webhook callback branch on `approval_status`.
 - `claw-like`: persist pending approval state and rehydrate on next heartbeat tick.

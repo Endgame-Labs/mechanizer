@@ -124,7 +124,7 @@ Output event (simplified):
   - Assumes enterprise governance for policy checks, run/audit telemetry, actor attribution, and admin visibility across workspace agent operations.
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Keep transcript-derived fields normalized to `gtm_event_v1` before scoring.
 - `agentic/` and `claude-routines/`:
   - Isolate extraction, scoring, and alignment as explicit Smart Cog phases.

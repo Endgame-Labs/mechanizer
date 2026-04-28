@@ -56,7 +56,7 @@ Use this machine when new reps need a high-quality starting package within minut
 - `rep.onboarding.failed`
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Keep canonical field names aligned with contract keys.
   - Keep approval gate before CRM/document mutations.
 - `agentic/` and `claude-routines/`:

@@ -26,6 +26,14 @@ Use this machine when renewal cohorts are too large for manual daily inspection 
 - Always-on: `slack_notify`
 - Optional (approval-gated): `renewal_plan_update`, `csm_task_create`, `outbound_email_send`
 
+## Adapter Notes
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
+  - Keep event normalization, idempotency, Slack notification, and approval-gated downstream action behavior stable across workflow runtimes.
+- `agentic/` and `claude-routines/`:
+  - Use the same cog order and preserve `gtm_event_v1` at runtime boundaries.
+- `claw-like/`:
+  - Drive scheduled execution and liveness from `HEARTBEAT.md`.
+
 ## Example Input
 ```json
 {

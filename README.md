@@ -33,6 +33,7 @@ It gives you one canonical machine spec and multiple runtime adapters so the sam
 - `zapier`
 - `tray`
 - `make`
+- `workato`
 - `agentic` (framework-agnostic)
 - `claude-routines`
 - `claw-like` heartbeat-driven runners

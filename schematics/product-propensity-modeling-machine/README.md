@@ -135,7 +135,7 @@ Output event (simplified):
 ```
 
 ## Adapter Notes
-- `n8n/`, `zapier/`, `tray/`, `make/`:
+- `n8n/`, `zapier/`, `tray/`, `make/`, `workato/`:
   - Preserve the same score thresholds, reason-code schema, idempotency behavior, and terminal event names.
 - `agentic/` and `claude-routines/`:
   - Use Endgame context tools for evidence gathering and keep score output contract-bound.

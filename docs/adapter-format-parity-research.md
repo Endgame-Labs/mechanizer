@@ -7,6 +7,7 @@ This note captures the public sources used to validate adapter artifact formats 
 - `zapier/zap.template.json`: reference template/spec; not a native Zapier account export bundle.
 - `tray/workflow.json`: reference scaffold; not a native Tray export envelope.
 - `make/scenario.json`: blueprint-style reference; not guaranteed to be directly importable as a raw Make blueprint export.
+- `workato/recipe.json`: recipe-shaped reference scaffold; not a tenant-native Workato package export.
 
 ## Public Sources
 
@@ -40,9 +41,22 @@ This note captures the public sources used to validate adapter artifact formats 
 - Public community blueprint guidance:
   - https://community.make.com/t/feature-spotlight-improved-scenario-blueprint-import/106569
 
+### Workato
+- Official recipe lifecycle management docs:
+  - https://docs.workato.com/recipe-development-lifecycle.html
+- Official Recipe Lifecycle Management API docs:
+  - https://docs.workato.com/workato-api/recipe-lifecycle-management.html
+- Official recipe design and automation docs:
+  - https://docs.workato.com/recipes.html
+- Official callable recipes docs:
+  - https://docs.workato.com/features/callable-recipes.html
+- Official jobs and error handling docs:
+  - https://docs.workato.com/recipes/jobs.html
+  - https://docs.workato.com/recipes/best-practices-error-handling.html
+
 ## Implementation Guidance
 - Keep these artifacts as contract-first references where vendor-native import envelopes are not stable or publicly standardized.
 - Treat direct importability as platform-specific:
   - n8n: direct import expected.
-  - Zapier/Tray/Make: expect some manual reconstruction or export-normalization in target tenant/workspace.
+  - Zapier/Tray/Make/Workato: expect some manual reconstruction or export-normalization in target tenant/workspace.
 - Keep `gtm_event_v1` envelope stable so runtime adapters can be migrated without changing machine semantics.

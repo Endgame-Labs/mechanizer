@@ -1,0 +1,190 @@
+{
+  "name": "ai-sdr-outbound-machine-v1",
+  "machine_id": "ai-sdr-outbound-machine",
+  "artifact_type": "workato_recipe_reference",
+  "contract": {
+    "input_contract": "gtm_event_v1",
+    "output_contract": "gtm_event_v1",
+    "idempotency_key": "event_id",
+    "accepted_event_types": [
+      "prospect.research_requested",
+      "account.intent_detected",
+      "response.received"
+    ],
+    "approval_required_before_side_effects": true
+  },
+  "workato_runtime": {
+    "recipe_type": "api_recipe_plus_optional_scheduled_recipe",
+    "shared_logic": "recipe_functions",
+    "state_store": "lookup_tables",
+    "promotion": "recipe_lifecycle_management_package",
+    "job_replay_supported": true
+  },
+  "steps": [
+    {
+      "id": "api_event_trigger",
+      "type": "api_platform.new_api_request",
+      "name": "Ai Sdr Outbound Machine API event",
+      "input_schema": "gtm_event_v1",
+      "path": "/ai-sdr-outbound-machine",
+      "accepts_event_types": [
+        "prospect.research_requested",
+        "account.intent_detected",
+        "response.received"
+      ]
+    },
+    {
+      "id": "normalize_validate",
+      "type": "tools.javascript",
+      "name": "Normalize + validate gtm_event_v1",
+      "validates": [
+        "event_id",
+        "event_type",
+        "source",
+        "occurred_at",
+        "trace.trace_id",
+        "subject"
+      ]
+    },
+    {
+      "id": "idempotency_lookup",
+      "type": "lookup_table.search_rows",
+      "name": "Idempotency lookup",
+      "key": "ai-sdr-outbound-machine:{{normalize_validate.event_id}}",
+      "on_duplicate": "stop_job_without_side_effects"
+    },
+    {
+      "id": "enrich_account_health",
+      "type": "recipe_function.call_function",
+      "name": "enrich_account_health",
+      "input": "{{normalize_validate.output}}",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "deal_score_reasoner",
+      "type": "recipe_function.call_function",
+      "name": "deal_score_reasoner",
+      "input": "{{normalize_validate.output}}",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "directive_alignment",
+      "type": "recipe_function.call_function",
+      "name": "directive_alignment",
+      "input": "{{normalize_validate.output}}",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "compose_outreach_message",
+      "type": "recipe_function.call_function",
+      "name": "compose_outreach_message",
+      "input": "{{normalize_validate.output}}",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "route_exec_alert",
+      "type": "recipe_function.call_function",
+      "name": "route_exec_alert",
+      "input": "{{normalize_validate.output}}",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "compose_action_plan",
+      "type": "tools.javascript",
+      "name": "Compose action plan",
+      "side_effects_considered": [
+        "sequence_draft_create",
+        "crm_task_create",
+        "qualified_response_route",
+        "exec_alert_send"
+      ]
+    },
+    {
+      "id": "approval_loop",
+      "type": "recipe_function.call_function",
+      "name": "approval_loop",
+      "input": {
+        "machine_id": "ai-sdr-outbound-machine",
+        "event_id": "{{normalize_validate.event_id}}",
+        "trace": "{{normalize_validate.trace}}",
+        "proposed_actions": "{{compose_action_plan.output}}",
+        "timeout_seconds": 1800
+      }
+    },
+    {
+      "id": "approval_branch",
+      "type": "conditional.if_else",
+      "name": "Approved?",
+      "condition": "{{approval_loop.approval_status}} == 'approved'",
+      "approved_path": [
+        "sequence_draft_create",
+        "crm_task_create",
+        "qualified_response_route",
+        "exec_alert_send"
+      ],
+      "deferred_path": "emit_deferred_event"
+    },
+    {
+      "id": "execute_side_effects",
+      "type": "connector_actions",
+      "name": "Execute approved/deterministic side effects",
+      "side_effects": [
+        "sequence_draft_create",
+        "crm_task_create",
+        "qualified_response_route",
+        "exec_alert_send"
+      ],
+      "guard": "approval_loop.approved"
+    },
+    {
+      "id": "emit_terminal_event",
+      "type": "http.post",
+      "name": "Emit terminal gtm_event_v1",
+      "url": "https://events.internal/v1/publish",
+      "body": {
+        "event_contract": "gtm_event_v1",
+        "source": "workato",
+        "machine_id": "ai-sdr-outbound-machine",
+        "trace": "{{normalize_validate.trace}}",
+        "attributes": {
+          "approval_status": "{{approval_loop.approval_status}}",
+          "workato_job_url": "{{job.url}}"
+        }
+      }
+    },
+    {
+      "id": "write_run_summary",
+      "type": "lookup_table.upsert_row",
+      "name": "Write run summary",
+      "key": "ai-sdr-outbound-machine:{{normalize_validate.event_id}}",
+      "value_fields": [
+        "status",
+        "approval_status",
+        "trace_id",
+        "workato_job_url",
+        "updated_at"
+      ]
+    }
+  ],
+  "error_handling": {
+    "default_mode": "monitor_and_handle_errors",
+    "retryable_error_classes": [
+      "RateLimitError",
+      "ConnectionError",
+      "TimeoutError"
+    ],
+    "dead_letter": {
+      "type": "http.post",
+      "url": "https://events.internal/v1/dead-letter",
+      "payload_fields": [
+        "machine_id",
+        "event_id",
+        "trace_id",
+        "step_name",
+        "error_type",
+        "error_message",
+        "workato_job_url"
+      ]
+    }
+  }
+}

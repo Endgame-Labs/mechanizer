@@ -8,6 +8,7 @@ This file documents common obligations and practical guardrails when using gener
 - Zapier
 - Tray
 - Make
+- Workato
 - Anthropic Claude-related runtimes and routines
 - Other LLM/API providers used by machine adapters
 
@@ -41,7 +42,7 @@ This file documents common obligations and practical guardrails when using gener
 - Implement deterministic fallbacks where model output quality is uncertain.
 
 ## Platform Marks
-- “Zapier”, “Make”, “n8n”, “Tray”, and “Claude” are trademarks of their respective owners.
+- “Zapier”, “Make”, “n8n”, “Tray”, “Workato”, and “Claude” are trademarks of their respective owners.
 - This project is not endorsed by those companies unless explicitly stated.
 
 ## Operational Recommendation

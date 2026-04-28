@@ -10,6 +10,7 @@ Prevent partial machine definitions that cannot be ported across supported runti
 - `zapier`
 - `tray`
 - `make`
+- `workato`
 - `agentic`
 - `claude-routines`
 - `claw-like`
