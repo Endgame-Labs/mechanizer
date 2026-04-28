@@ -17,6 +17,14 @@ Technical architecture, contracts, and contribution standards for `mechanizer`.
 ### Design Goal
 Machine intent stays stable while adapter implementations vary.
 
+### Adapter Artifact Semantics
+Adapter artifacts are contract references unless a platform explicitly supports direct import from the committed file shape.
+Runtime-specific files should preserve:
+- Accepted trigger event types.
+- Canonical terminal event types.
+- Required smart-cog inputs and guaranteed outputs.
+- Approval and idempotency behavior.
+
 ## 2) Required Machine Directory Contract
 
 Each machine directory must contain:
@@ -54,6 +62,11 @@ Shared contracts live in:
 - `trace`: correlation lineage.
 - `subject`: primary entity envelope.
 - `attributes`: extension map.
+
+### Terminal Event Semantics
+Each machine must declare terminal events under `outputs.terminal_event_types` in `machine.yaml`.
+Adapters should emit one of those canonical terminal event types for success, blocked/deferred, and failed paths.
+Avoid adapter-local synonyms such as mixing `completed` and `executed`, or `blocked` and `deferred`, unless both variants are intentionally declared in the machine contract.
 
 ### `cog_v1` semantics
 - `cog`: identity, ownership, category, version (smart-cog contract key).
@@ -147,7 +160,9 @@ Validation must confirm:
 - Required adapter coverage presence.
 - Heartbeat metadata validity for claw-like mode.
 - Machine diagram exists at `schematics/<machine-id>/diagram.svg`.
+- Machine diagram reflects the current adapter set.
 - Root `README.md` diagram gallery includes the machine.
+- Root `README.md` links directly to each machine it displays.
 
 ## 10) Compatibility Policy
 

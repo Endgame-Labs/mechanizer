@@ -9,6 +9,14 @@ This note captures the public sources used to validate adapter artifact formats 
 - `make/scenario.json`: blueprint-style reference; not guaranteed to be directly importable as a raw Make blueprint export.
 - `workato/recipe.json`: recipe-shaped reference scaffold; not a tenant-native Workato package export.
 
+## Parity Checklist
+- Keep accepted trigger event types aligned with `machine.yaml`.
+- Emit only terminal event types declared in `outputs.terminal_event_types`.
+- Preserve the shared `gtm_event_v1` fields in every adapter handoff.
+- Keep approval-gated side effects approval-gated across visual, agentic, and heartbeat runtimes.
+- Update the machine diagram whenever adapter coverage changes.
+- Link each displayed machine in the root README so the diagram gallery is navigable from GitHub.
+
 ## Public Sources
 
 ### n8n
@@ -60,3 +68,5 @@ This note captures the public sources used to validate adapter artifact formats 
   - n8n: direct import expected.
   - Zapier/Tray/Make/Workato: expect some manual reconstruction or export-normalization in target tenant/workspace.
 - Keep `gtm_event_v1` envelope stable so runtime adapters can be migrated without changing machine semantics.
+- Prefer machine-level contract changes over adapter-only naming fixes; adapter-local event names make cross-runtime validation harder.
+- When adding a runtime, update the root gallery, machine README Adapter Notes, and diagram in the same change.
