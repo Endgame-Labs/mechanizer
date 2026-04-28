@@ -1,5 +1,7 @@
 # n8n Adapter (meeting-prep-brief-machine)
 
+![Meeting Prep Brief Machine Diagram](../diagram.svg)
+
 n8n adapter for `meeting-prep-brief-machine` focused on reliable pre-meeting brief delivery with approval-gated delivery side effects.
 
 ## Artifacts

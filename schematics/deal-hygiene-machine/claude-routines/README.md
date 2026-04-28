@@ -1,5 +1,7 @@
 # Claude Routines Runtime (deal-hygiene-machine)
 
+![Deal Hygiene Machine Diagram](../diagram.svg)
+
 ## Purpose
 Concrete runtime implementation guide for deal hygiene detection/remediation in Claude routines with strict approval-gated writes.
 

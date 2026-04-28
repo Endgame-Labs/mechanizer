@@ -1,5 +1,7 @@
 # Make Adapter (consumption-renewal-intervention-machine)
 
+![Consumption Renewal Intervention Machine Diagram](../diagram.svg)
+
 Last validated against official Make docs: 2026-04-22.
 
 ## Artifact

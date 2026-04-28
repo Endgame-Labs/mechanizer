@@ -1,5 +1,7 @@
 # Zapier Adapter (consumption-renewal-intervention-machine)
 
+![Consumption Renewal Intervention Machine Diagram](../diagram.svg)
+
 Zapier implementation for daily consumption-risk intervention planning with approval-gated outbound actions.
 
 ## Artifact

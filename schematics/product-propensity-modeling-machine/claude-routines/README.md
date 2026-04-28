@@ -1,5 +1,7 @@
 # Claude Routines Runtime (product-propensity-modeling-machine)
 
+![Product Propensity Modeling Machine Diagram](../diagram.svg)
+
 ## Purpose
 Operational guidance for running `product-propensity-modeling-machine` as a Claude Code **routine** on Anthropic cloud sessions.
 

@@ -1,5 +1,7 @@
 # Claude Routines Runtime (nrr-machine)
 
+![NRR Machine Diagram](../diagram.svg)
+
 ## Purpose
 Runtime implementation for NRR intervention selection and execution in Claude routines with strict approval gates for outbound/CRM actions.
 

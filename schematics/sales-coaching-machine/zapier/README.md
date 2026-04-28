@@ -1,5 +1,7 @@
 # Zapier Adapter (sales-coaching-machine)
 
+![Sales Coaching Machine Diagram](../diagram.svg)
+
 Zapier implementation for post-call coaching recommendations with directive alignment and approval-gated CRM updates.
 
 ## Artifact

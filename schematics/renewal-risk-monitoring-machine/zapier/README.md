@@ -1,5 +1,7 @@
 # Zapier Adapter (renewal-risk-monitoring-machine)
 
+![Renewal Risk Monitoring Machine Diagram](../diagram.svg)
+
 Zapier implementation for renewal risk monitoring with required internal alerts and approval-gated customer-facing actions.
 
 ## Artifact

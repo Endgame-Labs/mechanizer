@@ -1,5 +1,7 @@
 # Tray Adapter (ai-sdr-outbound-machine)
 
+![AI SDR Outbound Machine Diagram](../diagram.svg)
+
 Tray runtime for `ai-sdr-outbound-machine` combining deterministic outbound workflowing with smart-cog reasoning checkpoints and approval before execution.
 
 ## Artifact

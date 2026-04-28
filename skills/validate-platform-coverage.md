@@ -31,8 +31,9 @@ Prevent partial machine definitions that cannot be ported across supported runti
 6. Verify machine README includes `## Adapter Notes` and `## ChatGPT Workspace Agents Support`.
 7. Verify machine README Adapter Notes mention every runtime, including Workato.
 8. Verify machine diagram exists at `schematics/<machine-id>/diagram.svg`.
-9. Verify root `README.md` contains a diagram gallery entry for the machine.
-10. Fail validation if any adapter folder is missing or renamed.
+9. Verify every runtime README shows `../diagram.svg` directly below its title.
+10. Verify root `README.md` contains a diagram gallery entry for the machine.
+11. Fail validation if any adapter folder is missing or renamed.
 
 ## Exit Criteria
 - Full adapter coverage present.

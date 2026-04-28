@@ -1,5 +1,7 @@
 # Zapier Adapter (deal-hygiene-machine)
 
+![Deal Hygiene Machine Diagram](../diagram.svg)
+
 Zapier implementation for deal hygiene scoring with a required approval gate before CRM writeback.
 
 ## Artifact

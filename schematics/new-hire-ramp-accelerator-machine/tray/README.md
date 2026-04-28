@@ -1,5 +1,7 @@
 # Tray Adapter (new-hire-ramp-accelerator-machine)
 
+![New Hire Ramp Accelerator Machine Diagram](../diagram.svg)
+
 Tray starter for new-hire-ramp-accelerator-machine with callable ingestion and mandatory approval gate.
 
 ## Artifact

@@ -1,5 +1,7 @@
 # n8n Adapter (pipeline-review-intelligence-machine)
 
+![Pipeline Review Intelligence Machine Diagram](../diagram.svg)
+
 Contract-first n8n adapter for `pipeline-review-intelligence-machine` using `gtm_event_v1`.
 
 ## Artifact

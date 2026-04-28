@@ -1,5 +1,7 @@
 # Agentic Adapter (account-health-audit-machine)
 
+![Account Health Audit Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `account-health-audit-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

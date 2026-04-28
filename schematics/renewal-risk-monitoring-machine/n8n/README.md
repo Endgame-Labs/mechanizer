@@ -1,5 +1,7 @@
 # n8n Adapter (renewal-risk-monitoring-machine)
 
+![Renewal Risk Monitoring Machine Diagram](../diagram.svg)
+
 ## Artifacts
 - `workflow.json`: importable starter workflow.
 

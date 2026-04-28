@@ -1,5 +1,7 @@
 # Claude Routines Runtime (sales-coaching-machine)
 
+![Sales Coaching Machine Diagram](../diagram.svg)
+
 ## Purpose
 Operational runtime guide for coaching recommendation generation with evidence checks and approval-gated CRM/task side effects.
 

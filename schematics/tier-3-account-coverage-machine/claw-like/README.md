@@ -1,5 +1,7 @@
 # Claw-like Adapter (tier-3-account-coverage-machine)
 
+![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+
 ## Purpose
 Automate long-tail account coverage scans and execute only approved outreach or CRM actions.
 

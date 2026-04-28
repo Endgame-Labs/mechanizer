@@ -1,5 +1,7 @@
 # Workato Adapter (account-health-audit-machine)
 
+![Account Health Audit Machine Diagram](../diagram.svg)
+
 Workato implementation notes for `account-health-audit-machine` using API recipes, recipe functions for shared smart cogs, lookup-table idempotency, and Workato job history for replay/debugging.
 
 ## Artifact

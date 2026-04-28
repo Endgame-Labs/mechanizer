@@ -1,5 +1,7 @@
 # Claw-Like Runner (product-propensity-modeling-machine)
 
+![Product Propensity Modeling Machine Diagram](../diagram.svg)
+
 Run scheduled product propensity scoring and liveness monitoring from `HEARTBEAT.md`.
 
 ## Execution Loop

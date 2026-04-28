@@ -1,5 +1,7 @@
 # Tray Adapter (deal-hygiene-machine)
 
+![Deal Hygiene Machine Diagram](../diagram.svg)
+
 Tray runtime for `deal-hygiene-machine` using composable callable workflows, deterministic policy checks, and an approval-gated Salesforce write path.
 
 ## Artifact

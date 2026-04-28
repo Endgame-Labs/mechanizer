@@ -1,5 +1,7 @@
 # Workato Adapter (tier-3-account-coverage-machine)
 
+![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+
 Workato implementation notes for `tier-3-account-coverage-machine` using API recipes, recipe functions for shared smart cogs, lookup-table idempotency, and Workato job history for replay/debugging.
 
 ## Artifact

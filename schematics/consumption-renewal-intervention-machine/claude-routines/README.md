@@ -1,5 +1,7 @@
 # Claude Routines Runtime (consumption-renewal-intervention-machine)
 
+![Consumption Renewal Intervention Machine Diagram](../diagram.svg)
+
 ## Purpose
 Runtime guidance for daily under-consumption renewal detection, intervention planning, and approval-gated execution.
 

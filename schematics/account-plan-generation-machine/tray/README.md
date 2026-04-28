@@ -1,5 +1,7 @@
 # Tray Adapter (account-plan-generation-machine)
 
+![Account Plan Generation Machine Diagram](../diagram.svg)
+
 Tray runtime for `account-plan-generation-machine` using callable cogs for research, deterministic plan assembly, and approval-gated CRM/document writes.
 
 ## Artifact

@@ -1,5 +1,7 @@
 # Zapier Adapter (account-health-audit-machine)
 
+![Account Health Audit Machine Diagram](../diagram.svg)
+
 Zapier implementation for recurring account health audits with deterministic scoring plus optional smart-cog enrichment.
 
 ## Artifact

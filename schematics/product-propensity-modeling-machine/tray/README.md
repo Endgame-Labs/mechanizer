@@ -1,5 +1,7 @@
 # Tray Adapter (product-propensity-modeling-machine)
 
+![Product Propensity Modeling Machine Diagram](../diagram.svg)
+
 Tray runtime for `product-propensity-modeling-machine` with scheduled and callable execution modes, reusable propensity smart cogs, and approval-gated write actions.
 
 ## Artifact

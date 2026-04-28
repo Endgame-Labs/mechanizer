@@ -1,5 +1,7 @@
 # Claude Routines Runtime (stage-change-deal-review-machine)
 
+![Stage Change Deal Review Machine Diagram](../diagram.svg)
+
 ## Purpose
 Runtime guidance for stage-change review automation with explicit approval gating before any CRM mutation.
 

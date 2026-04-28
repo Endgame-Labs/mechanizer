@@ -1,5 +1,7 @@
 # Claw-like Adapter (pipeline-review-intelligence-machine)
 
+![Pipeline Review Intelligence Machine Diagram](../diagram.svg)
+
 ## Purpose
 Build weekly pipeline-review intelligence packages with deterministic scoring and approval-gated delivery.
 

@@ -1,5 +1,7 @@
 # Agentic Adapter (meeting-prep-brief-machine)
 
+![Meeting Prep Brief Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `meeting-prep-brief-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

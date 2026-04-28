@@ -1,5 +1,7 @@
 # Make Adapter (new-hire-ramp-accelerator-machine)
 
+![New Hire Ramp Accelerator Machine Diagram](../diagram.svg)
+
 Last validated against official Make docs: 2026-04-22.
 
 ## Artifact

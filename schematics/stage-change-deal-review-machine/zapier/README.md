@@ -1,5 +1,7 @@
 # Zapier Adapter (stage-change-deal-review-machine)
 
+![Stage Change Deal Review Machine Diagram](../diagram.svg)
+
 Zapier implementation for stage-change reviews with approval-gated CRM writeback.
 
 ## Artifact

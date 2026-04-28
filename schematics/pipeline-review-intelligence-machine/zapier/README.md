@@ -1,5 +1,7 @@
 # Zapier Adapter (pipeline-review-intelligence-machine)
 
+![Pipeline Review Intelligence Machine Diagram](../diagram.svg)
+
 Zapier implementation for pipeline review prep with smart-cog scoring, approval gating, and manager-ready summaries.
 
 ## Artifact

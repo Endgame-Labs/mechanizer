@@ -1,5 +1,7 @@
 # Make Adapter (tier-3-account-coverage-machine)
 
+![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+
 Last validated against official Make docs: 2026-04-22.
 
 ## Artifact

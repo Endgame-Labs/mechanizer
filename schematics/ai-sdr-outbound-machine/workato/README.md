@@ -1,5 +1,7 @@
 # Workato Adapter (ai-sdr-outbound-machine)
 
+![AI SDR Outbound Machine Diagram](../diagram.svg)
+
 Workato implementation notes for `ai-sdr-outbound-machine` using API recipes, recipe functions for shared smart cogs, lookup-table idempotency, and Workato job history for replay/debugging.
 
 ## Artifact

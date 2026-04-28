@@ -1,5 +1,7 @@
 # Claw-like Adapter (account-health-audit-machine)
 
+![Account Health Audit Machine Diagram](../diagram.svg)
+
 ## Purpose
 Run scheduled account-health audits and emit deterministic summaries plus risk posture events.
 

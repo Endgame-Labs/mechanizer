@@ -1,5 +1,7 @@
 # Claw-like Adapter (sales-coaching-machine)
 
+![Sales Coaching Machine Diagram](../diagram.svg)
+
 ## Purpose
 Generate coaching recommendations continuously and maintain a manager-ready backlog safely.
 

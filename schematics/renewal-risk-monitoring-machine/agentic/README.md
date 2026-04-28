@@ -1,5 +1,7 @@
 # Agentic Adapter (renewal-risk-monitoring-machine)
 
+![Renewal Risk Monitoring Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `renewal-risk-monitoring-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

@@ -1,5 +1,7 @@
 # n8n Adapter (product-propensity-modeling-machine)
 
+![Product Propensity Modeling Machine Diagram](../diagram.svg)
+
 Contract-first n8n adapter for `product-propensity-modeling-machine` using `gtm_event_v1`.
 
 ## Artifacts

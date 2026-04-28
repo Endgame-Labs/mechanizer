@@ -1,5 +1,7 @@
 # Tray Adapter (tier-3-account-coverage-machine)
 
+![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+
 Tray implementation of tier-3 account coverage automation with callable ingest and required approval gating before side effects.
 
 ## Artifact

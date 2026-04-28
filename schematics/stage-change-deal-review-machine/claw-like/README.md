@@ -1,5 +1,7 @@
 # Claw-like Adapter (stage-change-deal-review-machine)
 
+![Stage Change Deal Review Machine Diagram](../diagram.svg)
+
 ## Purpose
 Review stage-change events and apply approved corrective actions with deterministic evidence trails.
 

@@ -1,5 +1,7 @@
 # n8n Adapter (nrr-machine)
 
+![NRR Machine Diagram](../diagram.svg)
+
 n8n adapter for `nrr-machine` focused on low-touch/no-touch execution with approval-gated side effects.
 
 ## Artifacts

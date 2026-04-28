@@ -1,5 +1,7 @@
 # Make Adapter (account-plan-generation-machine)
 
+![Account Plan Generation Machine Diagram](../diagram.svg)
+
 Last validated against official Make docs: 2026-04-22.
 
 ## Artifact

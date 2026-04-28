@@ -1,5 +1,7 @@
 # Make Adapter (product-propensity-modeling-machine)
 
+![Product Propensity Modeling Machine Diagram](../diagram.svg)
+
 Make scenario reference for scheduled and webhook-triggered product propensity scoring.
 
 ## Artifact

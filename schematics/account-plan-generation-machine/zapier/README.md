@@ -1,5 +1,7 @@
 # Zapier Adapter (account-plan-generation-machine)
 
+![Account Plan Generation Machine Diagram](../diagram.svg)
+
 Zapier pattern for generating account plans with deterministic section builders and explicit approval before CRM or outbound writes.
 
 ## Artifact

@@ -1,5 +1,7 @@
 # Claw-like Adapter (nrr-machine)
 
+![NRR Machine Diagram](../diagram.svg)
+
 ## Purpose
 Run retention and expansion scoring loops with approval-gated outbound and CRM actions.
 

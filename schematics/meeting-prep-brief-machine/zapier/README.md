@@ -1,5 +1,7 @@
 # Zapier Adapter (meeting-prep-brief-machine)
 
+![Meeting Prep Brief Machine Diagram](../diagram.svg)
+
 Zapier implementation for generating meeting prep briefs with deterministic scoring and approval-gated delivery.
 
 ## Artifact

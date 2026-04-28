@@ -1,5 +1,7 @@
 # Claude Routines Runtime (new-hire-ramp-accelerator-machine)
 
+![New Hire Ramp Accelerator Machine Diagram](../diagram.svg)
+
 ## Purpose
 Runtime guide for generating repeatable onboarding/ramp packages for new reps with explicit approval before publishing and CRM/task mutations.
 

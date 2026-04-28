@@ -1,5 +1,7 @@
 # Make Adapter (meeting-prep-brief-machine)
 
+![Meeting Prep Brief Machine Diagram](../diagram.svg)
+
 Last validated against official Make docs: 2026-04-22.
 
 ## Artifact

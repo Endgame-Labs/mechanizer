@@ -1,5 +1,7 @@
 # Tray Adapter (renewal-risk-monitoring-machine)
 
+![Renewal Risk Monitoring Machine Diagram](../diagram.svg)
+
 ## Artifact
 - `workflow.json`
 

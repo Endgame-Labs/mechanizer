@@ -1,5 +1,7 @@
 # n8n Adapter (ai-sdr-outbound-machine)
 
+![AI SDR Outbound Machine Diagram](../diagram.svg)
+
 n8n implementation for SDR outbound research, personalized drafting, approval-gated execution, and qualified-response routing.
 
 ## Artifacts

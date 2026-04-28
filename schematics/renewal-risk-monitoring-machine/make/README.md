@@ -1,5 +1,7 @@
 # Make Adapter (renewal-risk-monitoring-machine)
 
+![Renewal Risk Monitoring Machine Diagram](../diagram.svg)
+
 Last validated against official Make docs: 2026-04-22.
 
 ## Artifact

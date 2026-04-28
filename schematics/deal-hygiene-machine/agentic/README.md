@@ -1,5 +1,7 @@
 # Agentic Adapter (deal-hygiene-machine)
 
+![Deal Hygiene Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `deal-hygiene-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

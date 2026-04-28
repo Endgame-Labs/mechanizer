@@ -214,6 +214,21 @@ def check_readme(machine_dir, machine_yaml, root_readme, failures)
   terminal_events_for_readme(readme, trigger_events)
 end
 
+def check_runtime_readmes(machine_dir, failures)
+  ADAPTERS.each do |adapter|
+    path = machine_dir.join(adapter, "README.md")
+    next unless path.file?
+
+    readme = path.read
+    next if readme.match?(/\A#[^\n]*\n\n!\[[^\]]+ Diagram\]\(\.\.\/diagram\.svg\)\n\n/)
+
+    failures << Failure.new(
+      path: rel(path),
+      message: "Runtime README must show ../diagram.svg directly below the title"
+    )
+  end
+end
+
 def check_diagram(machine_dir, failures)
   path = machine_dir.join("diagram.svg")
   return unless path.file?
@@ -320,6 +335,7 @@ def main
     check_json_files(machine_dir, failures)
     check_workato_recipe(machine_dir, failures)
     check_diagram(machine_dir, failures)
+    check_runtime_readmes(machine_dir, failures)
     canonical_events = check_readme(machine_dir, machine_yaml, root_readme, failures) || []
     check_terminal_event_mismatches(machine_dir, machine_yaml, canonical_events, failures)
   end

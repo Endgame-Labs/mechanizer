@@ -1,5 +1,7 @@
 # n8n Adapter (stage-change-deal-review-machine)
 
+![Stage Change Deal Review Machine Diagram](../diagram.svg)
+
 Contract-first n8n adapter using `gtm_event_v1` for stage-progression review processing.
 
 ## Artifacts

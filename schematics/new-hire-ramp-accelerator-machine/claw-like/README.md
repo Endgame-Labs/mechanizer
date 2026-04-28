@@ -1,5 +1,7 @@
 # Claw-like Adapter (new-hire-ramp-accelerator-machine)
 
+![New Hire Ramp Accelerator Machine Diagram](../diagram.svg)
+
 ## Purpose
 Track onboarding signals and generate ramp interventions with constrained external side effects.
 

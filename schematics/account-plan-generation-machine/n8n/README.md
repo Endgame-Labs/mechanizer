@@ -1,5 +1,7 @@
 # n8n Adapter (account-plan-generation-machine)
 
+![Account Plan Generation Machine Diagram](../diagram.svg)
+
 n8n adapter for recurring and bulk account-plan generation with approval-gated mutations.
 
 ## Artifacts

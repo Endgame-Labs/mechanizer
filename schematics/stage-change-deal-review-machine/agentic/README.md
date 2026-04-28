@@ -1,5 +1,7 @@
 # Agentic Adapter (stage-change-deal-review-machine)
 
+![Stage Change Deal Review Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `stage-change-deal-review-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

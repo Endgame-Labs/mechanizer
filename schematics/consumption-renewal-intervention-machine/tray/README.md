@@ -1,5 +1,7 @@
 # Tray Adapter (consumption-renewal-intervention-machine)
 
+![Consumption Renewal Intervention Machine Diagram](../diagram.svg)
+
 ## Artifact
 - `workflow.json`
 

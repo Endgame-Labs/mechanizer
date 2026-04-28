@@ -1,5 +1,7 @@
 # n8n Adapter (new-hire-ramp-accelerator-machine)
 
+![New Hire Ramp Accelerator Machine Diagram](../diagram.svg)
+
 n8n adapter for provisioning-time onboarding package generation with approval-gated mutations.
 
 ## Artifacts

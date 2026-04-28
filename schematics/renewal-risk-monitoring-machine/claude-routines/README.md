@@ -1,5 +1,7 @@
 # Claude Routines Runtime (renewal-risk-monitoring-machine)
 
+![Renewal Risk Monitoring Machine Diagram](../diagram.svg)
+
 ## Purpose
 Runtime guide for daily renewal-risk monitoring with mandatory CSM visibility and approval-gated optional actions.
 

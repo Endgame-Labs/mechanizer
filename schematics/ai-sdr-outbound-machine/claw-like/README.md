@@ -1,5 +1,7 @@
 # Claw-like Adapter (ai-sdr-outbound-machine)
 
+![AI SDR Outbound Machine Diagram](../diagram.svg)
+
 ## Purpose
 Run recurring outbound candidate refresh, draft sequencing, and response routing with strict approvals.
 

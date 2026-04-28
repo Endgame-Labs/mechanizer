@@ -1,5 +1,7 @@
 # Claude Routines Runtime (meeting-prep-brief-machine)
 
+![Meeting Prep Brief Machine Diagram](../diagram.svg)
+
 ## Purpose
 Run pre-meeting brief generation in Claude routines with explicit quality, policy, and delivery approval controls.
 

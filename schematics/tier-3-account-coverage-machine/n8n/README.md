@@ -1,5 +1,7 @@
 # n8n Adapter (tier-3-account-coverage-machine)
 
+![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+
 n8n adapter for low-touch long-tail coverage automation with mandatory approval before outbound and CRM side effects.
 
 ## Artifacts

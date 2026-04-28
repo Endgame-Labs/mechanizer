@@ -1,5 +1,7 @@
 # Agentic Adapter (product-propensity-modeling-machine)
 
+![Product Propensity Modeling Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `product-propensity-modeling-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

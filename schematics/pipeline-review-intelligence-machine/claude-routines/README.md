@@ -1,5 +1,7 @@
 # Claude Routines Runtime (pipeline-review-intelligence-machine)
 
+![Pipeline Review Intelligence Machine Diagram](../diagram.svg)
+
 ## Purpose
 Runtime guidance for weekly pipeline review prep with deterministic checks and approval-gated mutation paths.
 

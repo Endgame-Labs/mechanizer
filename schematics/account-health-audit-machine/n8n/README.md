@@ -1,5 +1,7 @@
 # n8n Adapter (account-health-audit-machine)
 
+![Account Health Audit Machine Diagram](../diagram.svg)
+
 Contract-first n8n adapter for `account-health-audit-machine` using `gtm_event_v1` as the canonical envelope.
 
 ## Artifacts

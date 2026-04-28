@@ -1,5 +1,7 @@
 # Claw-like Adapter (renewal-risk-monitoring-machine)
 
+![Renewal Risk Monitoring Machine Diagram](../diagram.svg)
+
 ## Purpose
 Monitor daily renewal risk and publish CSM guidance with approvals on risky execution paths.
 

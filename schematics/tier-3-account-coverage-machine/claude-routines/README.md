@@ -1,5 +1,7 @@
 # Claude Routines Runtime (tier-3-account-coverage-machine)
 
+![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+
 ## Purpose
 Run scalable tier-3 account monitoring and actioning in Claude routines with explicit approval before outbound and CRM mutations.
 

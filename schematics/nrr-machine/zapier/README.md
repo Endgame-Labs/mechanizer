@@ -1,5 +1,7 @@
 # Zapier Adapter (nrr-machine)
 
+![NRR Machine Diagram](../diagram.svg)
+
 Zapier implementation for low-touch/no-touch NRR orchestration with scoring, approval gating, and idempotent execution.
 
 ## Artifact

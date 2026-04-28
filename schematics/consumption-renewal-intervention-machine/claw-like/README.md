@@ -1,5 +1,7 @@
 # Claw-like Adapter (consumption-renewal-intervention-machine)
 
+![Consumption Renewal Intervention Machine Diagram](../diagram.svg)
+
 ## Purpose
 Perform daily consumption and renewal intervention sweeps with HITL before customer-facing actions.
 

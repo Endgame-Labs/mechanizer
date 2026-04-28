@@ -1,5 +1,7 @@
 # Agentic Adapter (consumption-renewal-intervention-machine)
 
+![Consumption Renewal Intervention Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `consumption-renewal-intervention-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

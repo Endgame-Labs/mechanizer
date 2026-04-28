@@ -1,5 +1,7 @@
 # Agentic Adapter (sales-coaching-machine)
 
+![Sales Coaching Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `sales-coaching-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

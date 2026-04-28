@@ -1,5 +1,7 @@
 # Agentic Adapter (pipeline-review-intelligence-machine)
 
+![Pipeline Review Intelligence Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `pipeline-review-intelligence-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

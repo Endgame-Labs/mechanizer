@@ -1,5 +1,7 @@
 # Claude Routines Runtime (account-plan-generation-machine)
 
+![Account Plan Generation Machine Diagram](../diagram.svg)
+
 ## Purpose
 Run repeatable account-plan generation in Claude routines with explicit policy and approval controls for CRM/document writes.
 

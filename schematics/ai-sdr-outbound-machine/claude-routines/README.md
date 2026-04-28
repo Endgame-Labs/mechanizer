@@ -1,5 +1,7 @@
 # Claude Routines Runtime (ai-sdr-outbound-machine)
 
+![AI SDR Outbound Machine Diagram](../diagram.svg)
+
 ## Purpose
 Operational runtime guide for outbound research + sequence drafting + qualified response routing in Claude routines.
 

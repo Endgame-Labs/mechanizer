@@ -1,5 +1,7 @@
 # Agentic Adapter (tier-3-account-coverage-machine)
 
+![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `tier-3-account-coverage-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

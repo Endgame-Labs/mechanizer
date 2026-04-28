@@ -1,5 +1,7 @@
 # Tray Adapter (pipeline-review-intelligence-machine)
 
+![Pipeline Review Intelligence Machine Diagram](../diagram.svg)
+
 Tray implementation blueprint for weekly pipeline review prep and manager summary generation.
 
 ## Reference Artifact

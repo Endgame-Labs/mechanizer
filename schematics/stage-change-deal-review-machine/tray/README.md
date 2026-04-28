@@ -1,5 +1,7 @@
 # Tray Adapter (stage-change-deal-review-machine)
 
+![Stage Change Deal Review Machine Diagram](../diagram.svg)
+
 Tray implementation of stage-change review with strict idempotency and approval-gated writebacks.
 
 ## Reference Artifact

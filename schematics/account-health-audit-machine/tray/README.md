@@ -1,5 +1,7 @@
 # Tray Adapter (account-health-audit-machine)
 
+![Account Health Audit Machine Diagram](../diagram.svg)
+
 Tray runtime for `account-health-audit-machine` with scheduled and callable execution modes, reusable audit smart cogs, and approval-gated write actions.
 
 ## Artifact

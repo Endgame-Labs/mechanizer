@@ -1,5 +1,7 @@
 # Claw-like Adapter (account-plan-generation-machine)
 
+![Account Plan Generation Machine Diagram](../diagram.svg)
+
 ## Purpose
 Continuously refresh account plans in batches with approval-gated plan publication.
 

@@ -1,5 +1,7 @@
 # Claude Routines Runtime (account-health-audit-machine)
 
+![Account Health Audit Machine Diagram](../diagram.svg)
+
 ## Purpose
 Operational guidance for running `account-health-audit-machine` as a Claude Code **routine** on Anthropic cloud sessions.
 

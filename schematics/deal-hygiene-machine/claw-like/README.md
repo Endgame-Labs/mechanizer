@@ -1,5 +1,7 @@
 # Claw-like Adapter (deal-hygiene-machine)
 
+![Deal Hygiene Machine Diagram](../diagram.svg)
+
 ## Purpose
 Continuously detect and remediate deal-data hygiene issues with approval-gated CRM mutations.
 

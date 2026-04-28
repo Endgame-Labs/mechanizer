@@ -1,5 +1,7 @@
 # Claw-like Adapter (meeting-prep-brief-machine)
 
+![Meeting Prep Brief Machine Diagram](../diagram.svg)
+
 ## Purpose
 Generate near-term meeting briefs on a heartbeat loop with gated delivery for high-risk audiences.
 

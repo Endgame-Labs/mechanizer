@@ -1,5 +1,7 @@
 # Zapier Adapter (new-hire-ramp-accelerator-machine)
 
+![New Hire Ramp Accelerator Machine Diagram](../diagram.svg)
+
 Zapier implementation for new-hire onboarding package generation with approval before CRM or outbound updates.
 
 ## Artifact

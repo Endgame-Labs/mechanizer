@@ -1,5 +1,7 @@
 # Agentic Adapter (new-hire-ramp-accelerator-machine)
 
+![New Hire Ramp Accelerator Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `new-hire-ramp-accelerator-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

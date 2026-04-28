@@ -1,5 +1,7 @@
 # n8n Adapter (deal-hygiene-machine)
 
+![Deal Hygiene Machine Diagram](../diagram.svg)
+
 Contract-first n8n adapter for `deal-hygiene-machine` using `gtm_event_v1` as the canonical envelope.
 
 ## Artifacts

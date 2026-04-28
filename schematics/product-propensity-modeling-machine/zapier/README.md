@@ -1,5 +1,7 @@
 # Zapier Adapter (product-propensity-modeling-machine)
 
+![Product Propensity Modeling Machine Diagram](../diagram.svg)
+
 Zapier implementation for recurring or webhook-triggered account-product propensity scoring.
 
 ## Artifact

@@ -1,5 +1,7 @@
 # Tray Adapter (sales-coaching-machine)
 
+![Sales Coaching Machine Diagram](../diagram.svg)
+
 Tray runtime for `sales-coaching-machine` that evaluates post-call coaching recommendations against directives, then routes approved actions to CRM and manager channels.
 
 ## Artifact

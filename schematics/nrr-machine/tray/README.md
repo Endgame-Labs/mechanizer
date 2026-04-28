@@ -1,5 +1,7 @@
 # Tray Adapter (nrr-machine)
 
+![NRR Machine Diagram](../diagram.svg)
+
 Tray runtime for `nrr-machine` focused on low-touch/no-touch account motion with approval-gated outbound and CRM updates.
 
 ## Artifact

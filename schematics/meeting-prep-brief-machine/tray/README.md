@@ -1,5 +1,7 @@
 # Tray Adapter (meeting-prep-brief-machine)
 
+![Meeting Prep Brief Machine Diagram](../diagram.svg)
+
 Tray runtime for `meeting-prep-brief-machine` that composes prep briefs from revenue context, then gates delivery via approval when the brief can drive outbound actions.
 
 ## Artifact

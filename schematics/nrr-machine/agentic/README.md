@@ -1,5 +1,7 @@
 # Agentic Adapter (nrr-machine)
 
+![NRR Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `nrr-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

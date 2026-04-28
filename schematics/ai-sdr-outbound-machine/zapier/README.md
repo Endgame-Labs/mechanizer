@@ -1,5 +1,7 @@
 # Zapier Adapter (ai-sdr-outbound-machine)
 
+![AI SDR Outbound Machine Diagram](../diagram.svg)
+
 Webhook-driven SDR outbound orchestration with smart cogs, approval gating, and safe branch execution.
 
 ## Artifact

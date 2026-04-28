@@ -1,5 +1,7 @@
 # n8n Adapter (sales-coaching-machine)
 
+![Sales Coaching Machine Diagram](../diagram.svg)
+
 n8n implementation for sales coaching signals from call events, with directive checks and approval-gated side effects.
 
 ## Artifacts

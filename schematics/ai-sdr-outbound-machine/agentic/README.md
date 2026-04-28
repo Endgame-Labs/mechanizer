@@ -1,5 +1,7 @@
 # Agentic Adapter (ai-sdr-outbound-machine)
 
+![AI SDR Outbound Machine Diagram](../diagram.svg)
+
 Runtime-agnostic orchestration contract for `ai-sdr-outbound-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose

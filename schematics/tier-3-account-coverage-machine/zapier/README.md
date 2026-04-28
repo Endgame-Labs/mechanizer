@@ -1,5 +1,7 @@
 # Zapier Adapter (tier-3-account-coverage-machine)
 
+![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+
 Zapier implementation for tier-3 account coverage with segmentation, scoring, and approval-gated action execution.
 
 ## Artifact

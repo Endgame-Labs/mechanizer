@@ -1,5 +1,7 @@
 # n8n Adapter (consumption-renewal-intervention-machine)
 
+![Consumption Renewal Intervention Machine Diagram](../diagram.svg)
+
 ## Artifacts
 - `workflow.json`: importable starter workflow.
 
