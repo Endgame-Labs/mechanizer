@@ -6,7 +6,7 @@ Deterministic workflows are still the backbone of reliable revenue automation, b
 
 Smart Cogs are only useful when they have the right context and tool surface. Every current machine example in this repo assumes one or more of these context layers:
 - Endgame MCP + [`endgame-cli`](https://github.com/Endgame-Labs/endgame-cli)
-  - Unified GTM context graph with extracted facts and hybrid semantic + keyword retrieval across notes, docs, interactions, entities, and datasets.
+  - Unified GTM context graph with extracted facts and hybrid semantic + keyword retrieval across notes, docs, interactions, entities, and datasets.  Also has web search tools via Perplexity, enriched call transcript search, SFDC helpers, and Slack/Teams channel context.
   - Includes enablement/directive retrieval for coaching, messaging, and policy alignment.
   - Example: combine document insights, Salesforce notes, Slack messages, interaction history, and dataset-query outputs before `approval_loop`.
 - [Salesforce Headless 360](https://www.salesforce.com/news/stories/salesforce-headless-360-announcement/agentforce-developer-experience-tdx-release/)
