@@ -1,4 +1,4 @@
-# Agentic Runbook (tier-3-account-coverage-machine)
+# Agentic Runbook (long-tail-account-coverage-machine)
 
 ## Runtime Contract
 - Orchestration shape: **planner -> executor -> evaluator** with checkpoint persistence.
@@ -49,7 +49,7 @@ Required keys at stage entry:
 ## HITL Gate for Email/CRM Writes
 - Required for outreach send and CRM note/task creation.
 - Decision envelope: approve/reject/edit with template-safe edits only.
-- Reject or timeout emits tier3.coverage.blocked with policy and approval diagnostics.
+- Reject or timeout emits longtail.coverage.blocked with policy and approval diagnostics.
 
 ## Scheduled/Background Semantics
 - Event-driven default; scheduled mode supported for periodic sweeps.
@@ -57,9 +57,9 @@ Required keys at stage entry:
 - Resume from checkpoint; never replay already-committed side effects.
 
 ## Terminal Events
-- tier3.coverage.executed
-- tier3.coverage.blocked
-- tier3.coverage.failed
+- longtail.coverage.executed
+- longtail.coverage.blocked
+- longtail.coverage.failed
 
 ## Operational SLOs and Failure Policy
 - Retry transient tool failures with exponential backoff (max 3 attempts unless stricter machine policy applies).

@@ -1,15 +1,15 @@
-# Tier-3 Account Coverage Machine
+# Long Tail Account Coverage Machine
 
-![tier-3-account-coverage-machine Diagram](./diagram.svg)
+![long-tail-account-coverage-machine Diagram](./diagram.svg)
 
 ## Purpose
 Automate long-tail account coverage for low-touch/no-touch segments by combining deterministic signal monitoring, smart-cog scoring, approval-gated outreach, and churn/expansion trigger surfacing.
 
 ## Where It Fits
-Use this machine when account volume exceeds manual CSM capacity and teams need consistent monitoring plus lightweight outreach across tier-3 books.
+Use this machine when account volume exceeds manual CSM capacity and teams need consistent monitoring plus lightweight outreach across long-tail books.
 
 ## Primary KPIs
-- Tier-3 account coverage rate without human intervention.
+- Long-tail account coverage rate without human intervention.
 - Signal-to-action lead time for churn and expansion triggers.
 - Outreach approval-to-execution rate.
 - Churn risk intervention coverage.
@@ -40,7 +40,7 @@ Use this machine when account volume exceeds manual CSM capacity and teams need 
 
 ## Smart Cogs Used
 - `enrich_account_health`:
-  - Produces normalized feature set for tier-3 monitoring.
+  - Produces normalized feature set for long-tail monitoring.
 - `deal_score_reasoner`:
   - Outputs churn/expansion score, confidence, and play type.
 - `directive_alignment`:
@@ -58,7 +58,7 @@ Input event (simplified):
 {
   "event_type": "usage.declined",
   "source": "product_telemetry",
-  "subject": { "id": "001xx00000TIER3A" },
+  "subject": { "id": "001xx00000LONGTAILA" },
   "attributes": { "usage_drop_pct": 31, "segment": "low_touch" }
 }
 ```
@@ -66,7 +66,7 @@ Input event (simplified):
 Output event (simplified):
 ```json
 {
-  "event_type": "tier3.coverage.executed",
+  "event_type": "longtail.coverage.executed",
   "attributes": {
     "coverage_status": "actioned",
     "play": "churn_prevent_nudge",

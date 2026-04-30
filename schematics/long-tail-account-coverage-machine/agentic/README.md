@@ -1,8 +1,8 @@
-# Agentic Adapter (tier-3-account-coverage-machine)
+# Agentic Adapter (long-tail-account-coverage-machine)
 
-![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+![Long Tail Account Coverage Machine Diagram](../diagram.svg)
 
-Runtime-agnostic orchestration contract for `tier-3-account-coverage-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
+Runtime-agnostic orchestration contract for `long-tail-account-coverage-machine` using a **planner -> executor -> evaluator** loop with deterministic event I/O.
 
 ## Purpose
 Automate low-touch/no-touch account coverage with deterministic scoring, play selection, and approval-gated outreach and CRM actions.

@@ -1,6 +1,6 @@
-# n8n Adapter (tier-3-account-coverage-machine)
+# n8n Adapter (long-tail-account-coverage-machine)
 
-![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+![Long Tail Account Coverage Machine Diagram](../diagram.svg)
 
 n8n adapter for low-touch long-tail coverage automation with mandatory approval before outbound and CRM side effects.
 
@@ -22,10 +22,10 @@ n8n adapter for low-touch long-tail coverage automation with mandatory approval 
 - Input contract: `gtm_event_v1`.
 - Required checks: `event_id`, `event_type`, `source`, `occurred_at`, `trace.trace_id`, `subject.entity_id`.
 - Output terminal events:
-  - `tier3.coverage.executed`
-  - `tier3.coverage.blocked`
-  - `tier3.coverage.skipped_duplicate`
-  - `tier3.coverage.failed`
+  - `longtail.coverage.executed`
+  - `longtail.coverage.blocked`
+  - `longtail.coverage.skipped_duplicate`
+  - `longtail.coverage.failed`
 
 ## Smart-Cog Flow Mapping
 1. Normalize + validate.

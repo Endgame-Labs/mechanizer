@@ -1,13 +1,13 @@
-# Claw-like Adapter (tier-3-account-coverage-machine)
+# Claw-like Adapter (long-tail-account-coverage-machine)
 
-![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+![Long Tail Account Coverage Machine Diagram](../diagram.svg)
 
 ## Purpose
 Automate long-tail account coverage scans and execute only approved outreach or CRM actions.
 
 ## Heartbeat Loop (Executable Pattern)
 1. Scheduler evaluates cron in timezone and computes expected_tick_at.
-2. Runner acquires non-blocking distributed lock (claw.tier3_account_coverage); if lock exists, mark skipped_overlap and exit.
+2. Runner acquires non-blocking distributed lock (claw.longtail_account_coverage); if lock exists, mark skipped_overlap and exit.
 3. Load cursor window (lookback: 2h) and build deterministic candidate set.
 4. Run deterministic steps first: normalize to gtm_event_v1, schema validation, dedupe, policy prechecks.
 5. Run smart-cog gates from machine contract (for example: enrich_account_health, deal_score_reasoner, directive_alignment, route_exec_alert, approval_loop).
@@ -17,7 +17,7 @@ Automate long-tail account coverage scans and execute only approved outreach or 
 
 ## Cadence and Windowing
 - Schedule: */20 * * * * (America/Los_Angeles)
-- Cadence note: 20-minute loop balances breadth of tier-3 accounts with API budget.
+- Cadence note: 20-minute loop balances breadth of long-tail accounts with API budget.
 - Cursor lookback: 2h
 - Grace window: 120 seconds
 - Stale threshold: 3600 seconds
@@ -35,7 +35,7 @@ Automate long-tail account coverage scans and execute only approved outreach or 
   - provider/tool transient: 3 attempts (15s, 45s, 120s)
   - approval transport transient: 2 attempts (15s, 45s)
 - Non-retryable classes: schema failure, policy deny, HITL timeout deny.
-- Dead-letter sink: dlq.tier-3-account-coverage
+- Dead-letter sink: dlq.long-tail-account-coverage
 - DLQ payload minimum fields: machine_id, run_id, event_id, stage, error_code, retry_count, first_seen_at.
 
 ## HITL and Risk Controls
@@ -49,7 +49,7 @@ Automate long-tail account coverage scans and execute only approved outreach or 
 ## Safe Mode
 - Enter safe mode on stale transition, repeated dependency failures, or approval subsystem outage.
 - In safe mode, deterministic enrichment and scoring continue, but risky side effects stay disabled.
-- Emit diagnostics event: tier3.coverage.machine.safe_mode
+- Emit diagnostics event: longtail.coverage.machine.safe_mode
 - Exit safe mode after one full healthy run with successful heartbeat.
 
 ## References

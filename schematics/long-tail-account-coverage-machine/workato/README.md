@@ -1,14 +1,14 @@
-# Workato Adapter (tier-3-account-coverage-machine)
+# Workato Adapter (long-tail-account-coverage-machine)
 
-![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+![Long Tail Account Coverage Machine Diagram](../diagram.svg)
 
-Workato implementation notes for `tier-3-account-coverage-machine` using API recipes, recipe functions for shared smart cogs, lookup-table idempotency, and Workato job history for replay/debugging.
+Workato implementation notes for `long-tail-account-coverage-machine` using API recipes, recipe functions for shared smart cogs, lookup-table idempotency, and Workato job history for replay/debugging.
 
 ## Artifact
 - `recipe.json`: Workato recipe reference scaffold for build guidance and lifecycle packaging.
 
 ## Recipe Shape
-1. Receive `gtm_event_v1` through an API Platform recipe endpoint for `tier-3-account-coverage-machine`.
+1. Receive `gtm_event_v1` through an API Platform recipe endpoint for `long-tail-account-coverage-machine`.
 2. Add a companion scheduled recipe for `0 */6 * * *` in `workspace default` that calls the same recipe-function path for periodic sweeps.
 3. Validate and normalize the canonical event envelope.
 4. Check a lookup-table idempotency key before side effects.
@@ -17,10 +17,10 @@ Workato implementation notes for `tier-3-account-coverage-machine` using API rec
 7. Branch approved/deferred, perform allowed side effects, emit terminal `gtm_event_v1`, and write run summary.
 
 ## Terminal Events
-- Approved path emits `tier3.coverage.executed` from `emit_terminal_event.body.event_type`.
-- Blocked/deferred path emits `tier3.coverage.blocked` from `emit_terminal_event.body.event_type`.
+- Approved path emits `longtail.coverage.executed` from `emit_terminal_event.body.event_type`.
+- Blocked/deferred path emits `longtail.coverage.blocked` from `emit_terminal_event.body.event_type`.
 ## Idempotency and State
-- Use a lookup table key `tier-3-account-coverage-machine:{event_id}` before any downstream side effect.
+- Use a lookup table key `long-tail-account-coverage-machine:{event_id}` before any downstream side effect.
 - Persist terminal status, approval decision when present, `trace.trace_id`, and Workato job URL.
 - Keep secrets in Workato connections or project/environment properties, not lookup-table rows.
 

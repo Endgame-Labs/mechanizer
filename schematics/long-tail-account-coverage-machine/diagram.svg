@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
-  <title id="title">Tier-3 Account Coverage Machine</title>
+  <title id="title">Long Tail Account Coverage Machine</title>
   <desc id="desc">Flow diagram for low-touch long-tail account coverage with monitoring, trigger scoring, approval-gated outreach, and integration callouts.</desc>
   <defs>
     <linearGradient id="bg5" x1="0" y1="0" x2="1" y2="1">
@@ -23,7 +23,7 @@
   </defs>
 
   <rect width="1200" height="700" fill="url(#bg5)"/>
-  <text x="60" y="70" class="t">Tier-3 Account Coverage Machine</text>
+  <text x="60" y="70" class="t">Long Tail Account Coverage Machine</text>
 
   <rect x="70" y="145" width="230" height="94" rx="14" class="n"/>
   <text x="100" y="188" class="l">Signal Intake</text>
@@ -31,7 +31,7 @@
 
   <rect x="350" y="145" width="260" height="94" rx="14" class="a"/>
   <text x="384" y="188" class="l">Smart Cog: Enrichment</text>
-  <text x="384" y="210" class="m">tier-3 feature map</text>
+  <text x="384" y="210" class="m">long-tail feature map</text>
 
   <rect x="660" y="145" width="240" height="94" rx="14" class="a"/>
   <text x="694" y="188" class="l">Smart Cog: Scoring</text>

@@ -1,9 +1,9 @@
-# Claude Routines Runtime (tier-3-account-coverage-machine)
+# Claude Routines Runtime (long-tail-account-coverage-machine)
 
-![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+![Long Tail Account Coverage Machine Diagram](../diagram.svg)
 
 ## Purpose
-Run scalable tier-3 account monitoring and actioning in Claude routines with explicit approval before outbound and CRM mutations.
+Run scalable long-tail account monitoring and actioning in Claude routines with explicit approval before outbound and CRM mutations.
 
 ## Runtime Shape
 - Works best as schedule-first routine with optional API trigger.

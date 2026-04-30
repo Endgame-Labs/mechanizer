@@ -1,10 +1,10 @@
-# Routine Spec (tier-3-account-coverage-machine)
+# Routine Spec (long-tail-account-coverage-machine)
 
 ## Metadata
-- routine_id: `tier3_account_coverage_v1`
+- routine_id: `longtail_account_coverage_v1`
 - input_contract: `gtm_event_v1`
 - output_contract: `gtm_event_v1`
-- objective: continuously monitor tier-3 accounts and execute approved churn/expansion plays.
+- objective: continuously monitor long-tail accounts and execute approved churn/expansion plays.
 
 ## Supported Events
 - `account.health_changed`
@@ -15,7 +15,7 @@
 ## Stage Plan
 1. `validate_input`
 - Validate envelope and supported event types.
-- Invalid -> `tier3.coverage.failed_validation`.
+- Invalid -> `longtail.coverage.failed_validation`.
 
 2. `enrich_context`
 - Pull account timeline, CRM state, and telemetry features.
@@ -31,15 +31,15 @@
 
 6. `approval_loop`
 - Required before `outbound_send` or `crm_update`.
-- Non-approved -> `tier3.coverage.blocked`.
+- Non-approved -> `longtail.coverage.blocked`.
 
 7. `execute`
 - Apply approved actions with idempotency key `event_id`.
 
 8. `emit`
-- Success: `tier3.coverage.executed`.
-- Blocked: `tier3.coverage.blocked`.
-- Failure: `tier3.coverage.failed`.
+- Success: `longtail.coverage.executed`.
+- Blocked: `longtail.coverage.blocked`.
+- Failure: `longtail.coverage.failed`.
 
 ## Subagent Guidance
 - Optional read-only `cohort-researcher` for large cohort triage.

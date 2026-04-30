@@ -1,6 +1,6 @@
 {
-  "name": "tier-3-account-coverage-machine-v1",
-  "machine_id": "tier-3-account-coverage-machine",
+  "name": "long-tail-account-coverage-machine-v1",
+  "machine_id": "long-tail-account-coverage-machine",
   "artifact_type": "workato_recipe_reference",
   "contract": {
     "input_contract": "gtm_event_v1",
@@ -25,9 +25,9 @@
     {
       "id": "api_event_trigger",
       "type": "api_platform.new_api_request",
-      "name": "Tier 3 Account Coverage Machine API event",
+      "name": "Long Tail Account Coverage Machine API event",
       "input_schema": "gtm_event_v1",
-      "path": "/tier-3-account-coverage-machine",
+      "path": "/long-tail-account-coverage-machine",
       "accepts_event_types": [
         "account.health_changed",
         "usage.declined",
@@ -60,7 +60,7 @@
       "id": "idempotency_lookup",
       "type": "lookup_table.search_rows",
       "name": "Idempotency lookup",
-      "key": "tier-3-account-coverage-machine:{{normalize_validate.event_id}}",
+      "key": "long-tail-account-coverage-machine:{{normalize_validate.event_id}}",
       "on_duplicate": "stop_job_without_side_effects"
     },
     {
@@ -114,7 +114,7 @@
       "type": "recipe_function.call_function",
       "name": "approval_loop",
       "input": {
-        "machine_id": "tier-3-account-coverage-machine",
+        "machine_id": "long-tail-account-coverage-machine",
         "event_id": "{{normalize_validate.event_id}}",
         "trace": "{{normalize_validate.trace}}",
         "proposed_actions": "{{compose_action_plan.output}}",
@@ -154,19 +154,19 @@
       "body": {
         "event_contract": "gtm_event_v1",
         "source": "workato",
-        "machine_id": "tier-3-account-coverage-machine",
+        "machine_id": "long-tail-account-coverage-machine",
         "trace": "{{normalize_validate.trace}}",
         "attributes": {
           "approval_status": "{{approval_loop.approval_status}}",
           "workato_job_url": "{{job.url}}"
         },
-        "event_type": "{{approval_loop.approval_status == 'approved' ? 'tier3.coverage.executed' : 'tier3.coverage.blocked'}}",
+        "event_type": "{{approval_loop.approval_status == 'approved' ? 'longtail.coverage.executed' : 'longtail.coverage.blocked'}}",
         "terminal_events": {
-          "success": "tier3.coverage.executed",
-          "blocked": "tier3.coverage.blocked",
-          "failed": "tier3.coverage.failed",
-          "approved_event_type": "tier3.coverage.executed",
-          "deferred_event_type": "tier3.coverage.blocked"
+          "success": "longtail.coverage.executed",
+          "blocked": "longtail.coverage.blocked",
+          "failed": "longtail.coverage.failed",
+          "approved_event_type": "longtail.coverage.executed",
+          "deferred_event_type": "longtail.coverage.blocked"
         },
         "event_id": "{{normalize_validate.event_id}}",
         "subject": "{{normalize_validate.subject}}"
@@ -177,7 +177,7 @@
       "id": "write_run_summary",
       "type": "lookup_table.upsert_row",
       "name": "Write run summary",
-      "key": "tier-3-account-coverage-machine:{{normalize_validate.event_id}}",
+      "key": "long-tail-account-coverage-machine:{{normalize_validate.event_id}}",
       "value_fields": [
         "status",
         "approval_status",
@@ -209,10 +209,10 @@
     }
   },
   "terminal_events": {
-    "success": "tier3.coverage.executed",
-    "blocked": "tier3.coverage.blocked",
-    "failed": "tier3.coverage.failed",
-    "approved_event_type": "tier3.coverage.executed",
-    "deferred_event_type": "tier3.coverage.blocked"
+    "success": "longtail.coverage.executed",
+    "blocked": "longtail.coverage.blocked",
+    "failed": "longtail.coverage.failed",
+    "approved_event_type": "longtail.coverage.executed",
+    "deferred_event_type": "longtail.coverage.blocked"
   }
 }

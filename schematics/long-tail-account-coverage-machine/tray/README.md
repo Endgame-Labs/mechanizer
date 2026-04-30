@@ -1,8 +1,8 @@
-# Tray Adapter (tier-3-account-coverage-machine)
+# Tray Adapter (long-tail-account-coverage-machine)
 
-![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+![Long Tail Account Coverage Machine Diagram](../diagram.svg)
 
-Tray implementation of tier-3 account coverage automation with callable ingest and required approval gating before side effects.
+Tray implementation of long-tail account coverage automation with callable ingest and required approval gating before side effects.
 
 ## Artifact
 - `workflow.json`: project-style starter artifact.
@@ -14,11 +14,11 @@ Tray implementation of tier-3 account coverage automation with callable ingest a
 ## Contract Semantics
 1. Normalize and validate `gtm_event_v1`.
 2. Enrich account context and compute coverage signals.
-3. Gate to tier-3 target segments (`low_touch`, `no_touch`).
+3. Gate to long-tail target segments (`low_touch`, `no_touch`).
 4. Score churn/expansion trigger intensity.
 5. Compose outreach plan and run approval.
 6. Execute approved outbound/CRM actions.
-7. Emit `tier3.coverage.executed` or `tier3.coverage.blocked`.
+7. Emit `longtail.coverage.executed` or `longtail.coverage.blocked`.
 
 ## Format Parity
 - Compatibility posture: `workflow.json` tracks machine intent and step sequencing, but it is not the native Tray project/workflow export JSON envelope.

@@ -1,6 +1,6 @@
-# Make Adapter (tier-3-account-coverage-machine)
+# Make Adapter (long-tail-account-coverage-machine)
 
-![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+![Long Tail Account Coverage Machine Diagram](../diagram.svg)
 
 Last validated against official Make docs: 2026-04-22.
 
@@ -8,7 +8,7 @@ Last validated against official Make docs: 2026-04-22.
 - `scenario.json`: blueprint-style scenario reference.
 
 ## Scenario Shape
-1. Ingest tier-3 account signals via webhook and periodic sweep.
+1. Ingest long-tail account signals via webhook and periodic sweep.
 2. Normalize + dedupe to canonical contract.
 3. Enrich context and score churn/expansion posture.
 4. Route actions by risk band.

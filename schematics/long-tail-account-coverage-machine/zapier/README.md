@@ -1,8 +1,8 @@
-# Zapier Adapter (tier-3-account-coverage-machine)
+# Zapier Adapter (long-tail-account-coverage-machine)
 
-![Tier-3 Account Coverage Machine Diagram](../diagram.svg)
+![Long Tail Account Coverage Machine Diagram](../diagram.svg)
 
-Zapier implementation for tier-3 account coverage with segmentation, scoring, and approval-gated action execution.
+Zapier implementation for long-tail account coverage with segmentation, scoring, and approval-gated action execution.
 
 ## Artifact
 - `zap.template.json`

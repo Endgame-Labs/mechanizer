@@ -1,11 +1,11 @@
 {
-  "workflow_name": "tier3_account_coverage_machine",
-  "machine_id": "tier-3-account-coverage-machine",
+  "workflow_name": "longtail_account_coverage_machine",
+  "machine_id": "long-tail-account-coverage-machine",
   "version": "1.0.0",
   "tray_runtime": {
     "trigger_mode": "callable",
     "callable_trigger": {
-      "name": "tier3_coverage_ingest",
+      "name": "longtail_coverage_ingest",
       "operation": "trigger_and_respond"
     },
     "scheduled_trigger": {
@@ -30,7 +30,7 @@
       "key": "idempotency_check",
       "operation": "data_storage_get",
       "input": {
-        "key": "tier3-account-coverage:${steps.normalize_validate.output.event_id}"
+        "key": "longtail-account-coverage:${steps.normalize_validate.output.event_id}"
       }
     },
     {

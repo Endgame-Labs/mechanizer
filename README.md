@@ -98,7 +98,7 @@ All forms must honor shared contracts.
 - `nrr-machine`: low-touch/no-touch retention and expansion signal machine.
 
 ## New Schematics (April 2026)
-- `tier-3-account-coverage-machine`
+- `long-tail-account-coverage-machine`
 - `ai-sdr-outbound-machine`
 - `account-health-audit-machine`
 - `consumption-renewal-intervention-machine`
@@ -126,7 +126,7 @@ All forms must honor shared contracts.
 | [`renewal-risk-monitoring-machine`](schematics/renewal-risk-monitoring-machine/) | 0 7 * * *<br>renewal.window_opened, account.risk_signal.detected | renewal.risk.play.executed<br>renewal.risk.play.blocked<br>renewal.risk.play.failed | All required adapters |
 | [`sales-coaching-machine`](schematics/sales-coaching-machine/) | call.completed | coaching.recommendation.created<br>coaching.recommendation.blocked<br>coaching.recommendation.failed | All required adapters |
 | [`stage-change-deal-review-machine`](schematics/stage-change-deal-review-machine/) | deal.stage_changed, opportunity.stage_changed | deal.stage_review.writeback_applied<br>deal.stage_review.findings_posted<br>deal.stage_review.failed | All required adapters |
-| [`tier-3-account-coverage-machine`](schematics/tier-3-account-coverage-machine/) | account.health_changed, usage.declined, renewal.window_opened, intent.signal_detected<br>0 */6 * * * | tier3.coverage.executed<br>tier3.coverage.blocked<br>tier3.coverage.failed | All required adapters |
+| [`long-tail-account-coverage-machine`](schematics/long-tail-account-coverage-machine/) | account.health_changed, usage.declined, renewal.window_opened, intent.signal_detected<br>0 */6 * * * | longtail.coverage.executed<br>longtail.coverage.blocked<br>longtail.coverage.failed | All required adapters |
 
 ## Agentic Support Model
 `mechanizer` supports three agentic operating modes:
@@ -161,9 +161,8 @@ All forms must honor shared contracts.
 9. Document any breaking change and migration path.
 
 ## Diagrams
-- `docs/assets/flow-overview.svg`
 - [`schematics/deal-hygiene-machine/`](schematics/deal-hygiene-machine/)
-- [`schematics/tier-3-account-coverage-machine/`](schematics/tier-3-account-coverage-machine/)
+- [`schematics/long-tail-account-coverage-machine/`](schematics/long-tail-account-coverage-machine/)
 - [`schematics/ai-sdr-outbound-machine/`](schematics/ai-sdr-outbound-machine/)
 - [`schematics/account-health-audit-machine/`](schematics/account-health-audit-machine/)
 - [`schematics/consumption-renewal-intervention-machine/`](schematics/consumption-renewal-intervention-machine/)
@@ -180,14 +179,11 @@ All forms must honor shared contracts.
 
 ## Diagram Gallery
 
-### Flow Overview
-![Flow Overview](docs/assets/flow-overview.svg)
-
 ### [Deal Hygiene Machine](schematics/deal-hygiene-machine/)
 [![Deal Hygiene Machine](schematics/deal-hygiene-machine/diagram.svg)](schematics/deal-hygiene-machine/)
 
-### [Tier 3 Account Coverage Machine](schematics/tier-3-account-coverage-machine/)
-[![Tier 3 Account Coverage Machine](schematics/tier-3-account-coverage-machine/diagram.svg)](schematics/tier-3-account-coverage-machine/)
+### [Long Tail Account Coverage Machine](schematics/long-tail-account-coverage-machine/)
+[![Long Tail Account Coverage Machine](schematics/long-tail-account-coverage-machine/diagram.svg)](schematics/long-tail-account-coverage-machine/)
 
 ### [AI SDR Outbound Machine](schematics/ai-sdr-outbound-machine/)
 [![AI SDR Outbound Machine](schematics/ai-sdr-outbound-machine/diagram.svg)](schematics/ai-sdr-outbound-machine/)

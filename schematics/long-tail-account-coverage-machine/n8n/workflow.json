@@ -1,5 +1,5 @@
 {
-  "name": "tier-3-account-coverage-machine-v2",
+  "name": "long-tail-account-coverage-machine-v2",
   "active": false,
   "settings": {
     "executionOrder": "v1",
@@ -7,7 +7,7 @@
     "timezone": "America/Los_Angeles"
   },
   "meta": {
-    "machine_id": "tier-3-account-coverage-machine",
+    "machine_id": "long-tail-account-coverage-machine",
     "schema_version": "gtm_event_v1",
     "idempotency_key": "event_id",
     "n8n_notes": {
@@ -27,7 +27,7 @@
       ],
       "parameters": {
         "httpMethod": "POST",
-        "path": "tier3-account-coverage/events",
+        "path": "longtail-account-coverage/events",
         "responseMode": "onReceived"
       }
     },
@@ -63,7 +63,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const now = new Date().toISOString();\nreturn {\n  event_id: `tier3-sweep-${Date.now()}`,\n  event_type: 'account.health_changed',\n  source: 'tier3_scheduler',\n  occurred_at: now,\n  ingested_at: now,\n  trace: { trace_id: `trace_tier3_${Date.now()}` },\n  subject: { entity_type: 'account', entity_id: 'tier3_cohort' },\n  attributes: { refresh_mode: 'scheduled' }\n};"
+        "jsCode": "const now = new Date().toISOString();\nreturn {\n  event_id: `longtail-sweep-${Date.now()}`,\n  event_type: 'account.health_changed',\n  source: 'longtail_scheduler',\n  occurred_at: now,\n  ingested_at: now,\n  trace: { trace_id: `trace_longtail_${Date.now()}` },\n  subject: { entity_type: 'account', entity_id: 'longtail_cohort' },\n  attributes: { refresh_mode: 'scheduled' }\n};"
       }
     },
     {
@@ -78,7 +78,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const e = $json;\nconst required = ['event_id', 'event_type', 'source', 'occurred_at', 'trace', 'subject'];\nfor (const key of required) { if (!e[key]) throw new Error(`Missing ${key}`); }\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nconst supported = ['account.health_changed', 'usage.declined', 'renewal.window_opened', 'intent.signal_detected'];\nif (!supported.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nreturn {\n  ...e,\n  machine_id: 'tier-3-account-coverage-machine',\n  schema_version: 'gtm_event_v1',\n  ingested_at: e.ingested_at || new Date().toISOString(),\n  trace: { ...e.trace, run_id: e.trace?.run_id || `${e.event_id}:${Date.now()}` }\n};"
+        "jsCode": "const e = $json;\nconst required = ['event_id', 'event_type', 'source', 'occurred_at', 'trace', 'subject'];\nfor (const key of required) { if (!e[key]) throw new Error(`Missing ${key}`); }\nif (!e.trace?.trace_id) throw new Error('Missing trace.trace_id');\nif (!e.subject?.entity_id) throw new Error('Missing subject.entity_id');\nconst supported = ['account.health_changed', 'usage.declined', 'renewal.window_opened', 'intent.signal_detected'];\nif (!supported.includes(e.event_type)) throw new Error(`Unsupported event_type ${e.event_type}`);\nreturn {\n  ...e,\n  machine_id: 'long-tail-account-coverage-machine',\n  schema_version: 'gtm_event_v1',\n  ingested_at: e.ingested_at || new Date().toISOString(),\n  trace: { ...e.trace, run_id: e.trace?.run_id || `${e.event_id}:${Date.now()}` }\n};"
       }
     },
     {
@@ -94,7 +94,7 @@
         "method": "POST",
         "url": "https://idempotency.internal/v1/lookup",
         "sendBody": true,
-        "jsonBody": "={{ { machine_id: 'tier-3-account-coverage-machine', event_id: $json.event_id, event_type: $json.event_type } }}"
+        "jsonBody": "={{ { machine_id: 'long-tail-account-coverage-machine', event_id: $json.event_id, event_type: $json.event_type } }}"
       },
       "retryOnFail": true,
       "maxTries": 3,
@@ -122,7 +122,7 @@
     },
     {
       "id": "7",
-      "name": "Emit tier3.coverage.skipped_duplicate",
+      "name": "Emit longtail.coverage.skipped_duplicate",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
@@ -133,7 +133,7 @@
         "method": "POST",
         "url": "https://events.internal/v1/publish",
         "sendBody": true,
-        "jsonBody": "={{ { ...$json, event_type: 'tier3.coverage.skipped_duplicate' } }}"
+        "jsonBody": "={{ { ...$json, event_type: 'longtail.coverage.skipped_duplicate' } }}"
       }
     },
     {
@@ -305,7 +305,7 @@
         "method": "POST",
         "url": "https://events.internal/v1/publish",
         "sendBody": true,
-        "jsonBody": "={{ { ...$json, event_type: 'tier3.coverage.executed' } }}"
+        "jsonBody": "={{ { ...$json, event_type: 'longtail.coverage.executed' } }}"
       }
     },
     {
@@ -321,7 +321,7 @@
         "method": "POST",
         "url": "https://events.internal/v1/publish",
         "sendBody": true,
-        "jsonBody": "={{ { ...$json, event_type: 'tier3.coverage.blocked' } }}"
+        "jsonBody": "={{ { ...$json, event_type: 'longtail.coverage.blocked' } }}"
       }
     }
   ],
@@ -385,7 +385,7 @@
       "main": [
         [
           {
-            "node": "Emit tier3.coverage.skipped_duplicate",
+            "node": "Emit longtail.coverage.skipped_duplicate",
             "type": "main",
             "index": 0
           }

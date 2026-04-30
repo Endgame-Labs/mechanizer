@@ -1,13 +1,13 @@
 {
-  "zap_name": "Tier-3 Account Coverage Machine",
+  "zap_name": "Long Tail Account Coverage Machine",
   "version": "1.1.0",
-  "machine_id": "tier-3-account-coverage-machine",
+  "machine_id": "long-tail-account-coverage-machine",
   "description": "Monitors long-tail accounts and executes approval-gated outreach plays.",
   "trigger": {
     "primary": {
       "app": "webhooks_by_zapier",
       "event": "catch_hook",
-      "path": "/tier3-account-coverage/events"
+      "path": "/longtail-account-coverage/events"
     },
     "alternate": {
       "app": "schedule_by_zapier",
@@ -30,7 +30,7 @@
       "id": "idempotency_lookup",
       "app": "storage_by_zapier",
       "event": "get_value",
-      "key_template": "tier3-coverage:${event_id}"
+      "key_template": "longtail-coverage:${event_id}"
     },
     {
       "id": "fetch_context",
@@ -103,7 +103,7 @@
               "request": {
                 "url": "https://events.internal/emit",
                 "json": {
-                  "event_type": "tier3.coverage.executed"
+                  "event_type": "longtail.coverage.executed"
                 }
               }
             }
@@ -120,7 +120,7 @@
               "request": {
                 "url": "https://events.internal/emit",
                 "json": {
-                  "event_type": "tier3.coverage.blocked"
+                  "event_type": "longtail.coverage.blocked"
                 }
               }
             }

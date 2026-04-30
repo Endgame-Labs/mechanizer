@@ -1,6 +1,6 @@
 # HEARTBEAT
 
-machine_id: tier-3-account-coverage-machine
+machine_id: long-tail-account-coverage-machine
 heartbeat_version: v2
 schedule_cron: "*/20 * * * *"
 timezone: "America/Los_Angeles"
@@ -15,7 +15,7 @@ alert_channels:
 
 lock:
   strategy: advisory_or_lease_lock
-  key: "claw.tier3_account_coverage"
+  key: "claw.longtail_account_coverage"
   acquire_mode: try_lock
   lease_seconds: 1500
 
@@ -35,7 +35,7 @@ retry_policy:
 
 dead_letter:
   enabled: true
-  sink: "dlq.tier-3-account-coverage"
+  sink: "dlq.long-tail-account-coverage"
   max_receive_count: 5
 
 hitl:
@@ -46,10 +46,10 @@ hitl:
 safe_mode:
   enter_on: [stale_transition, repeated_transient_failures, approval_subsystem_outage]
   blocks: [crm_writes, outbound_sends, irreversible_actions]
-  diagnostics_event: "tier3.coverage.machine.safe_mode"
+  diagnostics_event: "longtail.coverage.machine.safe_mode"
 
 stale_handling:
-  stale_event: "tier3.coverage.machine.stale"
+  stale_event: "longtail.coverage.machine.stale"
   clear_condition: "one complete healthy run with heartbeat success"
 
 ## Cron Semantics
