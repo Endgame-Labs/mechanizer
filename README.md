@@ -162,20 +162,20 @@ All forms must honor shared contracts.
 
 ## Diagrams
 - `docs/assets/flow-overview.svg`
-- [`schematics/deal-hygiene-machine/diagram.svg`](schematics/deal-hygiene-machine/)
-- [`schematics/tier-3-account-coverage-machine/diagram.svg`](schematics/tier-3-account-coverage-machine/)
-- [`schematics/ai-sdr-outbound-machine/diagram.svg`](schematics/ai-sdr-outbound-machine/)
-- [`schematics/account-health-audit-machine/diagram.svg`](schematics/account-health-audit-machine/)
-- [`schematics/consumption-renewal-intervention-machine/diagram.svg`](schematics/consumption-renewal-intervention-machine/)
-- [`schematics/meeting-prep-brief-machine/diagram.svg`](schematics/meeting-prep-brief-machine/)
-- [`schematics/account-plan-generation-machine/diagram.svg`](schematics/account-plan-generation-machine/)
-- [`schematics/pipeline-review-intelligence-machine/diagram.svg`](schematics/pipeline-review-intelligence-machine/)
-- [`schematics/stage-change-deal-review-machine/diagram.svg`](schematics/stage-change-deal-review-machine/)
-- [`schematics/new-hire-ramp-accelerator-machine/diagram.svg`](schematics/new-hire-ramp-accelerator-machine/)
-- [`schematics/renewal-risk-monitoring-machine/diagram.svg`](schematics/renewal-risk-monitoring-machine/)
-- [`schematics/product-propensity-modeling-machine/diagram.svg`](schematics/product-propensity-modeling-machine/)
-- [`schematics/sales-coaching-machine/diagram.svg`](schematics/sales-coaching-machine/)
-- [`schematics/nrr-machine/diagram.svg`](schematics/nrr-machine/)
+- [`schematics/deal-hygiene-machine/`](schematics/deal-hygiene-machine/)
+- [`schematics/tier-3-account-coverage-machine/`](schematics/tier-3-account-coverage-machine/)
+- [`schematics/ai-sdr-outbound-machine/`](schematics/ai-sdr-outbound-machine/)
+- [`schematics/account-health-audit-machine/`](schematics/account-health-audit-machine/)
+- [`schematics/consumption-renewal-intervention-machine/`](schematics/consumption-renewal-intervention-machine/)
+- [`schematics/meeting-prep-brief-machine/`](schematics/meeting-prep-brief-machine/)
+- [`schematics/account-plan-generation-machine/`](schematics/account-plan-generation-machine/)
+- [`schematics/pipeline-review-intelligence-machine/`](schematics/pipeline-review-intelligence-machine/)
+- [`schematics/stage-change-deal-review-machine/`](schematics/stage-change-deal-review-machine/)
+- [`schematics/new-hire-ramp-accelerator-machine/`](schematics/new-hire-ramp-accelerator-machine/)
+- [`schematics/renewal-risk-monitoring-machine/`](schematics/renewal-risk-monitoring-machine/)
+- [`schematics/product-propensity-modeling-machine/`](schematics/product-propensity-modeling-machine/)
+- [`schematics/sales-coaching-machine/`](schematics/sales-coaching-machine/)
+- [`schematics/nrr-machine/`](schematics/nrr-machine/)
 - `docs/assets/approval-loop-cog.svg`
 
 ## Diagram Gallery
@@ -184,46 +184,46 @@ All forms must honor shared contracts.
 ![Flow Overview](docs/assets/flow-overview.svg)
 
 ### [Deal Hygiene Machine](schematics/deal-hygiene-machine/)
-![Deal Hygiene Machine](schematics/deal-hygiene-machine/diagram.svg)
+[![Deal Hygiene Machine](schematics/deal-hygiene-machine/diagram.svg)](schematics/deal-hygiene-machine/)
 
 ### [Tier 3 Account Coverage Machine](schematics/tier-3-account-coverage-machine/)
-![Tier 3 Account Coverage Machine](schematics/tier-3-account-coverage-machine/diagram.svg)
+[![Tier 3 Account Coverage Machine](schematics/tier-3-account-coverage-machine/diagram.svg)](schematics/tier-3-account-coverage-machine/)
 
 ### [AI SDR Outbound Machine](schematics/ai-sdr-outbound-machine/)
-![AI SDR Outbound Machine](schematics/ai-sdr-outbound-machine/diagram.svg)
+[![AI SDR Outbound Machine](schematics/ai-sdr-outbound-machine/diagram.svg)](schematics/ai-sdr-outbound-machine/)
 
 ### [Account Health Audit Machine](schematics/account-health-audit-machine/)
-![Account Health Audit Machine](schematics/account-health-audit-machine/diagram.svg)
+[![Account Health Audit Machine](schematics/account-health-audit-machine/diagram.svg)](schematics/account-health-audit-machine/)
 
 ### [Consumption Renewal Intervention Machine](schematics/consumption-renewal-intervention-machine/)
-![Consumption Renewal Intervention Machine](schematics/consumption-renewal-intervention-machine/diagram.svg)
+[![Consumption Renewal Intervention Machine](schematics/consumption-renewal-intervention-machine/diagram.svg)](schematics/consumption-renewal-intervention-machine/)
 
 ### [Meeting Prep Brief Machine](schematics/meeting-prep-brief-machine/)
-![Meeting Prep Brief Machine](schematics/meeting-prep-brief-machine/diagram.svg)
+[![Meeting Prep Brief Machine](schematics/meeting-prep-brief-machine/diagram.svg)](schematics/meeting-prep-brief-machine/)
 
 ### [Account Plan Generation Machine](schematics/account-plan-generation-machine/)
-![Account Plan Generation Machine](schematics/account-plan-generation-machine/diagram.svg)
+[![Account Plan Generation Machine](schematics/account-plan-generation-machine/diagram.svg)](schematics/account-plan-generation-machine/)
 
 ### [Pipeline Review Intelligence Machine](schematics/pipeline-review-intelligence-machine/)
-![Pipeline Review Intelligence Machine](schematics/pipeline-review-intelligence-machine/diagram.svg)
+[![Pipeline Review Intelligence Machine](schematics/pipeline-review-intelligence-machine/diagram.svg)](schematics/pipeline-review-intelligence-machine/)
 
 ### [Stage Change Deal Review Machine](schematics/stage-change-deal-review-machine/)
-![Stage Change Deal Review Machine](schematics/stage-change-deal-review-machine/diagram.svg)
+[![Stage Change Deal Review Machine](schematics/stage-change-deal-review-machine/diagram.svg)](schematics/stage-change-deal-review-machine/)
 
 ### [New Hire Ramp Accelerator Machine](schematics/new-hire-ramp-accelerator-machine/)
-![New Hire Ramp Accelerator Machine](schematics/new-hire-ramp-accelerator-machine/diagram.svg)
+[![New Hire Ramp Accelerator Machine](schematics/new-hire-ramp-accelerator-machine/diagram.svg)](schematics/new-hire-ramp-accelerator-machine/)
 
 ### [Renewal Risk Monitoring Machine](schematics/renewal-risk-monitoring-machine/)
-![Renewal Risk Monitoring Machine](schematics/renewal-risk-monitoring-machine/diagram.svg)
+[![Renewal Risk Monitoring Machine](schematics/renewal-risk-monitoring-machine/diagram.svg)](schematics/renewal-risk-monitoring-machine/)
 
 ### [Product Propensity Modeling Machine](schematics/product-propensity-modeling-machine/)
-![Product Propensity Modeling Machine](schematics/product-propensity-modeling-machine/diagram.svg)
+[![Product Propensity Modeling Machine](schematics/product-propensity-modeling-machine/diagram.svg)](schematics/product-propensity-modeling-machine/)
 
 ### [Sales Coaching Machine](schematics/sales-coaching-machine/)
-![Sales Coaching Machine](schematics/sales-coaching-machine/diagram.svg)
+[![Sales Coaching Machine](schematics/sales-coaching-machine/diagram.svg)](schematics/sales-coaching-machine/)
 
 ### [NRR Machine](schematics/nrr-machine/)
-![NRR Machine](schematics/nrr-machine/diagram.svg)
+[![NRR Machine](schematics/nrr-machine/diagram.svg)](schematics/nrr-machine/)
 
 ### Approval Loop Cog
 ![Approval Loop Cog](docs/assets/approval-loop-cog.svg)
