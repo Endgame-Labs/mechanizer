@@ -1,6 +1,6 @@
 # mechanizer
 
-`mechanizer` is a contract-first library of reusable revenue automation schematics.
+`mechanizer` is a contract-first library of reusable revenue automation [schematics](#diagram-gallery).
 
 Deterministic workflows are still the backbone of reliable revenue automation, but the next generation of orchestration adds **agentic reasoning gates** only where judgment is required. In `mechanizer`, those reasoning nodes are modeled as **Smart Cogs**: contract-bound units that can use MCP, CLI, and API tools with strict guardrails.
 
