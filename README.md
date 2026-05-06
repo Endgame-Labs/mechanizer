@@ -1,6 +1,8 @@
 # mechanizer
 
+
 <img width="308" height="164" alt="image" src="https://github.com/user-attachments/assets/d7af7400-c580-4699-9784-f2fb04b58e2b" />
+
 
 
 `mechanizer` is a contract-first library of reusable revenue automation [schematics](#diagram-gallery).
